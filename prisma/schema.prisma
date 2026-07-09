@@ -1,0 +1,31 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Answer {
+  id            String   @id @default(uuid())
+  question      String
+  category      String
+  summary       String
+  analysis      String
+  references    String   // stored as serialized JSON string array
+  notes         String
+  confidence    String
+  disclaimer    String
+  reasoningTree String   // stored as serialized JSON object (statusBadge, confidenceVal, nodes, edges, inspectorData)
+  createdAt     DateTime @default(now())
+}
+
+model Hadith {
+  id            String   @id @default(uuid())
+  hadithNumber  Int
+  book          String   // e.g., "bukhari", "muslim"
+  text          String
+  source        String   // e.g., "Sahih al-Bukhari (Hadith 123)"
+  tags          String   // stored as serialized JSON string array of keywords
+  createdAt     DateTime @default(now())
+}
