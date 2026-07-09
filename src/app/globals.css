@@ -1,26 +1,78 @@
 @import "tailwindcss";
+@import "../style/theme.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAF8F5;
+  --foreground: #1E2A22;
+  
+  --color-brand-green: #0E3A20;
+  --color-brand-green-dark: #0A2D18;
+  --color-card-warm: #FFFDFB;
+  --color-border-warm: #EAE4D9;
+  --color-border-warm-light: #F2EEE5;
+  --color-text-primary: #1E2A22;
+  --color-text-secondary: #6E6A62;
+  --color-brand-green-light: #ECF4F0;
+  --color-brand-gold-light: #FAF6F0;
+}
+
+/* System media-query based dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0B1410;
+    --foreground: #E2E8E5;
+    
+    --color-brand-green: #4ADE80; /* Bright glowing emerald green for dark mode */
+    --color-brand-green-dark: #22C55E;
+    --color-card-warm: #121E19;
+    --color-border-warm: #20332A;
+    --color-border-warm-light: #1A2A22;
+    --color-text-primary: #E2E8E5;
+    --color-text-secondary: #929D98;
+    --color-brand-green-light: #122D20;
+    --color-brand-gold-light: #1E2822;
+  }
+}
+
+/* Explicit class-based dark mode for manual toggle overrides */
+.dark {
+  --background: #0B1410 !important;
+  --foreground: #E2E8E5 !important;
+  
+  --color-brand-green: #4ADE80 !important;
+  --color-brand-green-dark: #22C55E !important;
+  --color-card-warm: #121E19 !important;
+  --color-border-warm: #20332A !important;
+  --color-border-warm-light: #1A2A22 !important;
+  --color-text-primary: #E2E8E5 !important; /* Fixed: light text in dark mode */
+  --color-text-secondary: #929D98 !important;
+  --color-brand-green-light: #122D20 !important;
+  --color-brand-gold-light: #1E2822 !important;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  --color-brand-green: var(--color-brand-green);
+  --color-brand-green-dark: var(--color-brand-green-dark);
+  --color-brand-green-light: var(--color-brand-green-light);
+  --color-brand-gold: #A37D4C;
+  --color-brand-gold-light: var(--color-brand-gold-light);
+  --color-bg-cream: var(--background);
+  --color-card-warm: var(--color-card-warm);
+  --color-border-warm: var(--color-border-warm);
+  --color-border-warm-light: var(--color-border-warm-light);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  
+  --font-sans: var(--font-geist-sans), sans-serif;
+  --font-serif: var(--font-lora), var(--font-eb-garamond), Georgia, serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
