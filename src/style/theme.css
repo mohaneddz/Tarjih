@@ -1,0 +1,70 @@
+/**
+ * Custom design utilities and variables using Tailwind CSS v4 syntax.
+ * Extended for the premium academic and scholarly light/dark aesthetic.
+ */
+
+@theme {
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+/* Academic cards matching the warm reference layout */
+@utility academic-card {
+  background-color: var(--color-card-warm);
+  border: 1px solid var(--color-border-warm);
+  border-radius: 16px;
+}
+
+@utility academic-card-interactive {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: var(--color-brand-gold);
+    box-shadow: 0 4px 20px -2px rgba(163, 125, 76, 0.06);
+    transform: translateY(-1px);
+  }
+}
+
+/* Soft academic text gradient */
+@utility text-gradient-academic {
+  background: linear-gradient(135deg, var(--color-brand-green) 0%, var(--color-brand-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Very subtle diffused shadow for minimalist cards */
+@utility shadow-premium {
+  box-shadow: 0 6px 24px -4px rgba(30, 42, 34, 0.03), 0 2px 8px -2px rgba(30, 42, 34, 0.015);
+}
+
+/* Scrollbar styles matching the warm palette nested under a single utility */
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-warm);
+    border-radius: 9999px;
+
+    &:hover {
+      background: var(--color-brand-gold);
+    }
+  }
+}
+
+/* Authentic repeating Arabesque geometric lattice background pattern */
+@utility bg-pattern-arabesque {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M0 0 L30 30 L0 60' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M60 0 L30 30 L60 60' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%23A37D4C' fill-opacity='0.3'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
