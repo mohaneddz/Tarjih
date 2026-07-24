@@ -1,0 +1,68 @@
+/**
+ * Usul al-fiqh: the derivation rules themselves.
+ *
+ * These are the clauses that let the engine reach a ruling no text states
+ * directly, and they are the most dangerous clauses in the KB — one careless
+ * rule over-generalises across the entire corpus. Each carries the conditions
+ * the usulis actually place on it.
+ */
+
+import type { KbEntry } from "../entry";
+
+export const USUL: KbEntry[] = [
+  {
+    id: "usul:qiyas",
+    /*
+     * Qiyas: the ruling of an established case transfers to a new case that
+     * shares its effective cause.
+     *
+     * Three guards, each doing real work:
+     *
+     * - `illah`, never `hikma`. The analogy runs on the manifest, constant
+     *   attribute the ruling turns on, not on the ruling's underlying wisdom.
+     *   Date wine and grape wine share intoxication; they do not share a
+     *   measurable quantum of "preserving the intellect".
+     * - `generalisable(Asl)` must be asserted. A ruling that was a concession
+     *   to a particular person or occasion cannot found an analogy, and with
+     *   no negation-as-failure this guard fails closed: silence forbids the
+     *   analogy rather than permitting it.
+     * - New must differ from Asl. Not written as a condition because the
+     *   prover's variant loop check already handles it — deriving
+     *   ruling(X, H) from ruling(X, H) is a variant of its own parent goal.
+     *   That also rules out circular chains of analogy at any length.
+     */
+    clause:
+      "ruling(New, H) :- illah(New, Illa), illah(Asl, Illa), generalisable(Asl), ruling(Asl, H).",
+    evidence: {
+      kind: "qiyas",
+      reference: "Qiyas (analogical extension)",
+      dalala: "zanni",
+      notes:
+        "Analogy yields a probable indication, not a certain one. A derivation " +
+        "resting on this clause loses to one resting on an explicit text about " +
+        "the same act.",
+    },
+  },
+
+  {
+    id: "usul:darura-lifts-prohibition",
+    /*
+     * al-darurat tubih al-mahzurat — necessity renders the forbidden
+     * permissible. Grounded in Qur'an 2:173, not a free-standing principle.
+     *
+     * Requires both an asserted exception and a situation that genuinely
+     * amounts to darura. The gap between real necessity and mere difficulty
+     * is the entire substance of the rule, so the engine will not infer it.
+     */
+    clause: "ruling(Act, mubah) :- excepted(Act, Reason), necessity(Reason).",
+    evidence: {
+      kind: "usul",
+      reference: "al-darurat tubih al-mahzurat",
+      dalala: "qati",
+      notes:
+        "The concession lasts only while the necessity lasts and reaches only " +
+        "as far as it requires (al-darura tuqaddar bi-qadariha). The engine " +
+        "models whether the concession applies, not how far it extends.",
+    },
+  },
+];
