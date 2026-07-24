@@ -136,9 +136,6 @@ export function undoTo(markPoint: number, s: Substitution, trail: Trail): void {
 /**
  * True when `a` is at least as general as `b` — i.e. `a` subsumes `b` under
  * some substitution of `a`'s variables alone.
- *
- * Used for loop detection: a goal that is subsumed by one of its own ancestors
- * cannot produce anything new, so that branch is cut.
  */
 export function subsumes(a: Literal, b: Literal): boolean {
   if (a.predicate !== b.predicate || a.args.length !== b.args.length) return false;
@@ -159,6 +156,21 @@ export function subsumes(a: Literal, b: Literal): boolean {
     return pattern.args.every((arg, i) => matchTerm(arg, target.args[i]));
   };
   return a.args.every((arg, i) => matchTerm(arg, b.args[i]));
+}
+
+/**
+ * True when `a` and `b` are the same literal up to consistent variable
+ * renaming — each subsumes the other.
+ *
+ * This is the loop-detection test. Subsumption alone is *not* safe here: a
+ * goal posed with an unbound argument, such as `ancestor(X, muhammad)`,
+ * subsumes every ground instance it is trying to derive, so a subsumption cut
+ * would prune legitimate branches and silently return fewer evidences than
+ * exist. Requiring a variant means we only cut a goal that is genuinely a
+ * repeat of one already being explored.
+ */
+export function isVariant(a: Literal, b: Literal): boolean {
+  return subsumes(a, b) && subsumes(b, a);
 }
 
 function termsIdentical(a: Term, b: Term): boolean {
