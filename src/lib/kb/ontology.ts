@@ -51,9 +51,19 @@ export function conflictSeverity(a: Hukm, b: Hukm): number {
   return Math.abs(HUKM_POLARITY[a] - HUKM_POLARITY[b]);
 }
 
-/** True when the two rulings sit on opposite sides of permissibility. */
+/**
+ * True when two rulings cannot honestly be presented as a range and the
+ * tarjih layer must pick one.
+ *
+ * The threshold sits at 2, which is where the practical question changes.
+ * A gap of 1 — haram against makruh, wajib against mandub — is the ordinary
+ * texture of scholarly disagreement: both sides tell you to do the same
+ * thing, differing only on whether the obligation binds. A gap of 2 or more
+ * gives genuinely opposed instructions (haram against mubah: may I or may I
+ * not?) and cannot be reported as a spread without misleading the reader.
+ */
 export function contradicts(a: Hukm, b: Hukm): boolean {
-  return conflictSeverity(a, b) >= 3;
+  return conflictSeverity(a, b) >= 2;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,15 +175,35 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "instance",
     ["Entity", "Class"],
     "taxonomy",
-    "Entity is a member of Class.",
-    "instance(aunt, kin)"
+    "Entity is directly asserted to be a member of Class. Asserted only; " +
+      "query instance_of/2 instead to pick up inherited membership.",
+    "instance(aunt_maternal, rahim)"
+  ),
+  spec(
+    "instance_of",
+    ["Entity", "Class"],
+    "taxonomy",
+    "Entity is a member of Class directly or through the subclass hierarchy. " +
+      "This is the predicate rules should depend on.",
+    "instance_of(aunt_maternal, kin)"
   ),
   spec(
     "subclass",
     ["Sub", "Super"],
     "taxonomy",
-    "Every member of Sub is a member of Super. Transitive; closure is derived.",
+    "Every member of Sub is directly asserted to be a member of Super. " +
+      "One link only; the transitive closure is subclass_of/2.",
     "subclass(maternal_kin, kin)"
+  ),
+  spec(
+    "subclass_of",
+    ["Sub", "Super"],
+    "taxonomy",
+    "Transitive closure of subclass/2. Kept as a separate predicate because " +
+      "writing transitivity directly on subclass/2 would be left-recursive, " +
+      "and the prover's loop check would cut the recursive branch as a variant " +
+      "of its own parent goal, silently yielding only direct links.",
+    "subclass_of(maternal_kin, rahim)"
   ),
   spec(
     "attribute",
@@ -269,12 +299,16 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "established(ruling(consume(wine), haram))"
   ),
   spec(
-    "text_specific",
+    "generalisable",
     ["Case"],
     "derivational",
-    "The ruling on Case is a concession peculiar to it and may not be generalised " +
-      "by qiyas. Blocks analogy from rulings that are explicitly exceptional.",
-    "text_specific(testimony(khuzayma))"
+    "The ruling on Case may serve as the source case (asl) of an analogy. " +
+      "Stated positively rather than as 'not text-specific' because the engine " +
+      "has no negation-as-failure: a positive guard fails closed, so the KB " +
+      "must explicitly permit an analogy rather than merely fail to forbid it. " +
+      "For a juristic tool that is the safer default — silence should not " +
+      "license generalising a concession granted to one person or occasion.",
+    "generalisable(consume(khamr))"
   ),
   spec(
     "excepted",
