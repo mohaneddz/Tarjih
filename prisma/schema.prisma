@@ -6,26 +6,135 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Answer {
-  id            String   @id @default(uuid())
-  question      String
-  category      String
-  summary       String
-  analysis      String
-  references    String   // stored as serialized JSON string array
-  notes         String
-  confidence    String
-  disclaimer    String
-  reasoningTree String   // stored as serialized JSON object (statusBadge, confidenceVal, nodes, edges, inspectorData)
-  createdAt     DateTime @default(now())
+/// A scriptural text as retrieved, before any formalisation.
+///
+/// Kept separate from the clauses derived from it so a bad formalisation can
+/// be regenerated without re-fetching, and so the UI can always show the user
+/// the actual source text next to the rule the engine used.
+model SourceText {
+  id String @id @default(cuid())
+
+  /// "quran" | "sunnah"
+  kind       String
+  /// Collection slug for hadith, e.g. "bukhari". Null for Qur'an.
+  collection String?
+  /// Hadith number, or ayah number for Qur'an.
+  number     Int?
+  /// Surah number. Null for hadith.
+  surah      Int?
+  /// Human-facing citation, e.g. "Sahih al-Bukhari 5971".
+  reference  String
+
+  textEn String
+  textAr String?
+
+  /// Authenticity grade: mutawatir | sahih | hasan | daif | mawdu.
+  /// Null means ungraded — such a text must not be formalised into a clause
+  /// that carries weight, since we cannot say how sound it is.
+  grade String?
+
+  /// pending | done | failed | skipped
+  formalisationStatus String    @default("pending")
+  formalisationError  String?
+  formalisedAt        DateTime?
+
+  clauses Clause[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([kind, collection, number])
+  @@index([formalisationStatus])
 }
 
-model Hadith {
-  id            String   @id @default(uuid())
-  hadithNumber  Int
-  book          String   // e.g., "bukhari", "muslim"
-  text          String
-  source        String   // e.g., "Sahih al-Bukhari (Hadith 123)"
-  tags          String   // stored as serialized JSON string array of keywords
-  createdAt     DateTime @default(now())
+/// One Horn clause plus the evidence metadata that gives it juristic weight.
+///
+/// The logic and the metadata share a row because they are strictly 1:1, but
+/// they stay separate *in the engine*: the prover reads only `source`, and the
+/// tarjih layer reads only the metadata. That is what stops the search being
+/// biased by how authoritative a clause claims to be.
+model Clause {
+  /// The clause id the engine uses. Also the join key from a proof back to
+  /// its evidence.
+  id String @id
+
+  /// The clause in surface syntax, e.g.
+  /// "ruling(mistreat(X), haram) :- kin(X, ego), causes(mistreat(X), darar)."
+  /// Stored as text so it stays reviewable by a human reading the database.
+  source String
+
+  /// Head predicate as "name/arity", for diagnostics and KB statistics.
+  head String
+
+  // --- Evidence metadata ---
+
+  /// quran | sunnah | ijma | qiyas | qaida | usul | istihsan | urf | ontology
+  kind      String
+  reference String
+
+  grade       String?
+  /// Certainty of transmission: qati | zanni
+  thubut      String?
+  /// Certainty of indication: qati | zanni
+  dalala      String?
+  /// amm | khass
+  scope       String?
+  /// mutlaq | muqayyad
+  restriction String?
+  /// nasikh | mansukh
+  abrogation  String?
+  /// Clause id of the text this one abrogates.
+  abrogates   String?
+
+  /// JSON array of madhhab slugs. Null means agreed or not school-specific.
+  madhahib String?
+
+  /// True until a human has checked the formalisation. Surfaced in the UI:
+  /// an unreviewed machine reading of scripture is not the same kind of claim
+  /// as a hand-authored rule.
+  unreviewed Boolean @default(true)
+
+  notes String?
+
+  sourceTextId String?
+  sourceText   SourceText? @relation(fields: [sourceTextId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([head])
+  @@index([kind])
+  @@index([unreviewed])
+}
+
+/// A cached engine run.
+///
+/// Stores the goal actually proved and the full derivation, not a prose
+/// answer, so a stored result can be re-rendered and re-audited rather than
+/// taken on trust.
+model Resolution {
+  id String @id @default(cuid())
+
+  question String
+  /// The goal literal the question was translated into, in surface syntax.
+  goal     String
+
+  madhhab    String?
+  strictness String?
+
+  /// Winning hukm, or null when the engine found no derivation.
+  verdict    String?
+  /// Computed from the proof and the murajjihat, never model-generated.
+  confidence Int?
+  /// True when competing derivations reached contradictory rulings.
+  contested  Boolean @default(false)
+
+  /// Full engine output as JSON: derivations, proof trees, weighing steps.
+  result String
+
+  /// True when a budget stopped the search, so the result may be incomplete.
+  truncated Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([question])
+  @@index([createdAt])
 }
