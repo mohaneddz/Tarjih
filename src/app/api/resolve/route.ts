@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getKb } from "@/lib/kb/singleton";
+import { getLiveKb } from "@/lib/kb/live-kb";
 import { GroqClient } from "@/lib/pipeline/llm";
 import { resolveQuestion } from "@/lib/pipeline/resolve";
 import { prisma } from "@/data/db";
@@ -42,12 +42,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const liveKb = await getLiveKb();
   const result = await resolveQuestion({
     question,
     madhhab: body.madhhab,
     strictness: body.strictness,
     llm: new GroqClient(apiKey),
-    kb: getKb(),
+    kb: liveKb.loaded,
   });
 
   if (!result.ok) {
