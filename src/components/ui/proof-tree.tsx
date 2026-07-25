@@ -10,61 +10,85 @@ interface ProofTreeProps {
   readonly onSelectNode: (clauseId: string) => void;
 }
 
-interface LaidOutNode {
-  readonly view: ProofView;
-  readonly depth: number;
-  /** Center x, in leaf-units (not pixels — scaled at render time). */
-  readonly x: number;
-}
+// ---------------------------------------------------------------------------
+// Node taxonomy
+// ---------------------------------------------------------------------------
+
+export type DisplayNodeType = "conclusion" | "principle" | "condition" | "source";
 
 /**
- * Lays out a proof tree of arbitrary shape and depth.
+ * Classifies a proof node into the four display roles used throughout the
+ * design (design/study.png): Conclusion, Principle, Condition, Source.
  *
- * The old visualizer hardcoded exactly five nodes at fixed (x, y) positions
- * because the LLM it rendered always produced exactly five nodes. Real
- * derivations don't: they range from a single fact to a multi-level chain of
- * qiyas built on qiyas, so the layout has to be computed from whatever tree
- * actually comes back. This is a standard tidy-tree pass: each node's width
- * in "leaf units" is the number of leaves beneath it (minimum 1), and a
- * node's center is the midpoint of the span its children occupy.
+ * Purely a display-layer read of data the engine already computed — nothing
+ * here is invented. A node is a Conclusion whenever its goal *is* a ruling
+ * (the root always is one, but an intermediate qiyas step that itself proves
+ * a ruling — e.g. "mistreating one's mother is haram" on the way to proving
+ * the same about an aunt — is a Conclusion too, since it's the same kind of
+ * claim). A Source is a node whose evidence is a primary text (Qur'an,
+ * hadith, ijma). A Principle is the methodological machinery connecting them
+ * (qiyas, a legal maxim, or another usul rule). Everything else — the
+ * definitional/taxonomic facts a principle depends on, like "an aunt is
+ * collateral kin" — is a Condition.
  */
-function layoutTree(root: ProofView): { nodes: LaidOutNode[]; totalWidth: number; maxDepth: number } {
-  const nodes: LaidOutNode[] = [];
-  let maxDepth = 0;
-
-  function place(view: ProofView, depth: number, xOffset: number): number {
-    maxDepth = Math.max(maxDepth, depth);
-    if (view.children.length === 0) {
-      nodes.push({ view, depth, x: xOffset + 0.5 });
-      return xOffset + 1;
-    }
-    const childStart = xOffset;
-    let cursor = xOffset;
-    const childCenters: number[] = [];
-    for (const child of view.children) {
-      const before = cursor;
-      cursor = place(child, depth + 1, cursor);
-      childCenters.push((before + cursor) / 2);
-    }
-    const center = (childStart + cursor) / 2;
-    nodes.push({ view, depth, x: center });
-    return cursor;
+export function classifyNode(view: ProofView): DisplayNodeType {
+  const predicate = view.goal.slice(0, view.goal.indexOf("("));
+  if (predicate === "ruling") return "conclusion";
+  if (view.evidence.kind === "quran" || view.evidence.kind === "sunnah" || view.evidence.kind === "ijma") {
+    return "source";
   }
-
-  const totalWidth = place(root, 0, 0);
-  return { nodes, totalWidth: Math.max(totalWidth, 1), maxDepth };
+  if (["qiyas", "qaida", "usul", "istihsan", "urf"].includes(view.evidence.kind)) return "principle";
+  return "condition";
 }
 
-const KIND_STYLE: Record<string, { badge: string; label: string }> = {
-  quran: { badge: "bg-brand-green-light text-brand-green", label: "Qur'an" },
-  sunnah: { badge: "bg-brand-gold-light text-brand-gold", label: "Sunnah" },
-  ijma: { badge: "bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300", label: "Ijma'" },
-  qiyas: { badge: "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300", label: "Qiyas" },
-  qaida: { badge: "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300", label: "Maxim" },
-  usul: { badge: "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300", label: "Usul" },
-  istihsan: { badge: "bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300", label: "Istihsan" },
-  urf: { badge: "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300", label: "Custom" },
-  ontology: { badge: "bg-[#EFEDE8] dark:bg-white/5 text-text-secondary", label: "Definition" },
+const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode }> = {
+  conclusion: {
+    label: "Conclusion",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+        <circle cx="12" cy="12" r="9" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.5l2 2 4-4.5" />
+      </svg>
+    ),
+  },
+  principle: {
+    label: "Principle",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+      </svg>
+    ),
+  },
+  condition: {
+    label: "Condition",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0-17.25a3.75 3.75 0 110 7.5m0-7.5a3.75 3.75 0 100 7.5m0-7.5v7.5m-6.75 3h13.5m-13.5 0a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25m-13.5 0v3a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-3" />
+      </svg>
+    ),
+  },
+  source: {
+    label: "Source",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+      </svg>
+    ),
+  },
+};
+
+const TYPE_CARD_STYLE: Record<DisplayNodeType, string> = {
+  conclusion: "bg-brand-red-light/40 border-brand-red/30",
+  principle: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/40",
+  condition: "bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900/40",
+  source: "bg-brand-green-light border-brand-green/30",
+};
+
+const TYPE_ICON_STYLE: Record<DisplayNodeType, string> = {
+  conclusion: "bg-brand-red text-white",
+  principle: "bg-purple-200 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200",
+  condition: "bg-sky-200 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200",
+  source: "bg-brand-green text-white",
 };
 
 /** Strips the outer wrapper off a goal string for a shorter card title, e.g. "ruling(mistreat(mother), haram)" -> "mistreat(mother) = haram". */
@@ -74,10 +98,55 @@ function shortGoal(goal: string): string {
   return goal;
 }
 
-const ROW_HEIGHT = 132;
-const COL_WIDTH = 220;
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+interface LaidOutNode {
+  readonly view: ProofView;
+  readonly depth: number;
+  readonly x: number;
+  readonly number: number;
+}
+
+/**
+ * Lays out a proof tree of arbitrary shape and depth, and assigns each node
+ * a sequential display number in post-order (leaves first, root last) — the
+ * same "build up to the conclusion" reading order the reference design uses.
+ *
+ * This is a standard tidy-tree pass: a node's width in "leaf units" is the
+ * number of leaves beneath it (minimum 1), and its center is the midpoint of
+ * the span its children occupy.
+ */
+function layoutTree(root: ProofView): { nodes: LaidOutNode[]; totalWidth: number; maxDepth: number } {
+  const nodes: LaidOutNode[] = [];
+  let maxDepth = 0;
+  let counter = 1;
+
+  function place(view: ProofView, depth: number, xOffset: number): number {
+    maxDepth = Math.max(maxDepth, depth);
+    if (view.children.length === 0) {
+      nodes.push({ view, depth, x: xOffset + 0.5, number: counter++ });
+      return xOffset + 1;
+    }
+    const childStart = xOffset;
+    let cursor = xOffset;
+    for (const child of view.children) {
+      cursor = place(child, depth + 1, cursor);
+    }
+    const center = (childStart + cursor) / 2;
+    nodes.push({ view, depth, x: center, number: counter++ });
+    return cursor;
+  }
+
+  const totalWidth = place(root, 0, 0);
+  return { nodes, totalWidth: Math.max(totalWidth, 1), maxDepth };
+}
+
+const ROW_HEIGHT = 148;
+const COL_WIDTH = 224;
 const CARD_W = 196;
-const CARD_H = 96;
+const CARD_H = 108;
 
 export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreeProps) {
   const { nodes, totalWidth, maxDepth } = useMemo(() => layoutTree(proof), [proof]);
@@ -92,7 +161,7 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
 
   const byNode = new Map(nodes.map((n) => [n.view, n]));
 
-  const edges: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  const edges: { x1: number; y1: number; x2: number; y2: number; weak: boolean }[] = [];
   const walkEdges = (view: ProofView) => {
     const parent = byNode.get(view);
     if (!parent) return;
@@ -101,14 +170,18 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
       if (!c) continue;
       const p1 = positionOf(parent);
       const p2 = positionOf(c);
-      edges.push({ x1: p1.cx, y1: p1.cy + CARD_H / 2, x2: p2.cx, y2: p2.cy - CARD_H / 2 });
+      // A "weaker path": the child's own indication of the ruling is
+      // probable (zanni) rather than certain, e.g. an identified 'illa or a
+      // qiyas step — matches the dashed "weaker path" edges in the design.
+      const weak = child.evidence.dalala === "zanni";
+      edges.push({ x1: p1.cx, y1: p1.cy + CARD_H / 2, x2: p2.cx, y2: p2.cy - CARD_H / 2, weak });
       walkEdges(child);
     }
   };
   walkEdges(proof);
 
   return (
-    <div className="relative w-full h-[520px] overflow-auto bg-background/30 rounded-2xl border border-border-warm-light/40 custom-scrollbar">
+    <div className="relative w-full h-[560px] overflow-auto bg-background/30 rounded-2xl border border-border-warm-light/40 custom-scrollbar">
       <div className="relative" style={{ width: Math.max(width, 400), height: Math.max(height, 200), margin: "0 auto" }}>
         <svg className="absolute inset-0 pointer-events-none" width={width} height={height}>
           {edges.map((e, i) => (
@@ -118,65 +191,117 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
               y1={e.y1}
               x2={e.x2}
               y2={e.y2}
-              stroke="#A37D4C"
+              stroke="var(--color-brand-red)"
               strokeWidth={1.5}
-              opacity={0.65}
+              strokeDasharray={e.weak ? "4,4" : undefined}
+              opacity={0.55}
             />
           ))}
         </svg>
 
-        {nodes.map((n, i) => {
+        {nodes.map((n) => {
           const { cx, cy } = positionOf(n);
-          const style = KIND_STYLE[n.view.evidence.kind] ?? KIND_STYLE.ontology;
+          const type = classifyNode(n.view);
+          const meta = TYPE_META[type];
           const isSelected = selectedClauseId === n.view.clauseId;
           const isOntology = n.view.evidence.kind === "ontology";
           const title = isOntology ? shortGoal(n.view.goal) : n.view.evidence.reference;
-          const subtitle = isOntology ? "definition" : shortGoal(n.view.goal);
+          const subtitle = isOntology ? shortGoal(n.view.goal) : n.view.evidence.reference === title ? "" : shortGoal(n.view.goal);
+          const hasNote = Boolean(n.view.evidence.notes);
 
           return (
-            <button
-              key={`${n.view.clauseId}-${i}`}
-              onClick={() => onSelectNode(n.view.clauseId)}
-              style={{
-                left: cx - CARD_W / 2,
-                top: cy - CARD_H / 2,
-                width: CARD_W,
-                height: CARD_H,
-              }}
-              className={cn(
-                "absolute rounded-xl border p-3 text-left flex flex-col gap-1 transition-all cursor-pointer shadow-sm hover:shadow-md",
-                isSelected
-                  ? "bg-brand-gold-light border-brand-gold ring-2 ring-brand-gold/15"
-                  : "bg-card-warm border-border-warm hover:border-brand-gold/50"
-              )}
+            <div
+              key={`${n.view.clauseId}-${n.number}`}
+              className="absolute flex flex-col items-center gap-1.5"
+              style={{ left: cx - CARD_W / 2, top: cy - CARD_H / 2, width: CARD_W }}
             >
-              <div className="flex items-center justify-between gap-1">
-                <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0", style.badge)}>
-                  {style.label}
+              <button
+                onClick={() => onSelectNode(n.view.clauseId)}
+                style={{ width: CARD_W, height: CARD_H }}
+                className={cn(
+                  "relative rounded-xl border p-3 text-left flex flex-col gap-1 transition-all cursor-pointer shadow-sm hover:shadow-md",
+                  isSelected ? "ring-2 ring-brand-red/30 border-brand-red/50" : "hover:border-brand-red/40",
+                  TYPE_CARD_STYLE[type]
+                )}
+              >
+                {/* Sequence badge */}
+                <span className="absolute -top-2.5 -left-2.5 h-6 w-6 rounded-full bg-brand-red text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-background">
+                  {n.number}
                 </span>
-                {n.view.evidence.unreviewed && (
-                  <span className="text-[7px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase">
-                    unreviewed
+
+                <div className="flex items-center justify-between gap-1">
+                  <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0", TYPE_ICON_STYLE[type])}>
+                    {meta.icon}
+                  </span>
+                  {n.view.evidence.unreviewed && (
+                    <span className="text-[7px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase shrink-0">
+                      unreviewed
+                    </span>
+                  )}
+                </div>
+                <span className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-2" title={title}>
+                  {title}
+                </span>
+                {subtitle && (
+                  <span className="text-[9px] text-text-secondary leading-tight line-clamp-1" title={subtitle}>
+                    {subtitle}
                   </span>
                 )}
-              </div>
-              <span className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-2" title={title}>
-                {title}
-              </span>
-              <span className="text-[9px] text-text-secondary leading-tight line-clamp-2 mt-auto" title={subtitle}>
-                {subtitle}
-              </span>
-              {!isOntology && (
-                <div className="h-1 w-full bg-border-warm-light/60 rounded-full overflow-hidden mt-1">
-                  <div
-                    className="h-full bg-brand-green/70"
-                    style={{ width: `${n.view.evidence.strength}%` }}
-                  />
+                <div className="flex items-center justify-between mt-auto gap-1">
+                  <span className="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-text-secondary bg-border-warm-light/70">
+                    {meta.label}
+                  </span>
+                  {!isOntology && (
+                    <div className="h-1 flex-1 max-w-[48px] bg-border-warm-light/60 rounded-full overflow-hidden">
+                      <div className="h-full bg-brand-green/70" style={{ width: `${n.view.evidence.strength}%` }} />
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {/* Real evidence note surfaced as an editor's-note style callout */}
+              {hasNote && (
+                <div
+                  className="w-full text-[9px] leading-relaxed text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-2 line-clamp-3"
+                  title={n.view.evidence.notes}
+                >
+                  {n.view.evidence.notes}
                 </div>
               )}
-            </button>
+            </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+export function ProofTreeLegend() {
+  const items: { label: string; render: React.ReactNode }[] = [
+    { label: "Conclusion", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.conclusion)}>{TYPE_META.conclusion.icon}</span> },
+    { label: "Principle", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.principle)}>{TYPE_META.principle.icon}</span> },
+    { label: "Condition", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.condition)}>{TYPE_META.condition.icon}</span> },
+    { label: "Source", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.source)}>{TYPE_META.source.icon}</span> },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 py-3 text-[10px] text-text-secondary border-t border-border-warm-light/60">
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-1.5">
+          {item.render}
+          <span>{item.label}</span>
+        </div>
+      ))}
+      <div className="flex items-center gap-1.5">
+        <span className="w-5 h-px bg-brand-red opacity-55" />
+        <span>Strong inference</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="w-5 h-px border-t border-dashed border-brand-red opacity-70" />
+        <span>Weaker path</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="w-5 h-3 border border-dashed border-brand-red/40 rounded" />
+        <span>Editor&rsquo;s note</span>
       </div>
     </div>
   );

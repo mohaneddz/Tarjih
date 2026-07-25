@@ -5,7 +5,7 @@ import { groundGoal } from "./goal";
 import type { LlmClient } from "./llm";
 import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
 import { presentGroup, presentProof, proofViewToText } from "./present";
-import { resolveQuestion } from "./resolve";
+import { groundQuestion, resolveQuestion } from "./resolve";
 import { prove } from "../engine/prover";
 import { weighRuling } from "../tarjih/weigh";
 
@@ -201,6 +201,41 @@ describe("present", () => {
     const proved = prove([g.goal.literal], core.kb);
     const view = presentProof(proved.solutions[0].proofs[0], core.evidence);
     expect(view.evidence.unreviewed).toBe(false);
+  });
+});
+
+describe("groundQuestion (the grounding-preview stage)", () => {
+  it("returns the same goal text resolveQuestion would prove against", async () => {
+    const llm = new FakeLlm(["ruling(mistreat(aunt_maternal), H)"]);
+    const result = await groundQuestion("Is mistreating my maternal aunt haram?", llm);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.goalText).toBe("ruling(mistreat(aunt_maternal), H)");
+  });
+
+  it("surfaces a grounding failure distinctly, without calling prove", async () => {
+    const llm = new FakeLlm(["ruling(annihilate(mother), H)"]);
+    const result = await groundQuestion("anything", llm);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.stage).toBe("goal-grounding");
+  });
+
+  it("surfaces an LLM failure distinctly", async () => {
+    const result = await groundQuestion("anything", new ThrowingLlm());
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.stage).toBe("llm");
+  });
+
+  it("is the exact code path resolveQuestion uses for its own stage 1 (no duplicated logic to drift)", async () => {
+    // Same scripted answer fed to both entry points must ground identically.
+    const question = "Is mistreating my maternal aunt haram?";
+    const preview = await groundQuestion(question, new FakeLlm(["ruling(mistreat(aunt_maternal), H)"]));
+    const full = await resolveQuestion({
+      question,
+      llm: new FakeLlm(["ruling(mistreat(aunt_maternal), H)", JSON.stringify({ summary: "s", analysis: "a", notes: "n" })]),
+      kb: core,
+    });
+    if (!preview.ok || !full.ok) throw new Error("expected both to succeed");
+    expect(full.view.goalText).toBe(preview.goalText);
   });
 });
 
