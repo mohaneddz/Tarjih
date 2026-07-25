@@ -27,14 +27,14 @@ type Tab = "core" | "queue";
 
 const KIND_BADGE: Record<string, string> = {
   quran: "bg-brand-green-light text-brand-green",
-  sunnah: "bg-brand-gold-light text-brand-gold",
+  sunnah: "bg-brand-red-light text-brand-red",
   ijma: "bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300",
   qiyas: "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300",
   qaida: "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300",
   usul: "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300",
   istihsan: "bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300",
   urf: "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300",
-  ontology: "bg-[#EFEDE8] dark:bg-white/5 text-text-secondary",
+  ontology: "bg-border-warm-light text-text-secondary",
 };
 
 function KindBadge({ kind }: { kind: string }) {
@@ -138,7 +138,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
             placeholder="Search by id, predicate, or reference..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md h-10 px-4 text-xs rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-gold transition-all"
+            className="w-full max-w-md h-10 px-4 text-xs rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-red transition-all"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -149,7 +149,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
                   <KindBadge kind={c.kind} />
                 </div>
                 <span className="font-serif font-bold text-sm text-text-primary">{c.head}</span>
-                <span className="text-xs text-brand-gold font-semibold">{c.reference}</span>
+                <span className="text-xs text-brand-red font-semibold">{c.reference}</span>
                 {c.text && <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{c.text}&rdquo;</p>}
                 {c.notes && <p className="text-[11px] text-text-secondary leading-relaxed">{c.notes}</p>}
                 <div className="flex gap-1.5 flex-wrap mt-auto pt-2 border-t border-border-warm-light/50">
