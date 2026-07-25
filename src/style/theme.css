@@ -65,6 +65,6 @@
 
 /* Authentic repeating Arabesque geometric lattice background pattern */
 @utility bg-pattern-arabesque {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M0 0 L30 30 L0 60' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M60 0 L30 30 L60 60' fill='none' stroke='%23A37D4C' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%23A37D4C' fill-opacity='0.3'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z' fill='none' stroke='%237A1F2E' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M0 0 L30 30 L0 60' fill='none' stroke='%237A1F2E' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Cpath d='M60 0 L30 30 L60 60' fill='none' stroke='%237A1F2E' stroke-width='0.4' stroke-opacity='0.25'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%237A1F2E' fill-opacity='0.3'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }

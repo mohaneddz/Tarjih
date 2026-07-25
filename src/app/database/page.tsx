@@ -39,7 +39,6 @@ export default function DatabasePage() {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300">
-      <div className="absolute inset-0 -z-20 bg-pattern-arabesque opacity-[0.03] dark:opacity-[0.012] pointer-events-none" />
       <Header />
       <main className="flex-grow max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-6 py-12 flex flex-col gap-8">
         <div className="border-b border-border-warm pb-6">
