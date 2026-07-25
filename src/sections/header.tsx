@@ -70,6 +70,17 @@ export function Header() {
           </Link>
 
           <Link
+            href="/database"
+            className="flex items-center gap-2.5 lg:gap-3 text-sm lg:text-base font-bold text-text-secondary hover:text-text-primary transition-colors"
+          >
+            {/* Network / Database Graph Icon */}
+            <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9h9M18 9v4.5M18 9H13.5M18 9h4.5M9 18v4.5M9 18H4.5M9 18h9M18 18v4.5M18 18H13.5M18 18h4.5m-18-9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm18 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-18 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm18 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+            </svg>
+            <span>Database</span>
+          </Link>
+
+          <Link
             href="/settings"
             className="flex items-center gap-2.5 lg:gap-3 text-sm lg:text-base font-bold text-text-secondary hover:text-text-primary transition-colors"
           >
