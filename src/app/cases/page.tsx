@@ -10,11 +10,20 @@ import Link from "next/link";
 interface CaseRecord {
   id: string;
   title: string;
-  category: string;
   madhhab: string;
   confidence: number;
-  status: "Resolved" | "Disputed" | "Under Review";
+  status: "Resolved" | "Disputed" | "Unresolved";
   date: string;
+}
+
+interface ResolutionSummary {
+  id: string;
+  question: string;
+  madhhab: string | null;
+  verdict: string | null;
+  confidence: number | null;
+  contested: boolean;
+  createdAt: string;
 }
 
 export default function CasesPage() {
@@ -26,34 +35,22 @@ export default function CasesPage() {
   useEffect(() => {
     async function loadCases() {
       try {
-        const res = await fetch("/api/answers");
+        const res = await fetch("/api/resolutions");
         if (!res.ok) throw new Error("Failed to load");
-        const data = await res.json();
-        
-        // Map database answers to CaseRecord layout shape
-        const mapped: CaseRecord[] = data.map((ans: any) => {
-          const badge = ans.reasoningTree?.statusBadge || "Resolved";
-          const status = (badge.toLowerCase().includes("disputed") || badge.toLowerCase().includes("exceptions") || badge.toLowerCase().includes("conflict"))
-            ? "Disputed" 
-            : "Resolved";
+        const data: ResolutionSummary[] = await res.json();
 
-          const relNode = ans.reasoningTree?.nodes?.find((n: any) => n.type === "Relation");
-          const madhhab = relNode ? relNode.title : "Juristic Derivation";
+        const mapped: CaseRecord[] = data.map((r) => ({
+          id: r.id,
+          title: r.question,
+          madhhab: r.madhhab ?? "Madhhab-neutral",
+          confidence: r.confidence ?? 0,
+          status: r.contested ? (r.verdict ? "Disputed" : "Unresolved") : "Resolved",
+          date: new Date(r.createdAt).toISOString().split("T")[0],
+        }));
 
-          return {
-            id: ans.id,
-            title: ans.question,
-            category: ans.category,
-            madhhab: madhhab,
-            confidence: ans.reasoningTree?.confidenceVal || 85,
-            status: status,
-            date: ans.createdAt ? new Date(ans.createdAt).toISOString().split('T')[0] : "2026-06-27",
-          };
-        });
-        
         setCases(mapped);
       } catch (err) {
-        console.error("Failed to load dynamic cases ledger", err);
+        console.error("Failed to load resolution ledger", err);
       } finally {
         setIsLoading(false);
       }
@@ -65,7 +62,6 @@ export default function CasesPage() {
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            c.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             c.madhhab.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || c.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -123,7 +119,7 @@ export default function CasesPage() {
 
           {/* Status Filter Buttons */}
           <div className="flex bg-card-warm/80 p-1 rounded-xl text-[10px] font-bold border border-border-warm">
-            {["All", "Resolved", "Disputed"].map((s) => (
+            {["All", "Resolved", "Disputed", "Unresolved"].map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -146,7 +142,6 @@ export default function CasesPage() {
               <thead>
                 <tr className="border-b border-border-warm bg-[#FAF8F5]/60 dark:bg-[#121E19]/35 text-[10px] font-bold text-text-secondary uppercase tracking-wider select-none">
                   <th className="p-4.5 pl-6">Case Title</th>
-                  <th className="p-4.5">Category</th>
                   <th className="p-4.5">Madhhab / Usul</th>
                   <th className="p-4.5 text-center">Confidence</th>
                   <th className="p-4.5 text-center">Status</th>
@@ -156,13 +151,13 @@ export default function CasesPage() {
               <tbody className="divide-y divide-border-warm bg-transparent">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-text-secondary">
+                    <td colSpan={5} className="text-center py-12 text-text-secondary">
                       Loading historical ledger records...
                     </td>
                   </tr>
                 ) : filteredCases.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-text-secondary">
+                    <td colSpan={5} className="text-center py-12 text-text-secondary">
                       No matching case records found.
                     </td>
                   </tr>
@@ -174,9 +169,6 @@ export default function CasesPage() {
                     >
                       <td className="p-4.5 pl-6 font-serif font-bold text-[#1E2A22] dark:text-[#E2E8E5] text-sm leading-snug">
                         {c.title}
-                      </td>
-                      <td className="p-4.5 text-text-secondary font-medium">
-                        {c.category}
                       </td>
                       <td className="p-4.5 text-brand-gold font-semibold">
                         {c.madhhab}
@@ -196,7 +188,7 @@ export default function CasesPage() {
                         </span>
                       </td>
                       <td className="p-4.5 pr-6 text-right">
-                        <Link href={`/study?case=${c.id}`}>
+                        <Link href="/study">
                           <Button
                             variant="outline"
                             size="sm"
