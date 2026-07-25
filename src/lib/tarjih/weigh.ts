@@ -116,8 +116,7 @@ function adjudicate(
   for (const rule of [...MURAJJIH_RULES, overallStrength]) {
     const result = rule.compare(inputA, inputB);
     if (result === "tie") continue;
-    const [winner, loser, winInput, loseInput, side] =
-      result === "a" ? [a, b, inputA, inputB, "a" as const] : [b, a, inputB, inputA, "b" as const];
+    const [winner, loser, side] = result === "a" ? [a, b, "a" as const] : [b, a, "b" as const];
     return {
       winner,
       loser,
