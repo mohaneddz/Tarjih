@@ -7,8 +7,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 /**
- * Premium Button component styled for the Tarjih academic/legal layout.
- * Maps variants to brand-green, brand-gold, and warm-border styles.
+ * Button component for the Tarjih editorial/legal layout.
+ * Primary is the brand-red accent; brand-green is reserved for
+ * authenticity/success meaning elsewhere in the app, not for buttons.
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", children, ...props }, ref) => {
@@ -16,16 +17,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-full font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-brand-green/30 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none",
+          "inline-flex items-center justify-center rounded-lg font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-brand-red/30 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none",
           // Variants
           {
-            "bg-brand-green text-white hover:bg-brand-green-dark shadow-sm hover:shadow-md":
+            "bg-brand-red text-white hover:bg-brand-red-dark shadow-sm hover:shadow-md":
               variant === "primary",
-            "bg-brand-gold-light text-brand-gold hover:bg-brand-gold/15":
+            "bg-brand-red-light text-brand-red hover:bg-brand-red/15":
               variant === "secondary",
-            "border border-border-warm bg-transparent text-text-primary hover:bg-[#FAF6F0] hover:border-brand-gold/40 hover:text-brand-gold":
+            "border border-border-warm bg-transparent text-text-primary hover:bg-brand-red-light hover:border-brand-red/40 hover:text-brand-red":
               variant === "outline",
-            "bg-transparent text-text-secondary hover:bg-brand-gold-light hover:text-brand-gold":
+            "bg-transparent text-text-secondary hover:bg-brand-red-light hover:text-brand-red":
               variant === "ghost",
           },
           // Sizes

@@ -1,71 +1,104 @@
 @import "tailwindcss";
 @import "../style/theme.css";
 
+/*
+ * Palette: white background + a single burgundy/red accent, replacing the
+ * earlier warm cream/gold/green academic theme (see design/*.png). Green is
+ * now reserved specifically for authenticity/verified/success meaning (the
+ * "AUTHENTIC" seal, a winning path) rather than doubling as the primary
+ * brand colour.
+ *
+ * `--color-brand-gold` is kept as a compatibility alias pointing at the new
+ * red so every existing `text-brand-gold` / `bg-brand-gold-light` usage
+ * across the app repaints correctly without a mechanical rename of every
+ * file; new code should reach for `brand-red` directly.
+ */
+
 :root {
-  --background: #FAF8F5;
-  --foreground: #1E2A22;
-  
-  --color-brand-green: #0E3A20;
-  --color-brand-green-dark: #0A2D18;
-  --color-card-warm: #FFFDFB;
-  --color-border-warm: #EAE4D9;
-  --color-border-warm-light: #F2EEE5;
-  --color-text-primary: #1E2A22;
-  --color-text-secondary: #6E6A62;
-  --color-brand-green-light: #ECF4F0;
-  --color-brand-gold-light: #FAF6F0;
+  --background: #FAFAF9;
+  --foreground: #1B2430;
+
+  --color-brand-red: #7A1F2E;
+  --color-brand-red-dark: #5C1622;
+  --color-brand-red-light: #FBEEEF;
+
+  --color-brand-green: #1F6B3F;
+  --color-brand-green-dark: #17532F;
+  --color-brand-green-light: #EAF3EC;
+
+  --color-card-warm: #FFFFFF;
+  --color-border-warm: #E6E4DF;
+  --color-border-warm-light: #EFEEEA;
+  --color-text-primary: #1B2430;
+  --color-text-secondary: #6B6F76;
+
+  --color-brand-gold: var(--color-brand-red);
+  --color-brand-gold-light: var(--color-brand-red-light);
 }
 
 /* System media-query based dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0B1410;
-    --foreground: #E2E8E5;
-    
-    --color-brand-green: #4ADE80; /* Bright glowing emerald green for dark mode */
+    --background: #0E1116;
+    --foreground: #E7E9EC;
+
+    --color-brand-red: #E2626F;
+    --color-brand-red-dark: #C43F4E;
+    --color-brand-red-light: #3A1620;
+
+    --color-brand-green: #4ADE80;
     --color-brand-green-dark: #22C55E;
-    --color-card-warm: #121E19;
-    --color-border-warm: #20332A;
-    --color-border-warm-light: #1A2A22;
-    --color-text-primary: #E2E8E5;
-    --color-text-secondary: #929D98;
     --color-brand-green-light: #122D20;
-    --color-brand-gold-light: #1E2822;
+
+    --color-card-warm: #161A21;
+    --color-border-warm: #272C34;
+    --color-border-warm-light: #1F232A;
+    --color-text-primary: #E7E9EC;
+    --color-text-secondary: #9A9FA8;
   }
 }
 
 /* Explicit class-based dark mode for manual toggle overrides */
 .dark {
-  --background: #0B1410 !important;
-  --foreground: #E2E8E5 !important;
-  
+  --background: #0E1116 !important;
+  --foreground: #E7E9EC !important;
+
+  --color-brand-red: #E2626F !important;
+  --color-brand-red-dark: #C43F4E !important;
+  --color-brand-red-light: #3A1620 !important;
+
   --color-brand-green: #4ADE80 !important;
   --color-brand-green-dark: #22C55E !important;
-  --color-card-warm: #121E19 !important;
-  --color-border-warm: #20332A !important;
-  --color-border-warm-light: #1A2A22 !important;
-  --color-text-primary: #E2E8E5 !important; /* Fixed: light text in dark mode */
-  --color-text-secondary: #929D98 !important;
   --color-brand-green-light: #122D20 !important;
-  --color-brand-gold-light: #1E2822 !important;
+
+  --color-card-warm: #161A21 !important;
+  --color-border-warm: #272C34 !important;
+  --color-border-warm-light: #1F232A !important;
+  --color-text-primary: #E7E9EC !important;
+  --color-text-secondary: #9A9FA8 !important;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  
+
+  --color-brand-red: var(--color-brand-red);
+  --color-brand-red-dark: var(--color-brand-red-dark);
+  --color-brand-red-light: var(--color-brand-red-light);
+
   --color-brand-green: var(--color-brand-green);
   --color-brand-green-dark: var(--color-brand-green-dark);
   --color-brand-green-light: var(--color-brand-green-light);
-  --color-brand-gold: #A37D4C;
+  --color-brand-gold: var(--color-brand-gold);
   --color-brand-gold-light: var(--color-brand-gold-light);
+
   --color-bg-cream: var(--background);
   --color-card-warm: var(--color-card-warm);
   --color-border-warm: var(--color-border-warm);
   --color-border-warm-light: var(--color-border-warm-light);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
-  
+
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-serif: var(--font-lora), var(--font-eb-garamond), Georgia, serif;
   --font-mono: var(--font-geist-mono), monospace;
