@@ -3,47 +3,51 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 /**
- * Hero Section component.
- * Features warm academic highlights, a decorative badge, serif typography,
- * and calls to action pointing to the study workspace.
+ * Hero section matching design/home.png: a plain white background, a large
+ * serif headline with the key claim picked out in red, and a direct
+ * statement of the mechanism rather than vague "AI-powered" marketing copy.
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden py-24 md:py-36 bg-transparent select-none">
-      {/* Dynamic Background Highlights (Gold & Green soft glow) */}
-      <div className="absolute inset-0 -z-10 flex items-center justify-center opacity-25 pointer-events-none">
-        <div className="h-[300px] md:h-[450px] w-[300px] md:w-[450px] rounded-full bg-brand-green blur-[100px] md:blur-[140px] animate-float" />
-        <div className="ml-32 h-[250px] md:h-[350px] w-[250px] md:w-[350px] rounded-full bg-brand-gold blur-[80px] md:blur-[110px] animate-float [animation-delay:2.5s]" />
-      </div>
-
-      <div className="mx-auto max-w-[92rem] px-6 text-center flex flex-col items-center">
-        {/* Decorative Pill Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold-light px-4 py-1.5 text-xs md:text-sm font-serif font-bold text-brand-gold mb-8 select-none shadow-sm">
-          ⚖️ Juristic Analytical & Weighing Engine
-        </div>
-
-        {/* Heading title using the premium EB Garamond/Lora serif styles */}
-        <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight max-w-4xl leading-tight text-text-primary">
-          Weighing Scholarly Opinions with <span className="text-gradient-academic">Analytical Precision</span>
+    <section className="relative py-20 md:py-28 select-none">
+      <div className="mx-auto max-w-[92rem] px-6 flex flex-col">
+        <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight max-w-2xl leading-[1.1] text-text-primary">
+          A ruling should be <span className="text-brand-red">proven,</span> not predicted.
         </h1>
 
-        {/* Description/Subtitle */}
-        <p className="mt-6 text-sm md:text-base text-text-secondary max-w-3xl leading-relaxed">
-          An interactive academic platform utilizing structured reasoning trees (Qiyas) to visualize, evaluate, and resolve complex contemporary jurisprudential inquiries.
+        <p className="mt-6 text-sm md:text-base text-text-secondary max-w-xl leading-relaxed">
+          Tarjih grounds a question into logic, <strong className="text-text-primary font-semibold">proves</strong> it
+          against reviewed evidence, <strong className="text-text-primary font-semibold">weighs</strong> conflicts,
+          then <strong className="text-text-primary font-semibold">narrates</strong> the decided result — with
+          reasons you can inspect.
         </p>
 
-        {/* Calls to Action */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4.5 w-full sm:w-auto">
-          <Link href="/study" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full sm:w-auto text-xs md:text-sm font-bold shadow-md hover:shadow-lg">
-              Enter Study Workspace
+        <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+          <Link href="/study">
+            <Button size="lg" className="text-xs md:text-sm font-bold shadow-sm hover:shadow-md">
+              Examine a question
             </Button>
           </Link>
-          <Link href="#features" className="w-full sm:w-auto">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-xs md:text-sm font-bold">
-              Explore Features
-            </Button>
-          </Link>
+          <a href="#how-it-works" className="text-sm font-semibold text-text-primary hover:text-brand-red transition-colors flex items-center gap-1.5">
+            Inspect the methodology
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+            </svg>
+          </a>
+        </div>
+
+        <div className="mt-10 flex items-center gap-4">
+          <div className="h-16 w-16 shrink-0 rounded-full border-2 border-brand-green flex flex-col items-center justify-center text-brand-green">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39 1.593 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+            </svg>
+            <span className="text-[7px] font-extrabold uppercase tracking-wider">Authentic</span>
+          </div>
+          <p className="text-xs text-text-secondary leading-relaxed max-w-sm">
+            Every citation carries a real authenticity grade. Formalized clauses stay marked
+            <strong className="text-text-primary"> unreviewed</strong> until a human checks them — nothing enters a
+            live answer unvetted.
+          </p>
         </div>
       </div>
     </section>
