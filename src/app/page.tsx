@@ -1,25 +1,37 @@
 import React from "react";
 import { Header } from "@/sections/header";
 import { Hero } from "@/sections/hero";
-import { Features } from "@/sections/features";
+import { PipelineExample } from "@/sections/pipeline-example";
+import { ReasoningSteps } from "@/sections/features";
 import { Footer } from "@/sections/footer";
+import { loadCoreKb } from "@/lib/kb/core";
+import { prisma } from "@/data/db";
 
 /**
- * Main application homepage.
- * Replaces default boilerplate with a clean compositional layout assembly.
+ * Reviewed-clause count is best-effort: the query fails harmlessly to 0 if
+ * the table isn't there in a given environment, same pattern as the
+ * /api/resolutions route.
  */
-export default function Home() {
+async function countReviewedClauses(): Promise<number> {
+  try {
+    return await prisma.clause.count({ where: { unreviewed: false } });
+  } catch {
+    return 0;
+  }
+}
+
+export default async function Home() {
+  const core = loadCoreKb();
+  const reviewedClauseCount = await countReviewedClauses();
+
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300">
-      {/* Repeating Arabesque Geometric Pattern */}
-      <div className="absolute inset-0 -z-20 bg-pattern-arabesque opacity-[0.03] dark:opacity-[0.012] pointer-events-none" />
-      
-      {/* Composited Sections */}
       <Header />
-      
+
       <main className="flex-1">
         <Hero />
-        <Features />
+        <PipelineExample />
+        <ReasoningSteps coreClauseCount={core.clauses.length} reviewedClauseCount={reviewedClauseCount} />
       </main>
 
       <Footer />
