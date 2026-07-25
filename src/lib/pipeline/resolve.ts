@@ -14,7 +14,7 @@
 import { prove } from "../engine/prover";
 import type { LoadedKb } from "../kb/entry";
 import { groundGoal } from "./goal";
-import type { GoalError } from "./goal";
+import type { GoalError, GroundedGoal } from "./goal";
 import type { LlmClient } from "./llm";
 import { presentGroup, presentStep } from "./present";
 import type { OutcomeGroupView, TarjihStepView } from "./present";
@@ -63,6 +63,41 @@ export interface ResolveOptions {
   readonly maxSolutions?: number;
 }
 
+export type GroundError =
+  | { readonly stage: "goal-grounding"; readonly error: GoalError }
+  | { readonly stage: "llm"; readonly message: string };
+
+export type GroundResult =
+  | { readonly ok: true; readonly goal: GroundedGoal; readonly goalText: string }
+  | { readonly ok: false; readonly error: GroundError };
+
+/**
+ * Runs stage 1 alone: translates a question into the goal literal the
+ * prover would run, without proving or narrating anything.
+ *
+ * Exposed on its own — and reused by `resolveQuestion` below, so there is
+ * exactly one code path for this stage — so the UI can offer a "grounding
+ * preview": showing the user exactly what their question was translated to,
+ * and letting them catch a bad translation, before committing to the full
+ * (slower, two-LLM-call) pipeline.
+ */
+export async function groundQuestion(question: string, llm: LlmClient): Promise<GroundResult> {
+  const goalPrompt = buildGoalPrompt(question);
+  let rawGoal: string;
+  try {
+    rawGoal = await llm.complete(goalPrompt.system, goalPrompt.user, { temperature: 0 });
+  } catch (e) {
+    return { ok: false, error: { stage: "llm", message: e instanceof Error ? e.message : String(e) } };
+  }
+
+  const grounded = groundGoal(rawGoal);
+  if (!grounded.ok) {
+    return { ok: false, error: { stage: "goal-grounding", error: grounded.error } };
+  }
+
+  return { ok: true, goal: grounded.goal, goalText: literalToString(grounded.goal.literal) };
+}
+
 /** Best-effort JSON parse of the narration response; never throws. */
 function parseNarration(raw: string, fallback: Narration): Narration {
   try {
@@ -98,19 +133,11 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
   const { question, madhhab, strictness, llm, kb, maxSolutions = 200 } = options;
 
   // --- Stage 1: ground the question into a goal literal ---
-  const goalPrompt = buildGoalPrompt(question);
-  let rawGoal: string;
-  try {
-    rawGoal = await llm.complete(goalPrompt.system, goalPrompt.user, { temperature: 0 });
-  } catch (e) {
-    return { ok: false, error: { stage: "llm", message: e instanceof Error ? e.message : String(e) } };
-  }
-
-  const grounded = groundGoal(rawGoal);
+  const grounded = await groundQuestion(question, llm);
   if (!grounded.ok) {
-    return { ok: false, error: { stage: "goal-grounding", error: grounded.error } };
+    return { ok: false, error: grounded.error };
   }
-  const goalText = literalToString(grounded.goal.literal);
+  const { goalText } = grounded;
 
   // --- Stage 2: prove ---
   const proveResult = prove([grounded.goal.literal], kb.kb, { maxSolutions });

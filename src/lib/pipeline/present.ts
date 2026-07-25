@@ -19,10 +19,17 @@ export interface EvidenceView {
   readonly kind: Evidence["kind"];
   readonly reference: string;
   readonly text?: string;
+  readonly textArabic?: string;
   readonly grade?: string;
   readonly scope?: string;
   readonly restriction?: string;
+  /** Certainty of transmission: qati | zanni. */
+  readonly thubut?: string;
+  /** Certainty that the text indicates this particular ruling: qati | zanni. */
+  readonly dalala?: string;
   readonly unreviewed: boolean;
+  /** Human-authored rationale for this clause, when the KB records one. */
+  readonly notes?: string;
   /** 0-100, this piece of evidence alone. See `baseStrength`. */
   readonly strength: number;
 }
@@ -39,10 +46,14 @@ function presentEvidence(record: Evidence): EvidenceView {
     kind: record.kind,
     reference: record.reference,
     text: record.text,
+    textArabic: record.textArabic,
     grade: record.grade,
     scope: record.scope,
     restriction: record.restriction,
+    thubut: record.thubut,
+    dalala: record.dalala,
     unreviewed: record.unreviewed ?? false,
+    notes: record.notes,
     strength: baseStrength(record),
   };
 }
