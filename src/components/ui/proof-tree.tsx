@@ -41,20 +41,27 @@ export function classifyNode(view: ProofView): DisplayNodeType {
   return "condition";
 }
 
+/**
+ * Icon and label per type — deliberately a single neutral colour across all
+ * four (matching design/study.png, where only the glyph shape differs and
+ * every icon sits in the same muted slate circle). The card's coloured
+ * accents are reserved for the sequence badge and selection state, not for
+ * type — the legend at the bottom of the tree is what teaches the icon
+ * vocabulary, so the icon itself doesn't need to carry colour too.
+ */
 const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode }> = {
   conclusion: {
     label: "Conclusion",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
-        <circle cx="12" cy="12" r="9" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.5l2 2 4-4.5" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
       </svg>
     ),
   },
   principle: {
     label: "Principle",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
       </svg>
     ),
@@ -62,7 +69,7 @@ const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode 
   condition: {
     label: "Condition",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0-17.25a3.75 3.75 0 110 7.5m0-7.5a3.75 3.75 0 100 7.5m0-7.5v7.5m-6.75 3h13.5m-13.5 0a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25m-13.5 0v3a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-3" />
       </svg>
     ),
@@ -70,26 +77,51 @@ const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode 
   source: {
     label: "Source",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443" />
       </svg>
     ),
   },
 };
 
-const TYPE_CARD_STYLE: Record<DisplayNodeType, string> = {
-  conclusion: "bg-brand-red-light/40 border-brand-red/30",
-  principle: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/40",
-  condition: "bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900/40",
-  source: "bg-brand-green-light border-brand-green/30",
-};
+/** Uniform icon treatment across all four types — see TYPE_META's note. */
+const ICON_STYLE = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300";
 
-const TYPE_ICON_STYLE: Record<DisplayNodeType, string> = {
-  conclusion: "bg-brand-red text-white",
-  principle: "bg-purple-200 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200",
-  condition: "bg-sky-200 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200",
-  source: "bg-brand-green text-white",
-};
+/** For a Source node's grade badge — "Authentic"/"Mutawatir"/etc, matching the design's pill badges rather than a numeric strength bar. */
+function gradeBadgeLabel(evidence: ProofView["evidence"]): string | undefined {
+  switch (evidence.grade) {
+    case "mutawatir":
+      return "Mutawatir";
+    case "sahih":
+      return "Authentic";
+    case "hasan":
+      return "Hasan";
+    case "daif":
+      return "Weak";
+    case "mawdu":
+      return "Fabricated";
+    default:
+      return evidence.kind === "quran" ? "Authentic" : evidence.kind === "ijma" ? "Consensus" : undefined;
+  }
+}
+
+function CheckBadge() {
+  return (
+    <span className="h-4 w-4 rounded-full border border-brand-green text-brand-green flex items-center justify-center shrink-0" title="Confirmed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-2.5 w-2.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </span>
+  );
+}
+
+function GradeBadge({ label }: { label: string }) {
+  return (
+    <span className="text-[8px] px-2 py-0.5 rounded-full border border-brand-green/40 bg-brand-green-light text-brand-green font-bold uppercase tracking-wide shrink-0">
+      {label}
+    </span>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -169,6 +201,9 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
 
   const byNode = new Map(nodes.map((n) => [n.view, n]));
 
+  // Drawn from the child (the evidence) up to the parent (what it
+  // supports), with the arrowhead at the parent end — "this derivation
+  // flows into that conclusion", matching the design's upward arrows.
   const edges: { x1: number; y1: number; x2: number; y2: number; weak: boolean }[] = [];
   const walkEdges = (view: ProofView) => {
     const parent = byNode.get(view);
@@ -176,22 +211,40 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
     for (const child of view.children) {
       const c = byNode.get(child);
       if (!c) continue;
-      const p1 = positionOf(parent);
-      const p2 = positionOf(c);
+      const parentPos = positionOf(parent);
+      const childPos = positionOf(c);
       // A "weaker path": the child's own indication of the ruling is
       // probable (zanni) rather than certain, e.g. an identified 'illa or a
       // qiyas step — matches the dashed "weaker path" edges in the design.
       const weak = child.evidence.dalala === "zanni";
-      edges.push({ x1: p1.cx, y1: p1.cy + CARD_H / 2, x2: p2.cx, y2: p2.cy - CARD_H / 2, weak });
+      edges.push({
+        x1: childPos.cx,
+        y1: childPos.cy - CARD_H / 2,
+        x2: parentPos.cx,
+        y2: parentPos.cy + CARD_H / 2,
+        weak,
+      });
       walkEdges(child);
     }
   };
   walkEdges(proof);
 
   return (
-    <div className="relative w-full h-[560px] overflow-auto bg-background/30 rounded-2xl border border-border-warm-light/40 custom-scrollbar">
+    <div
+      className="relative w-full h-[560px] overflow-auto rounded-2xl border border-border-warm-light/40 custom-scrollbar"
+      style={{
+        backgroundImage: "radial-gradient(var(--color-border-warm) 1px, transparent 1px)",
+        backgroundSize: "18px 18px",
+        backgroundColor: "var(--color-background)",
+      }}
+    >
       <div className="relative" style={{ width: Math.max(width, 400), height: Math.max(height, 200), margin: "0 auto" }}>
-        <svg className="absolute inset-0 pointer-events-none" width={width} height={height}>
+        <svg className="absolute inset-0 pointer-events-none text-slate-400 dark:text-slate-500" width={width} height={height}>
+          <defs>
+            <marker id="proof-tree-arrow" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
+              <polygon points="0 0, 7 3, 0 6" fill="currentColor" />
+            </marker>
+          </defs>
           {edges.map((e, i) => (
             <line
               key={i}
@@ -199,10 +252,11 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
               y1={e.y1}
               x2={e.x2}
               y2={e.y2}
-              stroke="var(--color-brand-red)"
+              stroke="currentColor"
               strokeWidth={1.5}
               strokeDasharray={e.weak ? "4,4" : undefined}
-              opacity={0.55}
+              markerEnd="url(#proof-tree-arrow)"
+              opacity={0.75}
             />
           ))}
         </svg>
@@ -220,6 +274,7 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
           const title = n.view.goalHuman;
           const subtitle = isOntology ? "" : n.view.evidence.reference;
           const hasNote = Boolean(n.view.evidence.notes);
+          const gradeLabel = type === "source" ? gradeBadgeLabel(n.view.evidence) : undefined;
 
           return (
             <div
@@ -231,9 +286,8 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                 onClick={() => onSelectNode(n.view.clauseId)}
                 style={{ width: CARD_W, height: CARD_H }}
                 className={cn(
-                  "relative rounded-xl border p-3 text-left flex flex-col gap-1 transition-all cursor-pointer shadow-sm hover:shadow-md",
-                  isSelected ? "ring-2 ring-brand-red/30 border-brand-red/50" : "hover:border-brand-red/40",
-                  TYPE_CARD_STYLE[type]
+                  "relative rounded-xl border bg-card-warm p-3 text-left flex flex-col gap-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md",
+                  isSelected ? "ring-2 ring-brand-red/30 border-brand-red/50" : "border-border-warm hover:border-brand-red/40"
                 )}
               >
                 {/* Sequence badge */}
@@ -241,16 +295,19 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                   {n.number}
                 </span>
 
-                <div className="flex items-center justify-between gap-1">
-                  <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0", TYPE_ICON_STYLE[type])}>
+                {/* Icon + type label, matching the design's uniform icon treatment */}
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0", ICON_STYLE)}>
                     {meta.icon}
                   </span>
+                  <span className="text-[9px] font-semibold text-text-secondary uppercase tracking-wide">{meta.label}</span>
                   {n.view.evidence.unreviewed && (
-                    <span className="text-[7px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase shrink-0">
+                    <span className="text-[7px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase shrink-0 ml-auto">
                       unreviewed
                     </span>
                   )}
                 </div>
+
                 <span
                   className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-3"
                   title={`Formal goal: ${n.view.goal}`}
@@ -262,15 +319,15 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                     {subtitle}
                   </span>
                 )}
-                {/* Type is already conveyed by the coloured icon above (see
-                    the legend) — repeating it as text on every card was
-                    redundant clutter, so only the strength meter remains
-                    here. */}
-                {!isOntology && (
-                  <div className="h-1 w-full bg-border-warm-light/60 rounded-full overflow-hidden mt-auto">
-                    <div className="h-full bg-brand-green/70" style={{ width: `${n.view.evidence.strength}%` }} />
-                  </div>
-                )}
+
+                {/* Bottom-left confirmation glyph: a grade pill for a real
+                    citation (matches the design's "Authentic"/"Mutawatir"
+                    badges), a plain checkmark otherwise. Never a numeric
+                    strength bar here — that detail lives in the Evidence
+                    Inspector, not on the card face. */}
+                <div className="mt-auto flex items-center">
+                  {gradeLabel ? <GradeBadge label={gradeLabel} /> : !isOntology ? <CheckBadge /> : null}
+                </div>
               </button>
 
               {/* Real evidence note surfaced as an editor's-note style callout.
@@ -295,27 +352,31 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
 }
 
 export function ProofTreeLegend() {
-  const items: { label: string; render: React.ReactNode }[] = [
-    { label: "Conclusion", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.conclusion)}>{TYPE_META.conclusion.icon}</span> },
-    { label: "Principle", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.principle)}>{TYPE_META.principle.icon}</span> },
-    { label: "Condition", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.condition)}>{TYPE_META.condition.icon}</span> },
-    { label: "Source", render: <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", TYPE_ICON_STYLE.source)}>{TYPE_META.source.icon}</span> },
+  const items: { label: string; icon: React.ReactNode }[] = [
+    { label: "Conclusion", icon: TYPE_META.conclusion.icon },
+    { label: "Principle", icon: TYPE_META.principle.icon },
+    { label: "Condition", icon: TYPE_META.condition.icon },
+    { label: "Source", icon: TYPE_META.source.icon },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 py-3 text-[10px] text-text-secondary border-t border-border-warm-light/60">
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
-          {item.render}
+          <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", ICON_STYLE)}>{item.icon}</span>
           <span>{item.label}</span>
         </div>
       ))}
       <div className="flex items-center gap-1.5">
-        <span className="w-5 h-px bg-brand-red opacity-55" />
+        <span className="w-5 h-px bg-slate-400 dark:bg-slate-500" />
         <span>Strong inference</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="w-5 h-px border-t border-dashed border-brand-red opacity-70" />
+        <span className="w-5 h-px border-t border-dashed border-slate-400 dark:border-slate-500" />
         <span>Weaker path</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <CheckBadge />
+        <span>Confirmed</span>
       </div>
       <div className="flex items-center gap-1.5">
         <span className="w-5 h-3 border border-dashed border-brand-red/40 rounded" />
