@@ -26,7 +26,8 @@ import { findAct, findAtom } from "../kb/lexicon";
 export type GoalError =
   | { readonly kind: "parse-error"; readonly message: string }
   | { readonly kind: "unsupported-shape"; readonly message: string }
-  | { readonly kind: "unknown-term"; readonly term: string; readonly message: string };
+  | { readonly kind: "unknown-term"; readonly term: string; readonly message: string }
+  | { readonly kind: "not-covered"; readonly message: string };
 
 export interface GroundedGoal {
   /** Always `ruling(<Act>, H)` with the ruling variable canonically named H. */
@@ -88,6 +89,22 @@ function checkTermGrounded(term: Term): GoalError | undefined {
  */
 export function groundGoal(rawText: string): GoalResult {
   const trimmed = rawText.trim();
+
+  // The grounding prompt is explicitly told to answer with this sentinel
+  // rather than force-fitting an unrelated question into a structurally
+  // valid but wrong goal (e.g. mapping "is it halal to fight back against
+  // an attacker?" onto ruling(consume(swine), H) because those are simply
+  // the nearest known terms). A forced, unrelated guess would still pass
+  // `checkTermGrounded` below — every atom in it really is in the lexicon —
+  // so it has to be caught here, before that check ever runs, on the
+  // model's own admission that nothing in the question corresponds to what
+  // it knows.
+  if (/^none$/i.test(trimmed)) {
+    return fail({
+      kind: "not-covered",
+      message: "This question isn't about anything the knowledge base currently models (a handful of kinship acts and forbidden foods).",
+    });
+  }
 
   let goals;
   try {
