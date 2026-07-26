@@ -6,6 +6,7 @@ import type { ProofView } from "@/lib/pipeline/present";
 function node(goal: string, kind: string, children: ProofView[] = []): ProofView {
   return {
     goal,
+    goalHuman: goal,
     clauseId: "test:1",
     evidence: {
       kind: kind as ProofView["evidence"]["kind"],

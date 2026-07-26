@@ -91,13 +91,6 @@ const TYPE_ICON_STYLE: Record<DisplayNodeType, string> = {
   source: "bg-brand-green text-white",
 };
 
-/** Strips the outer wrapper off a goal string for a shorter card title, e.g. "ruling(mistreat(mother), haram)" -> "mistreat(mother) = haram". */
-function shortGoal(goal: string): string {
-  const match = goal.match(/^ruling\((.+), (\w+)\)$/);
-  if (match) return `${match[1]} = ${match[2]}`;
-  return goal;
-}
-
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
@@ -143,9 +136,11 @@ function layoutTree(root: ProofView): { nodes: LaidOutNode[]; totalWidth: number
   return { nodes, totalWidth: Math.max(totalWidth, 1), maxDepth };
 }
 
-const COL_WIDTH = 224;
-const CARD_W = 196;
-const CARD_H = 108;
+const COL_WIDTH = 240;
+const CARD_W = 212;
+/* Taller than before: the primary label is now a full readable sentence
+   (goalHuman) rather than a short symbolic term, and can run up to 3 lines. */
+const CARD_H = 136;
 /** Fixed height for the optional note strip below a card, capped rather than left to grow with text length. */
 const NOTE_H = 48;
 const NOTE_GAP = 6;
@@ -218,12 +213,12 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
           const meta = TYPE_META[type];
           const isSelected = selectedClauseId === n.view.clauseId;
           const isOntology = n.view.evidence.kind === "ontology";
-          const title = isOntology ? shortGoal(n.view.goal) : n.view.evidence.reference;
-          // For a non-ontology node, show the goal as a subtitle underneath
-          // its citation — unless the reference already reads identically to
-          // the shortened goal. For an ontology node the title already IS the
-          // shortened goal, so a subtitle would just repeat it verbatim.
-          const subtitle = isOntology ? "" : n.view.evidence.reference === shortGoal(n.view.goal) ? "" : shortGoal(n.view.goal);
+          // The readable sentence is always the primary label — never the
+          // raw clause syntax (that stays available via the `title`
+          // tooltip and the Evidence Inspector, for anyone who wants it).
+          // A citation, when there is a real one, is secondary context.
+          const title = n.view.goalHuman;
+          const subtitle = isOntology ? "" : n.view.evidence.reference;
           const hasNote = Boolean(n.view.evidence.notes);
 
           return (
@@ -256,11 +251,14 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                     </span>
                   )}
                 </div>
-                <span className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-2" title={title}>
+                <span
+                  className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-3"
+                  title={`Formal goal: ${n.view.goal}`}
+                >
                   {title}
                 </span>
                 {subtitle && (
-                  <span className="text-[9px] text-text-secondary leading-tight line-clamp-1" title={subtitle}>
+                  <span className="text-[9px] text-brand-red font-semibold leading-tight line-clamp-1" title={subtitle}>
                     {subtitle}
                   </span>
                 )}
