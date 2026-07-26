@@ -7,8 +7,13 @@ import { DatabaseClient } from "./database-client";
 import type { CoreClauseView } from "./database-client";
 
 export const metadata: Metadata = {
-  title: "Knowledge Base | Tarjih",
-  description: "Browse the hand-authored core knowledge base and review formalized hadith clauses awaiting approval.",
+  title: "Knowledge Base & Evidentiary Clauses",
+  description:
+    "Browse the hand-authored core knowledge base, primary text evidences, and review formalized Hadith clauses awaiting juristic approval.",
+  openGraph: {
+    title: "Knowledge Base & Evidentiary Clauses | Tarjih",
+    description: "Browse classical juristic knowledge base and reviewed Hadith clauses.",
+  },
 };
 
 /**
