@@ -36,35 +36,27 @@
   --color-brand-gold-light: var(--color-brand-red-light);
 }
 
-/* System media-query based dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0E1116;
-    --foreground: #E7E9EC;
-
-    --color-brand-red: #E2626F;
-    --color-brand-red-dark: #C43F4E;
-    --color-brand-red-light: #3A1620;
-
-    --color-brand-green: #4ADE80;
-    --color-brand-green-dark: #22C55E;
-    --color-brand-green-light: #122D20;
-
-    --color-card-warm: #161A21;
-    --color-border-warm: #272C34;
-    --color-border-warm-light: #1F232A;
-    --color-text-primary: #E7E9EC;
-    --color-text-secondary: #9A9FA8;
-  }
-}
-
-/* Explicit class-based dark mode for manual toggle overrides */
+/*
+ * Dark mode is controlled ONLY by the `.dark` class, set once at load by the
+ * inline script in layout.tsx (localStorage, falling back to system
+ * preference) and toggled explicitly by the header button afterward.
+ *
+ * There must be no `@media (prefers-color-scheme: dark)` block here. One
+ * existed before and re-applied dark tokens to `:root` whenever the OS
+ * preferred dark, at equal specificity to and after the base `:root` block —
+ * so it silently overrode an explicit user toggle to light every time the OS
+ * itself was in dark mode, making the toggle appear broken. The `.dark`
+ * class is the single source of truth; nothing else may set these tokens.
+ */
 .dark {
   --background: #0E1116 !important;
   --foreground: #E7E9EC !important;
 
-  --color-brand-red: #E2626F !important;
-  --color-brand-red-dark: #C43F4E !important;
+  /* Deeper true red for dark mode, not the lighter salmon/pink this was
+     before — needs to still read as "burgundy" against a dark background,
+     not as pink. */
+  --color-brand-red: #C43D52 !important;
+  --color-brand-red-dark: #A22F42 !important;
   --color-brand-red-light: #3A1620 !important;
 
   --color-brand-green: #4ADE80 !important;
