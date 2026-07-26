@@ -48,10 +48,23 @@ For example, for "Is mistreating my mother wrong?" you would output exactly:
 
   ruling(mistreat(mother), H)
 
-If the question does not name any act and entity from the lists above, still
-output your best single-line attempt in this exact shape using the closest
-listed terms — the engine will reject anything it cannot ground, so guessing
-is safe and preferred over refusing to answer.`;
+The question must genuinely be ABOUT the act and entity you choose — not merely
+built from words that happen to appear in the lists above. "Is it halal to fight
+back against an attacker?" is NOT a question about food, even though the only
+acts you know are mistreat/1 and consume/1; forcing it into
+"ruling(consume(swine), H)" would make the engine confidently answer a
+completely different question and mislead whoever asked it. That is far worse
+than admitting the knowledge base doesn't cover this yet.
+
+If the question is not genuinely about mistreating a known relative or
+consuming a known foodstuff, respond with EXACTLY the single word:
+
+  NONE
+
+Do not guess a structurally-valid-but-unrelated goal just to produce output.
+NONE is a correct, expected, and safe answer for any question outside the
+lists above — the engine will report that plainly rather than treat it as a
+failure.`;
 
   const user = `Question: ${question}`;
   return { system, user };

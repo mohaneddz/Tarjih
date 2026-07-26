@@ -91,6 +91,40 @@ describe("groundGoal", () => {
   it("tolerates a trailing dot", () => {
     expect(groundGoal("ruling(mistreat(mother), H).").ok).toBe(true);
   });
+
+  describe("the NONE sentinel (regression: force-fit guessing)", () => {
+    // A question genuinely unrelated to anything in the lexicon (e.g. "is it
+    // halal to fight back against an attacker?") has no correct mapping onto
+    // mistreat/1 or consume/1. The model is instructed to answer NONE rather
+    // than force a structurally-valid but wrong guess like
+    // ruling(consume(swine), H) -- which would pass checkTermGrounded (every
+    // atom in it really is known) and let the engine confidently answer a
+    // completely different question. This must be caught before that check
+    // ever runs.
+    it("is accepted as a distinct, honest failure rather than parsed as a goal", () => {
+      const result = groundGoal("NONE");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.kind).toBe("not-covered");
+    });
+
+    it("is case-insensitive and tolerates surrounding whitespace", () => {
+      expect(groundGoal("  none  ").ok).toBe(false);
+      expect(groundGoal("None").ok).toBe(false);
+    });
+
+    it("gives a message naming the actual coverage gap, not a generic failure", () => {
+      const result = groundGoal("NONE");
+      if (result.ok) throw new Error("expected failure");
+      expect(result.error.message).toMatch(/kinship|forbidden food/i);
+    });
+
+    it("does not treat a real goal that happens to contain the word none as the sentinel", () => {
+      // Guard against over-matching: only an exact "NONE" (whole response) is
+      // the sentinel, not any goal text that happens to include the letters.
+      const result = groundGoal("ruling(mistreat(mother), H)");
+      expect(result.ok).toBe(true);
+    });
+  });
 });
 
 describe("prompts", () => {
@@ -268,6 +302,27 @@ describe("resolveQuestion end to end (LLM mocked)", () => {
     const result = await resolveQuestion({ question: "anything", llm, kb: core });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.stage).toBe("goal-grounding");
+  });
+
+  it("reports a question outside the KB's vocabulary honestly, rather than proceeding on a forced guess", async () => {
+    // Regression for a real reported bug: "is it halal to fight back against
+    // an attacker?" is not a question about food or kinship, but every atom
+    // in ruling(consume(swine), H) is individually known, so a forced guess
+    // would have passed grounding and the engine would have confidently
+    // answered a completely unrelated question. The model is now expected to
+    // answer NONE for a question like this, and the pipeline must surface
+    // that as a clean failure rather than resolve anything.
+    const llm = new FakeLlm(["NONE"]);
+    const result = await resolveQuestion({
+      question: "Is it halal to fight back against attackers?",
+      llm,
+      kb: core,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.stage).toBe("goal-grounding");
+      if (result.error.stage === "goal-grounding") expect(result.error.error.kind).toBe("not-covered");
+    }
   });
 
   it("reports no-derivation distinctly from a grounding failure", async () => {

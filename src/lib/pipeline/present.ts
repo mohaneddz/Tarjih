@@ -14,6 +14,7 @@ import { literalToString } from "../logic/term";
 import { baseStrength, EvidenceStore } from "../kb/evidence";
 import type { Evidence } from "../kb/evidence";
 import type { OutcomeGroup, TarjihStep } from "../tarjih/weigh";
+import { humanizeLiteral } from "./humanize";
 
 export interface EvidenceView {
   readonly kind: Evidence["kind"];
@@ -35,7 +36,10 @@ export interface EvidenceView {
 }
 
 export interface ProofView {
+  /** Raw clause-syntax goal, e.g. "instance(aunt_maternal, collateral_kin)". Kept for the Evidence Inspector's technical detail, never shown as a node's primary label. */
   readonly goal: string;
+  /** The same goal as a readable sentence, e.g. "Maternal aunt is a collateral relative." See `humanize.ts`. */
+  readonly goalHuman: string;
   readonly clauseId: string;
   readonly evidence: EvidenceView;
   readonly children: readonly ProofView[];
@@ -61,6 +65,7 @@ function presentEvidence(record: Evidence): EvidenceView {
 export function presentProof(node: ProofNode, evidence: EvidenceStore): ProofView {
   return {
     goal: literalToString(node.goal),
+    goalHuman: humanizeLiteral(node.goal),
     clauseId: node.clauseId,
     evidence: presentEvidence(evidence.getOrUnknown(node.clauseId)),
     children: node.children.map((c) => presentProof(c, evidence)),
