@@ -143,10 +143,23 @@ function layoutTree(root: ProofView): { nodes: LaidOutNode[]; totalWidth: number
   return { nodes, totalWidth: Math.max(totalWidth, 1), maxDepth };
 }
 
-const ROW_HEIGHT = 148;
 const COL_WIDTH = 224;
 const CARD_W = 196;
 const CARD_H = 108;
+/** Fixed height for the optional note strip below a card, capped rather than left to grow with text length. */
+const NOTE_H = 48;
+const NOTE_GAP = 6;
+/**
+ * Vertical distance between successive depth rows.
+ *
+ * Must be at least CARD_H + NOTE_GAP + NOTE_H (the tallest a single node's
+ * column can be, card plus its note) plus real breathing room to the row
+ * below — this was previously 148, only ~40px more than the card alone,
+ * which meant a node with a note collided with the row beneath it whenever
+ * the note text ran two lines. Every node column has a bounded, known
+ * height now, so this margin is guaranteed rather than hoped for.
+ */
+const ROW_HEIGHT = CARD_H + NOTE_GAP + NOTE_H + 56;
 
 export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreeProps) {
   const { nodes, totalWidth, maxDepth } = useMemo(() => layoutTree(proof), [proof]);
@@ -206,13 +219,17 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
           const isSelected = selectedClauseId === n.view.clauseId;
           const isOntology = n.view.evidence.kind === "ontology";
           const title = isOntology ? shortGoal(n.view.goal) : n.view.evidence.reference;
-          const subtitle = isOntology ? shortGoal(n.view.goal) : n.view.evidence.reference === title ? "" : shortGoal(n.view.goal);
+          // For a non-ontology node, show the goal as a subtitle underneath
+          // its citation — unless the reference already reads identically to
+          // the shortened goal. For an ontology node the title already IS the
+          // shortened goal, so a subtitle would just repeat it verbatim.
+          const subtitle = isOntology ? "" : n.view.evidence.reference === shortGoal(n.view.goal) ? "" : shortGoal(n.view.goal);
           const hasNote = Boolean(n.view.evidence.notes);
 
           return (
             <div
               key={`${n.view.clauseId}-${n.number}`}
-              className="absolute flex flex-col items-center gap-1.5"
+              className="absolute flex flex-col items-center"
               style={{ left: cx - CARD_W / 2, top: cy - CARD_H / 2, width: CARD_W }}
             >
               <button
@@ -247,22 +264,25 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                     {subtitle}
                   </span>
                 )}
-                <div className="flex items-center justify-between mt-auto gap-1">
-                  <span className="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-text-secondary bg-border-warm-light/70">
-                    {meta.label}
-                  </span>
-                  {!isOntology && (
-                    <div className="h-1 flex-1 max-w-[48px] bg-border-warm-light/60 rounded-full overflow-hidden">
-                      <div className="h-full bg-brand-green/70" style={{ width: `${n.view.evidence.strength}%` }} />
-                    </div>
-                  )}
-                </div>
+                {/* Type is already conveyed by the coloured icon above (see
+                    the legend) — repeating it as text on every card was
+                    redundant clutter, so only the strength meter remains
+                    here. */}
+                {!isOntology && (
+                  <div className="h-1 w-full bg-border-warm-light/60 rounded-full overflow-hidden mt-auto">
+                    <div className="h-full bg-brand-green/70" style={{ width: `${n.view.evidence.strength}%` }} />
+                  </div>
+                )}
               </button>
 
-              {/* Real evidence note surfaced as an editor's-note style callout */}
+              {/* Real evidence note surfaced as an editor's-note style callout.
+                  Height is capped explicitly (not just line-clamped) so this
+                  box's contribution to the column's total height is bounded
+                  and known — see ROW_HEIGHT — regardless of note length. */}
               {hasNote && (
                 <div
-                  className="w-full text-[9px] leading-relaxed text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-2 line-clamp-3"
+                  style={{ marginTop: NOTE_GAP, maxHeight: NOTE_H }}
+                  className="w-full text-[9px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 line-clamp-2 overflow-hidden"
                   title={n.view.evidence.notes}
                 >
                   {n.view.evidence.notes}
