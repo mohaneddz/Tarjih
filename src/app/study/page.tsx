@@ -4,8 +4,13 @@ import { StudyClient } from "./study-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Study Dashboard | Tarjih",
-  description: "Ask a ruling question and see the resolution engine derive, weigh, and explain its verdict.",
+  title: "Study & Derivation Dashboard",
+  description:
+    "Formulate legal ruling inquiries, run derivation pipeline executions, map reasoning trees, and examine conflicting evidence.",
+  openGraph: {
+    title: "Study & Derivation Dashboard | Tarjih",
+    description: "Derive, weigh, and inspect juristic reasoning trees and verdicts.",
+  },
 };
 
 /**

@@ -37,9 +37,9 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-3 group">
           <img
-            src="/logo.png"
+            src="/logo/tarjih-icon-transparent.png"
             alt="Tarjih Logo"
-            className="h-9 w-9 lg:h-10 lg:w-10 object-contain transition-transform group-hover:scale-105"
+            className="h-9 w-9 lg:h-10 lg:w-10 object-contain transition-transform group-hover:scale-105 dark:brightness-0 dark:invert"
           />
           <span className="font-serif text-xl lg:text-2xl font-bold tracking-wide text-text-primary transition-colors">
             Tarjih
