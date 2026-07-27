@@ -7,6 +7,7 @@ import type { ResolutionView } from "@/lib/pipeline/resolve";
 import type { EvidenceView, OutcomeGroupView } from "@/lib/pipeline/present";
 import { HUKM_LABELS } from "@/lib/kb/ontology";
 import type { Hukm } from "@/lib/kb/ontology";
+import { VerdictBadge, EvidenceBadge, RulingRosette, WeighingScale, AuthenticStamp } from "@/components/ui/asset-badge";
 
 interface ResolutionSummary {
   readonly id: string;
@@ -329,9 +330,7 @@ export function StudyClient() {
                       {h.contested ? "Contested" : "Resolved"}
                     </span>
                     {h.verdict && (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold uppercase shrink-0 tracking-wider">
-                        {h.verdict}
-                      </span>
+                      <VerdictBadge verdict={h.verdict} size="sm" showLabel={false} />
                     )}
                   </div>
                   <span className="font-serif font-bold text-sm text-text-primary leading-snug line-clamp-2">
@@ -479,11 +478,13 @@ export function StudyClient() {
         {/* Verdict banner */}
         {view?.verdict && (
           <div className="shrink-0 bg-card-warm border border-border-warm rounded-2xl shadow-premium px-6 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
+            <div className="flex items-center gap-3">
+              <RulingRosette size="md" />
               <span className="text-sm text-text-secondary font-semibold">Verdict:</span>
+              <VerdictBadge verdict={view.verdict} size="md" showLabel={false} />
               <span className="font-serif text-2xl font-bold text-brand-red">{hukmLabel(view.verdict)}</span>
               {view.confidence !== undefined && (
-                <span className="text-xs text-text-secondary">{view.confidence}% confidence</span>
+                <span className="text-xs text-text-secondary">({view.confidence}% confidence)</span>
               )}
             </div>
             <button
@@ -620,9 +621,7 @@ export function StudyClient() {
                             <div className="flex items-center justify-between gap-2">
                               <p className="font-serif font-bold text-text-primary text-sm">{selectedEvidence.reference}</p>
                               {(selectedEvidence.grade === "sahih" || selectedEvidence.grade === "mutawatir") && (
-                                <span className="shrink-0 text-[8px] px-2 py-1 rounded-full border border-brand-green/40 text-brand-green font-extrabold uppercase tracking-wider">
-                                  ✓ Authentic
-                                </span>
+                                <AuthenticStamp size="sm" showLabel={false} />
                               )}
                             </div>
 
@@ -643,9 +642,9 @@ export function StudyClient() {
 
                             <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-2 border-t border-border-warm-light">
                               {selectedEvidence.grade && (
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <span className="text-text-secondary block">Authenticity grade</span>
-                                  <span className="font-bold text-text-primary capitalize">{selectedEvidence.grade}</span>
+                                  <EvidenceBadge grade={selectedEvidence.grade} size="sm" />
                                 </div>
                               )}
                               {selectedEvidence.scope && (
@@ -729,10 +728,10 @@ export function StudyClient() {
                             <span className="text-[9px] px-2 py-0.5 rounded bg-brand-red-light text-brand-red font-bold uppercase shrink-0">{r.evidence.kind}</span>
                           </div>
                           {r.evidence.text && <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{r.evidence.text}&rdquo;</p>}
-                          <div className="flex gap-1.5 flex-wrap mt-1">
-                            {r.evidence.grade && <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">{r.evidence.grade}</span>}
+                          <div className="flex gap-2 flex-wrap items-center mt-1">
+                            <EvidenceBadge grade={r.evidence.grade || (r.evidence.kind === "quran" ? "authentic" : "unverified")} size="sm" />
                             {r.evidence.unreviewed && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase">unreviewed</span>
+                              <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
                             )}
                           </div>
                         </div>
@@ -752,13 +751,16 @@ export function StudyClient() {
                           <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Competing rulings</span>
                           {allGroups.map((g) => (
                             <div key={g.outcome} className="flex items-center justify-between bg-background/40 border border-border-warm-light rounded-xl px-4 py-3">
-                              <span className="text-xs px-2.5 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold uppercase">{hukmLabel(g.outcome)}</span>
+                              <VerdictBadge verdict={g.outcome} size="sm" />
                               <span className="text-xs text-text-secondary">{g.confidence}% confidence · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}</span>
                             </div>
                           ))}
                         </div>
                         <div className="flex flex-col gap-3">
-                          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tarjih (weighing) applied</span>
+                          <div className="flex items-center gap-2">
+                            <WeighingScale size="sm" />
+                            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tarjih (weighing) applied</span>
+                          </div>
                           {view.resolution.length === 0 ? (
                             <p className="text-sm text-text-secondary">No weighing rule could separate the competing rulings.</p>
                           ) : (

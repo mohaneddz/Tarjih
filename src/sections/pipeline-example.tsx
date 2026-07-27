@@ -1,4 +1,5 @@
 import React from "react";
+import { WeighingScale, VerdictBadge, RulingRosette } from "@/components/ui/asset-badge";
 
 /**
  * The 5-step "how it works" illustration from design/home.png (Question ->
@@ -74,8 +75,11 @@ export function PipelineExample() {
           </div>
 
           {/* 4. Weighing */}
-          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2 text-[11px]">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
+          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2 text-[11px] relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
+              <WeighingScale size="sm" className="opacity-80 scale-75 -mr-2 -mt-1" />
+            </div>
             <div className="flex items-center justify-between">
               <span className="font-bold text-brand-red">Permitted</span>
               <span className="text-text-secondary">55%</span>
@@ -91,9 +95,13 @@ export function PipelineExample() {
           </div>
 
           {/* 5. Verdict */}
-          <div className="border-2 border-brand-red rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-center">
-            <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-secondary">Verdict</span>
-            <span className="font-serif text-xl font-bold text-brand-red">Permitted</span>
+          <div className="border-2 border-brand-red rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center bg-card-warm/40 relative">
+            <div className="flex items-center gap-1.5">
+              <RulingRosette size="sm" />
+              <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-secondary">Verdict</span>
+            </div>
+            <VerdictBadge verdict="permissible" size="md" showLabel={false} />
+            <span className="font-serif text-lg font-bold text-brand-red">Permitted</span>
             <span className="text-[10px] text-text-secondary">55% confidence</span>
           </div>
         </div>

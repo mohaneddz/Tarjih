@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import type { ProofView } from "@/lib/pipeline/present";
 import { cn } from "@/utils/cn";
+import { EvidenceBadge, RulingRosette, AuthenticStamp } from "@/components/ui/asset-badge";
 
 interface ProofTreeProps {
   readonly proof: ProofView;
@@ -52,11 +53,7 @@ export function classifyNode(view: ProofView): DisplayNodeType {
 const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode }> = {
   conclusion: {
     label: "Conclusion",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-      </svg>
-    ),
+    icon: <RulingRosette size="sm" />,
   },
   principle: {
     label: "Principle",
@@ -87,24 +84,6 @@ const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode 
 /** Uniform icon treatment across all four types — see TYPE_META's note. */
 const ICON_STYLE = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300";
 
-/** For a Source node's grade badge — "Authentic"/"Mutawatir"/etc, matching the design's pill badges rather than a numeric strength bar. */
-function gradeBadgeLabel(evidence: ProofView["evidence"]): string | undefined {
-  switch (evidence.grade) {
-    case "mutawatir":
-      return "Mutawatir";
-    case "sahih":
-      return "Authentic";
-    case "hasan":
-      return "Hasan";
-    case "daif":
-      return "Weak";
-    case "mawdu":
-      return "Fabricated";
-    default:
-      return evidence.kind === "quran" ? "Authentic" : evidence.kind === "ijma" ? "Consensus" : undefined;
-  }
-}
-
 function CheckBadge() {
   return (
     <span className="h-4 w-4 rounded-full border border-brand-green text-brand-green flex items-center justify-center shrink-0" title="Confirmed">
@@ -115,12 +94,9 @@ function CheckBadge() {
   );
 }
 
-function GradeBadge({ label }: { label: string }) {
-  return (
-    <span className="text-[8px] px-2 py-0.5 rounded-full border border-brand-green/40 bg-brand-green-light text-brand-green font-bold uppercase tracking-wide shrink-0">
-      {label}
-    </span>
-  );
+function GradeBadge({ evidence }: { evidence: ProofView["evidence"] }) {
+  const rawGrade = evidence.grade || (evidence.kind === "quran" ? "authentic" : evidence.kind === "ijma" ? "authentic" : "unverified");
+  return <EvidenceBadge grade={rawGrade} size="sm" showLabel={false} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +250,6 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
           const title = n.view.goalHuman;
           const subtitle = isOntology ? "" : n.view.evidence.reference;
           const hasNote = Boolean(n.view.evidence.notes);
-          const gradeLabel = type === "source" ? gradeBadgeLabel(n.view.evidence) : undefined;
 
           return (
             <div
@@ -320,13 +295,8 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                   </span>
                 )}
 
-                {/* Bottom-left confirmation glyph: a grade pill for a real
-                    citation (matches the design's "Authentic"/"Mutawatir"
-                    badges), a plain checkmark otherwise. Never a numeric
-                    strength bar here — that detail lives in the Evidence
-                    Inspector, not on the card face. */}
-                <div className="mt-auto flex items-center">
-                  {gradeLabel ? <GradeBadge label={gradeLabel} /> : !isOntology ? <CheckBadge /> : null}
+                <div className="mt-auto flex items-center justify-between w-full">
+                  {type === "source" ? <GradeBadge evidence={n.view.evidence} /> : !isOntology ? <CheckBadge /> : <div />}
                 </div>
               </button>
 
