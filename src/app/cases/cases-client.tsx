@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { HUKM_LABELS } from "@/lib/kb/ontology";
 import type { Hukm } from "@/lib/kb/ontology";
 import Link from "next/link";
+import { VerdictBadge, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
 
 interface CaseRecord {
   id: string;
@@ -83,14 +84,20 @@ export function CasesClient() {
       <Header />
 
       <main className="flex-grow max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-6 py-12 flex flex-col gap-8 select-none">
-        <div className="border-b border-border-warm pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-              Resolved Cases Ledger
-            </h1>
-            <p className="text-sm text-text-secondary mt-2">
-              A ledger of concluded analyses with traceable evidence.
-            </p>
+        <div className="border-b border-border-warm pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <WeighingScale size="sm" />
+            <div>
+              <div className="flex items-center gap-2">
+                <RulingRosette size="sm" />
+                <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+                  Resolved Cases Ledger
+                </h1>
+              </div>
+              <p className="text-sm text-text-secondary mt-1">
+                A ledger of concluded analyses with traceable evidence.
+              </p>
+            </div>
           </div>
 
           <Link href="/study">
@@ -173,26 +180,20 @@ export function CasesClient() {
                       <td className="p-4.5 text-brand-red font-semibold">{c.madhhab}</td>
                       <td className="p-4.5 text-center">
                         {c.verdict ? (
-                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider border border-brand-red/30 bg-brand-red-light text-brand-red">
-                            {hukmLabel(c.verdict)}
-                          </span>
+                          <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />
                         ) : (
-                          <span className="text-text-secondary">—</span>
+                          <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
                         )}
                       </td>
                       <td className="p-4.5 text-center font-bold text-text-primary">
                         {c.confidence !== null ? `${c.confidence}%` : "—"}
                       </td>
                       <td className="p-4.5 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
-                            c.contested
-                              ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/40"
-                              : "bg-brand-green-light text-brand-green"
-                          }`}
-                        >
-                          {c.contested ? "Yes" : "No"}
-                        </span>
+                        {c.contested ? (
+                          <EvidenceBadge grade="disputed" size="sm" showLabel={false} />
+                        ) : (
+                          <EvidenceBadge grade="authentic" size="sm" showLabel={false} />
+                        )}
                       </td>
                       <td className="p-4.5 text-center text-text-secondary">{c.date}</td>
                       <td className="p-4.5 pr-6 text-right">

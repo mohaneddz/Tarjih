@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/utils/cn";
 import type { kbStatistics } from "@/lib/kb/entry";
 import type { ReviewQueueItem, ExcludedLiveEntry } from "@/app/api/kb/review-queue/route";
+import { EvidenceBadge, AuthenticStamp, RulingRosette } from "@/components/ui/asset-badge";
 
 export interface CoreClauseView {
   readonly id: string;
@@ -122,8 +123,9 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
       {tab === "core" && (
         <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap gap-3 text-xs text-text-secondary">
-            <span className="bg-card-warm border border-border-warm rounded-lg px-3 py-1.5">
+          <div className="flex flex-wrap gap-3 text-xs text-text-secondary items-center">
+            <span className="bg-card-warm border border-border-warm rounded-lg px-3 py-1.5 flex items-center gap-2">
+              <RulingRosette size="sm" />
               {coreStats.facts} facts · {coreStats.rules} rules
             </span>
             {Object.entries(coreStats.byKind).map(([kind, count]) => (
@@ -143,7 +145,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredCore.map((c) => (
-              <div key={c.id} className="bg-card-warm border border-border-warm rounded-xl p-4 flex flex-col gap-2 shadow-sm">
+              <div key={c.id} className="bg-card-warm border border-border-warm rounded-xl p-4 flex flex-col gap-2 shadow-sm relative">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-[10px] text-text-secondary truncate" title={c.id}>{c.id}</span>
                   <KindBadge kind={c.kind} />
@@ -152,12 +154,14 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
                 <span className="text-xs text-brand-red font-semibold">{c.reference}</span>
                 {c.text && <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{c.text}&rdquo;</p>}
                 {c.notes && <p className="text-[11px] text-text-secondary leading-relaxed">{c.notes}</p>}
-                <div className="flex gap-1.5 flex-wrap mt-auto pt-2 border-t border-border-warm-light/50">
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">
-                    {c.isFact ? "fact" : "rule"}
-                  </span>
-                  {c.grade && <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">{c.grade}</span>}
-                  {c.scope && <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{c.scope}</span>}
+                <div className="flex items-center justify-between gap-1.5 flex-wrap mt-auto pt-2 border-t border-border-warm-light/50">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">
+                      {c.isFact ? "fact" : "rule"}
+                    </span>
+                    {c.scope && <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{c.scope}</span>}
+                  </div>
+                  <EvidenceBadge grade={c.grade || (c.kind === "quran" ? "authentic" : "unverified")} size="sm" showLabel={false} />
                 </div>
               </div>
             ))}
@@ -205,7 +209,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
                     <div className="flex items-center gap-2">
                       <KindBadge kind={item.kind} />
                       <span className="font-serif font-bold text-sm text-text-primary">{item.reference}</span>
-                      {item.grade && <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">{item.grade}</span>}
+                      <EvidenceBadge grade={item.grade || "unverified"} size="sm" showLabel={false} />
                     </div>
                     <span className="font-mono text-[10px] text-text-secondary">{item.head}</span>
                   </div>

@@ -5,6 +5,7 @@ import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RulingRosette, WeighingScale, EvidenceBadge } from "@/components/ui/asset-badge";
 
 export function SettingsClient() {
   const [defaultMadhhab, setDefaultMadhhab] = useState("Shafi'i");
@@ -45,13 +46,19 @@ export function SettingsClient() {
 
       <main className="flex-grow max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-6 py-12 flex flex-col gap-10 select-none">
         {/* Page Header */}
-        <div className="border-b border-border-warm pb-6">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-            Juristic Configurations
-          </h1>
-          <p className="text-sm text-text-secondary mt-2">
-            Configure default legal methodologies, derivation weights, and analytical strictness parameters.
-          </p>
+        <div className="border-b border-border-warm pb-6 flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <RulingRosette size="md" />
+              <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+                Juristic Configurations
+              </h1>
+            </div>
+            <p className="text-sm text-text-secondary mt-2">
+              Configure default legal methodologies, derivation weights, and analytical strictness parameters.
+            </p>
+          </div>
+          <WeighingScale size="sm" className="hidden sm:flex" />
         </div>
 
         {/* Section 1: Madhhab Selection */}

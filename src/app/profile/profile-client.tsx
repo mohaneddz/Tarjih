@@ -4,12 +4,13 @@ import React from "react";
 import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
+import { AuthenticStamp, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
 
 export function ProfileClient() {
   const stats = [
-    { title: "Cases Resolved", value: "142", desc: "Successfully resolved juristic inquires", icon: "cases" },
-    { title: "Weighed Opinions", value: "512", desc: "Total nodes mapped in reasoning trees", icon: "opinions" },
-    { title: "Juristic Accuracy", value: "98%", desc: "Consistency rating across schools", icon: "accuracy" },
+    { title: "Cases Resolved", value: "142", desc: "Successfully resolved juristic inquires", badge: <AuthenticStamp size="sm" showLabel={false} /> },
+    { title: "Weighed Opinions", value: "512", desc: "Total nodes mapped in reasoning trees", badge: <WeighingScale size="sm" /> },
+    { title: "Juristic Accuracy", value: "98%", desc: "Consistency rating across schools", badge: <RulingRosette size="sm" /> },
   ];
 
   const expertises = [
@@ -65,12 +66,13 @@ export function ProfileClient() {
           {/* Profile Details */}
           <div className="flex-grow flex flex-col gap-2">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-              <h1 className="font-serif text-2xl md:text-3xl font-bold text-text-primary">
-                Scholar S. al-Ansari
-              </h1>
-              <span className="inline-flex items-center rounded-full bg-brand-green-light px-3 py-1 text-xs font-extrabold text-brand-green border border-brand-green/20 uppercase tracking-wider select-none">
-                Senior Mufti & Jurist
-              </span>
+              <div className="flex items-center gap-2 justify-center md:justify-start">
+                <RulingRosette size="sm" />
+                <h1 className="font-serif text-2xl md:text-3xl font-bold text-text-primary">
+                  Scholar S. al-Ansari
+                </h1>
+              </div>
+              <AuthenticStamp size="sm" showLabel={false} />
             </div>
             <p className="text-xs text-brand-gold font-bold font-serif">
               Tarjih Juristic Assembly • Fiqh al-Nawazil Division
@@ -84,16 +86,19 @@ export function ProfileClient() {
         {/* Section 1: Statistics Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {stats.map((s, idx) => (
-            <Card key={idx} hoverable={false} className="p-6 flex flex-col gap-1 text-left relative overflow-hidden">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                {s.title}
-              </span>
-              <span className="text-3xl font-serif font-bold text-brand-green leading-tight">
-                {s.value}
-              </span>
-              <span className="text-[10px] text-text-secondary mt-1">
-                {s.desc}
-              </span>
+            <Card key={idx} hoverable={false} className="p-6 flex items-center justify-between gap-4 text-left relative overflow-hidden">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                  {s.title}
+                </span>
+                <span className="text-3xl font-serif font-bold text-brand-green leading-tight">
+                  {s.value}
+                </span>
+                <span className="text-[10px] text-text-secondary mt-1">
+                  {s.desc}
+                </span>
+              </div>
+              <div className="shrink-0">{s.badge}</div>
             </Card>
           ))}
         </div>
