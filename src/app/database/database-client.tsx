@@ -40,7 +40,7 @@ const KIND_BADGE: Record<string, string> = {
 
 function KindBadge({ kind }: { kind: string }) {
   return (
-    <span className={cn("text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0", KIND_BADGE[kind] ?? KIND_BADGE.ontology)}>
+    <span className={cn("text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0", KIND_BADGE[kind] ?? KIND_BADGE.ontology)}>
       {kind}
     </span>
   );
@@ -106,7 +106,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex bg-card-warm/80 p-1 rounded-xl text-[10px] font-bold border border-border-warm w-fit">
+      <div className="flex bg-card-warm/80 p-1 rounded-xl text-[12px] font-bold border border-border-warm w-fit">
         <button
           onClick={() => setTab("core")}
           className={cn("px-4 py-2 rounded-lg transition-all cursor-pointer", tab === "core" ? "bg-background text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary")}
@@ -123,7 +123,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
       {tab === "core" && (
         <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap gap-3 text-xs text-text-secondary items-center">
+          <div className="flex flex-wrap gap-3 text-sm text-text-secondary items-center">
             <span className="bg-card-warm border border-border-warm rounded-lg px-3 py-1.5 flex items-center gap-2">
               <RulingRosette size="sm" />
               {coreStats.facts} facts · {coreStats.rules} rules
@@ -140,26 +140,26 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
             placeholder="Search by id, predicate, or reference..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md h-10 px-4 text-xs rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-red transition-all"
+            className="w-full max-w-md h-10 px-4 text-sm rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-red transition-all"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredCore.map((c) => (
               <div key={c.id} className="bg-card-warm border border-border-warm rounded-xl p-4 flex flex-col gap-2 shadow-sm relative">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[10px] text-text-secondary truncate" title={c.id}>{c.id}</span>
+                  <span className="font-mono text-[12px] text-text-secondary truncate" title={c.id}>{c.id}</span>
                   <KindBadge kind={c.kind} />
                 </div>
                 <span className="font-serif font-bold text-sm text-text-primary">{c.head}</span>
-                <span className="text-xs text-brand-red font-semibold">{c.reference}</span>
-                {c.text && <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{c.text}&rdquo;</p>}
-                {c.notes && <p className="text-[11px] text-text-secondary leading-relaxed">{c.notes}</p>}
+                <span className="text-sm text-brand-red font-semibold">{c.reference}</span>
+                {c.text && <p className="text-sm text-text-secondary italic leading-relaxed">&ldquo;{c.text}&rdquo;</p>}
+                {c.notes && <p className="text-[13px] text-text-secondary leading-relaxed">{c.notes}</p>}
                 <div className="flex items-center justify-between gap-1.5 flex-wrap mt-auto pt-2 border-t border-border-warm-light/50">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">
+                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-border-warm-light/60 text-text-secondary font-bold uppercase">
                       {c.isFact ? "fact" : "rule"}
                     </span>
-                    {c.scope && <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{c.scope}</span>}
+                    {c.scope && <span className="text-[11px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{c.scope}</span>}
                   </div>
                   <EvidenceBadge grade={c.grade || (c.kind === "quran" ? "authentic" : "unverified")} size="sm" showLabel={false} />
                 </div>
@@ -167,7 +167,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
             ))}
           </div>
           {filteredCore.length === 0 && (
-            <div className="text-center py-12 text-text-secondary text-xs bg-card-warm border border-border-warm rounded-2xl">
+            <div className="text-center py-12 text-text-secondary text-sm bg-card-warm border border-border-warm rounded-2xl">
               No matching clauses.
             </div>
           )}
@@ -177,18 +177,18 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
       {tab === "queue" && (
         <div className="flex flex-col gap-5">
           {actionError && (
-            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3 text-xs">
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3 text-sm">
               {actionError}
             </div>
           )}
 
           {excludedLive.length > 0 && (
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-4 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest">
+              <span className="text-[12px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest">
                 Live KB health: {excludedLive.length} approved clause{excludedLive.length === 1 ? "" : "s"} currently excluded
               </span>
               {excludedLive.map((e) => (
-                <div key={e.clauseId} className="text-xs text-amber-900 dark:text-amber-200">
+                <div key={e.clauseId} className="text-sm text-amber-900 dark:text-amber-200">
                   <span className="font-mono">{e.clauseId}</span>: {e.reasons.join("; ")}
                 </div>
               ))}
@@ -196,9 +196,9 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
           )}
 
           {queueLoading ? (
-            <div className="text-center py-12 text-text-secondary text-xs">Loading review queue...</div>
+            <div className="text-center py-12 text-text-secondary text-sm">Loading review queue...</div>
           ) : queue.length === 0 ? (
-            <div className="text-center py-12 text-text-secondary text-xs bg-card-warm border border-border-warm rounded-2xl">
+            <div className="text-center py-12 text-text-secondary text-sm bg-card-warm border border-border-warm rounded-2xl">
               Nothing awaiting review. Run the formalization pipeline to generate candidates.
             </div>
           ) : (
@@ -211,24 +211,24 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
                       <span className="font-serif font-bold text-sm text-text-primary">{item.reference}</span>
                       <EvidenceBadge grade={item.grade || "unverified"} size="sm" showLabel={false} />
                     </div>
-                    <span className="font-mono text-[10px] text-text-secondary">{item.head}</span>
+                    <span className="font-mono text-[12px] text-text-secondary">{item.head}</span>
                   </div>
 
                   {item.sourceText?.textEn && (
-                    <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{item.sourceText.textEn}&rdquo;</p>
+                    <p className="text-sm text-text-secondary italic leading-relaxed">&ldquo;{item.sourceText.textEn}&rdquo;</p>
                   )}
 
-                  <div className="bg-background/50 border border-border-warm-light rounded-lg px-3 py-2 font-mono text-xs text-text-primary">
+                  <div className="bg-background/50 border border-border-warm-light rounded-lg px-3 py-2 font-mono text-sm text-text-primary">
                     {item.source}
                   </div>
 
-                  {item.notes && <p className="text-[11px] text-text-secondary leading-relaxed">{item.notes}</p>}
+                  {item.notes && <p className="text-[13px] text-text-secondary leading-relaxed">{item.notes}</p>}
 
                   <div className="flex gap-2 pt-2 border-t border-border-warm-light/50">
                     <button
                       onClick={() => act(item.id, "approve")}
                       disabled={actioningId === item.id}
-                      className="h-9 px-4 bg-brand-green hover:bg-brand-green-dark text-white dark:text-black rounded-lg text-xs font-bold cursor-pointer transition-colors disabled:opacity-50"
+                      className="h-9 px-4 bg-brand-green hover:bg-brand-green-dark text-white dark:text-black rounded-lg text-sm font-bold cursor-pointer transition-colors disabled:opacity-50"
                     >
                       Approve
                     </button>
@@ -238,7 +238,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
                         act(item.id, "reject", reason);
                       }}
                       disabled={actioningId === item.id}
-                      className="h-9 px-4 border border-red-300 dark:border-red-900/50 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg text-xs font-bold cursor-pointer transition-colors disabled:opacity-50"
+                      className="h-9 px-4 border border-red-300 dark:border-red-900/50 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg text-sm font-bold cursor-pointer transition-colors disabled:opacity-50"
                     >
                       Reject
                     </button>

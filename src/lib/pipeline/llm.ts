@@ -23,7 +23,7 @@ export interface LlmClient {
 export class GroqClient implements LlmClient {
   constructor(
     private readonly apiKey: string,
-    private readonly model = "llama-3.3-70b-versatile"
+    private readonly model = "openai/gpt-oss-120b"
   ) {}
 
   async complete(system: string, user: string, options: { json?: boolean; temperature?: number } = {}): Promise<string> {

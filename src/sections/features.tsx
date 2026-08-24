@@ -72,7 +72,7 @@ export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: Reasoni
                   </span>
                   <div>
                     <p className="font-bold text-sm text-text-primary">{step.label}</p>
-                    <p className="text-xs text-text-secondary leading-snug mt-0.5">{step.description}</p>
+                    <p className="text-sm text-text-secondary leading-snug mt-0.5">{step.description}</p>
                   </div>
                 </div>
                 {i < STEPS.length - 1 && (
@@ -99,7 +99,7 @@ export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: Reasoni
               </svg>
               <div>
                 <p className="font-serif font-bold text-xl text-text-primary">{coreClauseCount}</p>
-                <p className="text-xs text-text-secondary">Core clauses</p>
+                <p className="text-sm text-text-secondary">Core clauses</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-card-warm border border-border-warm rounded-xl p-4">
@@ -108,13 +108,13 @@ export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: Reasoni
               </svg>
               <div>
                 <p className="font-serif font-bold text-xl text-text-primary">{reviewedClauseCount}</p>
-                <p className="text-xs text-text-secondary">Formalized clauses reviewed</p>
+                <p className="text-sm text-text-secondary">Formalized clauses reviewed</p>
               </div>
             </div>
           </div>
           <div className="border border-dashed border-brand-red/40 rounded-xl p-4 bg-brand-red-light/30">
-            <p className="text-[10px] font-bold text-brand-red uppercase tracking-widest mb-1">Editor&rsquo;s note</p>
-            <p className="text-xs text-text-secondary leading-relaxed">
+            <p className="text-[12px] font-bold text-brand-red uppercase tracking-widest mb-1">Editor&rsquo;s note</p>
+            <p className="text-sm text-text-secondary leading-relaxed">
               If evidence is missing or the knowledge base has no rule covering a question, Tarjih reports the gap
               instead of guessing an answer.
             </p>

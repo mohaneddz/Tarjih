@@ -26,7 +26,7 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <Link href="/study">
-              <Button size="lg" className="text-xs md:text-sm font-bold shadow-sm hover:shadow-md">
+              <Button size="lg" className="text-sm md:text-sm font-bold shadow-sm hover:shadow-md">
                 Examine a question
               </Button>
             </Link>
@@ -40,7 +40,7 @@ export function Hero() {
 
           <div className="mt-10 flex items-center gap-4">
             <AuthenticStamp size="md" showLabel={false} />
-            <p className="text-xs text-text-secondary leading-relaxed max-w-sm">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-sm">
               Every citation carries a real authenticity grade. Formalized clauses stay marked
               <strong className="text-text-primary"> unreviewed</strong> until a human checks them — nothing enters a
               live answer unvetted.

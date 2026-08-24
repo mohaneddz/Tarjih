@@ -276,10 +276,10 @@ export function StudyClient() {
           <div className="p-5 flex flex-col gap-3.5 shrink-0 border-b border-border-warm-light">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <h2 className="text-xs lg:text-sm font-bold text-text-secondary uppercase tracking-widest">
+                <h2 className="text-sm lg:text-sm font-bold text-text-secondary uppercase tracking-widest">
                   Resolution History
                 </h2>
-                <span className="text-[10px] lg:text-xs bg-brand-red-light border border-border-warm text-brand-red px-2.5 py-0.5 rounded-full font-bold">
+                <span className="text-[12px] lg:text-sm bg-brand-red-light border border-border-warm text-brand-red px-2.5 py-0.5 rounded-full font-bold">
                   {history.length}
                 </span>
               </div>
@@ -310,7 +310,7 @@ export function StudyClient() {
 
           <div ref={historyListRef} className="flex-grow overflow-y-auto custom-scrollbar p-4 lg:p-6 flex flex-col gap-3 lg:gap-4 bg-background select-none">
             {filteredHistory.length === 0 ? (
-              <div className="text-center py-12 text-text-secondary text-xs">
+              <div className="text-center py-12 text-text-secondary text-sm">
                 No resolution history yet. Ask a question below to start.
               </div>
             ) : (
@@ -326,7 +326,7 @@ export function StudyClient() {
                   )}
                 >
                   <div className="flex items-center justify-between w-full gap-2">
-                    <span className="text-[10px] uppercase tracking-wider font-extrabold text-brand-green truncate">
+                    <span className="text-[12px] uppercase tracking-wider font-extrabold text-brand-green truncate">
                       {h.contested ? "Contested" : "Resolved"}
                     </span>
                     {h.verdict && (
@@ -337,7 +337,7 @@ export function StudyClient() {
                     {h.question}
                   </span>
                   {h.confidence !== null && (
-                    <span className="text-xs text-text-secondary">{h.confidence}% confidence</span>
+                    <span className="text-sm text-text-secondary">{h.confidence}% confidence</span>
                   )}
                 </button>
               ))
@@ -378,7 +378,7 @@ export function StudyClient() {
               disabled={isSubmitting}
               className="flex-grow bg-transparent h-11 px-1 text-sm md:text-base text-text-primary font-serif font-semibold placeholder-text-secondary/60 focus:outline-none disabled:opacity-50 min-w-0"
             />
-            <label className="hidden lg:flex items-center gap-2 text-xs text-text-secondary shrink-0 select-none cursor-pointer">
+            <label className="hidden lg:flex items-center gap-2 text-sm text-text-secondary shrink-0 select-none cursor-pointer">
               Grounding preview
               <button
                 type="button"
@@ -423,8 +423,8 @@ export function StudyClient() {
           {showSettings && (
             <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border-warm-light text-sm text-text-secondary">
               <div className="flex items-center gap-2 bg-background/50 border border-border-warm/65 rounded-xl px-3 py-2">
-                <span className="text-[10px] uppercase font-extrabold text-brand-red tracking-wider">Madhhab</span>
-                <select value={madhhab} onChange={(e) => setMadhhab(e.target.value)} className="bg-transparent font-bold text-text-primary focus:outline-none cursor-pointer text-xs">
+                <span className="text-[12px] uppercase font-extrabold text-brand-red tracking-wider">Madhhab</span>
+                <select value={madhhab} onChange={(e) => setMadhhab(e.target.value)} className="bg-transparent font-bold text-text-primary focus:outline-none cursor-pointer text-sm">
                   <option value="Shafi'i">Shafi&apos;i</option>
                   <option value="Hanafi">Hanafi</option>
                   <option value="Maliki">Maliki</option>
@@ -432,8 +432,8 @@ export function StudyClient() {
                 </select>
               </div>
               <div className="flex items-center gap-2 bg-background/50 border border-border-warm/65 rounded-xl px-3 py-2">
-                <span className="text-[10px] uppercase font-extrabold text-brand-red tracking-wider">Strictness</span>
-                <select value={strictness} onChange={(e) => setStrictness(e.target.value)} className="bg-transparent font-bold text-text-primary focus:outline-none cursor-pointer text-xs">
+                <span className="text-[12px] uppercase font-extrabold text-brand-red tracking-wider">Strictness</span>
+                <select value={strictness} onChange={(e) => setStrictness(e.target.value)} className="bg-transparent font-bold text-text-primary focus:outline-none cursor-pointer text-sm">
                   <option value="Moderate">Moderate</option>
                   <option value="Strict">Strict (Azeemah)</option>
                   <option value="Concessive">Concessive (Rukhshah)</option>
@@ -443,7 +443,7 @@ export function StudyClient() {
           )}
 
           {pendingPreview && (
-            <div className="flex items-center gap-3 bg-brand-red-light/60 border border-brand-red/25 rounded-xl px-4 py-2.5 text-xs">
+            <div className="flex items-center gap-3 bg-brand-red-light/60 border border-brand-red/25 rounded-xl px-4 py-2.5 text-sm">
               <span className="font-bold text-brand-red uppercase tracking-wider shrink-0">Grounded as</span>
               <code className="font-mono text-text-primary truncate">{pendingPreview}</code>
               <button
@@ -457,7 +457,7 @@ export function StudyClient() {
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] uppercase font-extrabold text-brand-red tracking-widest mr-1">Try:</span>
+            <span className="text-[12px] uppercase font-extrabold text-brand-red tracking-widest mr-1">Try:</span>
             {SUGGESTIONS.map((sug) => (
               <button
                 key={sug}
@@ -467,7 +467,7 @@ export function StudyClient() {
                   setPendingPreview(null);
                   inputRef.current?.focus();
                 }}
-                className="text-xs px-3 py-1 rounded-full border border-border-warm text-text-secondary hover:border-brand-red hover:text-text-primary transition-all cursor-pointer font-semibold"
+                className="text-sm px-3 py-1 rounded-full border border-border-warm text-text-secondary hover:border-brand-red hover:text-text-primary transition-all cursor-pointer font-semibold"
               >
                 {sug}
               </button>
@@ -484,13 +484,13 @@ export function StudyClient() {
               <VerdictBadge verdict={view.verdict} size="md" showLabel={false} />
               <span className="font-serif text-2xl font-bold text-brand-red">{hukmLabel(view.verdict)}</span>
               {view.confidence !== undefined && (
-                <span className="text-xs text-text-secondary">({view.confidence}% confidence)</span>
+                <span className="text-sm text-text-secondary">({view.confidence}% confidence)</span>
               )}
             </div>
             <button
               type="button"
               onClick={() => setActiveTab("interpretation")}
-              className="text-xs font-bold text-brand-red hover:underline cursor-pointer shrink-0 flex items-center gap-1"
+              className="text-sm font-bold text-brand-red hover:underline cursor-pointer shrink-0 flex items-center gap-1"
             >
               View summary
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -518,28 +518,28 @@ export function StudyClient() {
           </div>
 
           {/* Body */}
-          <div className="flex-grow min-h-0 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+          <div className="flex-grow min-h-0 overflow-y-auto custom-scrollbar">
             {!view && !errorMessage && (
-              <div className="h-full flex items-center justify-center text-center text-text-secondary text-sm max-w-md mx-auto">
+              <div className="h-full flex items-center justify-center text-center text-text-secondary text-sm max-w-md mx-auto p-6 lg:p-8">
                 Ask a question above to see the engine derive, weigh, and explain a ruling.
               </div>
             )}
 
             {errorMessage && (
-              <div className="max-w-2xl mx-auto bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl p-6 text-sm text-amber-900 dark:text-amber-200">
+              <div className="max-w-2xl mx-auto bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 text-sm text-brand-red m-6 lg:m-8">
                 {errorMessage}
               </div>
             )}
 
             {view && !errorMessage && (
-              <>
+              <div className={cn(activeTab === "tree" ? "px-3 pt-3 pb-4 lg:px-4" : "p-6 lg:p-8")}>
                 {view.truncated && (
-                  <div className="mb-6 text-xs bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3">
+                  <div className="mb-6 text-sm bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3">
                     The search hit a resource budget and may not have found every derivation. Treat this result as partial.
                   </div>
                 )}
                 {view.unresolved && (
-                  <div className="mb-6 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3">
+                  <div className="mb-6 text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3">
                     The engine found genuinely conflicting rulings that its weighing rules could not separate. No single
                     verdict is reported — see the Conflicts tab.
                   </div>
@@ -554,7 +554,7 @@ export function StudyClient() {
                             key={g.outcome}
                             onClick={() => setSelectedOutcome(g.outcome)}
                             className={cn(
-                              "text-xs px-3 py-1.5 rounded-full border font-bold transition-all cursor-pointer",
+                              "text-sm px-3 py-1.5 rounded-full border font-bold transition-all cursor-pointer",
                               selectedGroup?.outcome === g.outcome
                                 ? "bg-brand-red-light border-brand-red/40 text-brand-red"
                                 : "bg-transparent border-border-warm text-text-secondary hover:border-brand-red/40"
@@ -569,22 +569,22 @@ export function StudyClient() {
                     <div
                       className={cn(
                         "grid grid-cols-1 gap-5",
-                        winnerGroup && contestingLoser ? "xl:grid-cols-[220px_1fr_280px]" : "xl:grid-cols-[1fr_280px]"
+                        winnerGroup && contestingLoser ? "xl:grid-cols-[220px_1fr]" : "grid-cols-1"
                       )}
                     >
                       {/* Compare Paths */}
                       {winnerGroup && contestingLoser && (
-                        <div className="bg-background/40 border border-border-warm-light rounded-2xl p-4 flex flex-col gap-4 text-xs">
-                          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Compare Paths</span>
+                        <div className="bg-background/40 border border-border-warm-light rounded-2xl p-4 flex flex-col gap-4 text-sm">
+                          <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Compare Paths</span>
                           <div className="flex flex-col gap-1.5">
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-text-primary">Path A</span>
-                              <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-brand-red text-white font-bold uppercase">Wins</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-red text-white font-bold uppercase">Wins</span>
                             </div>
                             <span className="font-serif font-bold text-brand-red">{hukmLabel(winnerGroup.outcome)}</span>
                             <span className="text-text-secondary">{winnerGroup.confidence}% confidence, {winnerGroup.derivationCount} derivation{winnerGroup.derivationCount === 1 ? "" : "s"}</span>
                           </div>
-                          <div className="text-center text-text-secondary/60 text-[10px] font-bold">vs</div>
+                          <div className="text-center text-text-secondary/60 text-[12px] font-bold">vs</div>
                           <div className="flex flex-col gap-1.5">
                             <span className="font-bold text-text-primary">Path B</span>
                             <span className="font-serif font-bold text-text-secondary">{hukmLabel(contestingLoser.outcome)}</span>
@@ -592,7 +592,7 @@ export function StudyClient() {
                           </div>
                           {view.resolution.length > 0 && (
                             <div className="flex flex-col gap-2 pt-2 border-t border-border-warm-light">
-                              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Why Path A prevails</span>
+                              <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Why Path A prevails</span>
                               <ol className="flex flex-col gap-2">
                                 {view.resolution.map((step, i) => (
                                   <li key={i} className="flex gap-1.5">
@@ -607,93 +607,100 @@ export function StudyClient() {
                       )}
 
                       {selectedGroup && (
-                        <div className="flex flex-col gap-2 min-w-0">
+                        <div className="relative flex flex-col gap-2 min-w-0">
                           <ProofTree proof={selectedGroup.proof} selectedClauseId={selectedClauseId} onSelectNode={setSelectedClauseId} />
                           <ProofTreeLegend />
+
+                          {/* Evidence Inspector — floats over the canvas once a node is selected */}
+                          {selectedClauseId && selectedEvidence && (
+                            <div className="absolute top-4 right-4 z-20 w-[min(360px,calc(100%-2rem))] max-h-[calc(75vh-2rem)] overflow-y-auto custom-scrollbar bg-card-warm border border-border-warm-light rounded-2xl p-5 flex flex-col gap-4 text-sm shadow-xl">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Evidence Inspector</span>
+                                <button
+                                  onClick={() => setSelectedClauseId(null)}
+                                  className="text-text-secondary hover:text-text-primary cursor-pointer rounded-full h-6 w-6 flex items-center justify-center shrink-0"
+                                  aria-label="Close evidence inspector"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="font-serif font-bold text-text-primary text-sm">{selectedEvidence.reference}</p>
+                                  {(selectedEvidence.grade === "sahih" || selectedEvidence.grade === "mutawatir") && (
+                                    <AuthenticStamp size="sm" showLabel={false} />
+                                  )}
+                                </div>
+
+                                {selectedEvidence.textArabic && (
+                                  <div>
+                                    <span className="text-text-secondary font-semibold">Original text (Arabic)</span>
+                                    <p dir="rtl" className="font-serif text-sm text-text-primary leading-relaxed mt-1">
+                                      {selectedEvidence.textArabic}
+                                    </p>
+                                  </div>
+                                )}
+                                {selectedEvidence.text && (
+                                  <div>
+                                    <span className="text-text-secondary font-semibold">Translation</span>
+                                    <p className="text-text-secondary leading-relaxed italic mt-1">&ldquo;{selectedEvidence.text}&rdquo;</p>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-2 border-t border-border-warm-light">
+                                  {selectedEvidence.grade && (
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-text-secondary block">Authenticity grade</span>
+                                      <EvidenceBadge grade={selectedEvidence.grade} size="sm" />
+                                    </div>
+                                  )}
+                                  {selectedEvidence.scope && (
+                                    <div>
+                                      <span className="text-text-secondary block">Scope</span>
+                                      <span className="font-bold text-text-primary capitalize">{selectedEvidence.scope === "khass" ? "Specific" : "General"}</span>
+                                    </div>
+                                  )}
+                                  {certaintyLabel(selectedEvidence.dalala) && (
+                                    <div>
+                                      <span className="text-text-secondary block">Certainty</span>
+                                      <span className="font-bold text-text-primary">{certaintyLabel(selectedEvidence.dalala)}</span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <span className="text-text-secondary block">Evidence type</span>
+                                    <span className="font-bold text-text-primary capitalize">{selectedEvidence.kind}</span>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-text-secondary font-semibold">Strength</span>
+                                  <div className="h-2 w-full bg-border-warm-light rounded-full overflow-hidden mt-1">
+                                    <div className="h-full bg-brand-green rounded-full" style={{ width: `${selectedEvidence.strength}%` }} />
+                                  </div>
+                                  <p className="text-right text-text-secondary mt-0.5">{selectedEvidence.strength}/100</p>
+                                </div>
+
+                                {selectedEvidence.notes && (
+                                  <div className="pt-2 border-t border-border-warm-light">
+                                    <span className="text-text-secondary font-semibold">Why this node fired</span>
+                                    <p className="text-text-secondary leading-relaxed mt-1">{selectedEvidence.notes}</p>
+                                  </div>
+                                )}
+
+                                <div className="pt-2 border-t border-border-warm-light flex items-center justify-between">
+                                  <span className="text-text-secondary">Used in this analysis</span>
+                                  <span className="font-bold text-text-primary">{selectedUseCount} time{selectedUseCount === 1 ? "" : "s"}</span>
+                                </div>
+                                {selectedEvidence.unreviewed && (
+                                  <div className="text-[12px] px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-semibold">
+                                    Unreviewed: this clause was formalised by the LLM pipeline and has not yet been checked by a human.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
-
-                      {/* Evidence Inspector */}
-                      <div className="bg-background/40 border border-border-warm-light rounded-2xl p-5 flex flex-col gap-4 text-xs">
-                        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Evidence Inspector</span>
-                        {selectedEvidence ? (
-                          <div className="flex flex-col gap-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-serif font-bold text-text-primary text-sm">{selectedEvidence.reference}</p>
-                              {(selectedEvidence.grade === "sahih" || selectedEvidence.grade === "mutawatir") && (
-                                <AuthenticStamp size="sm" showLabel={false} />
-                              )}
-                            </div>
-
-                            {selectedEvidence.textArabic && (
-                              <div>
-                                <span className="text-text-secondary font-semibold">Original text (Arabic)</span>
-                                <p dir="rtl" className="font-serif text-sm text-text-primary leading-relaxed mt-1">
-                                  {selectedEvidence.textArabic}
-                                </p>
-                              </div>
-                            )}
-                            {selectedEvidence.text && (
-                              <div>
-                                <span className="text-text-secondary font-semibold">Translation</span>
-                                <p className="text-text-secondary leading-relaxed italic mt-1">&ldquo;{selectedEvidence.text}&rdquo;</p>
-                              </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-2 border-t border-border-warm-light">
-                              {selectedEvidence.grade && (
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-text-secondary block">Authenticity grade</span>
-                                  <EvidenceBadge grade={selectedEvidence.grade} size="sm" />
-                                </div>
-                              )}
-                              {selectedEvidence.scope && (
-                                <div>
-                                  <span className="text-text-secondary block">Scope</span>
-                                  <span className="font-bold text-text-primary capitalize">{selectedEvidence.scope === "khass" ? "Specific" : "General"}</span>
-                                </div>
-                              )}
-                              {certaintyLabel(selectedEvidence.dalala) && (
-                                <div>
-                                  <span className="text-text-secondary block">Certainty</span>
-                                  <span className="font-bold text-text-primary">{certaintyLabel(selectedEvidence.dalala)}</span>
-                                </div>
-                              )}
-                              <div>
-                                <span className="text-text-secondary block">Evidence type</span>
-                                <span className="font-bold text-text-primary capitalize">{selectedEvidence.kind}</span>
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-text-secondary font-semibold">Strength</span>
-                              <div className="h-2 w-full bg-border-warm-light rounded-full overflow-hidden mt-1">
-                                <div className="h-full bg-brand-green rounded-full" style={{ width: `${selectedEvidence.strength}%` }} />
-                              </div>
-                              <p className="text-right text-text-secondary mt-0.5">{selectedEvidence.strength}/100</p>
-                            </div>
-
-                            {selectedEvidence.notes && (
-                              <div className="pt-2 border-t border-border-warm-light">
-                                <span className="text-text-secondary font-semibold">Why this node fired</span>
-                                <p className="text-text-secondary leading-relaxed mt-1">{selectedEvidence.notes}</p>
-                              </div>
-                            )}
-
-                            <div className="pt-2 border-t border-border-warm-light flex items-center justify-between">
-                              <span className="text-text-secondary">Used in this analysis</span>
-                              <span className="font-bold text-text-primary">{selectedUseCount} time{selectedUseCount === 1 ? "" : "s"}</span>
-                            </div>
-                            {selectedEvidence.unreviewed && (
-                              <div className="text-[10px] px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-semibold">
-                                Unreviewed: this clause was formalised by the LLM pipeline and has not yet been checked by a human.
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-text-secondary">Select a node in the tree to inspect its evidence.</p>
-                        )}
-                      </div>
                     </div>
                   </div>
                 )}
@@ -701,17 +708,17 @@ export function StudyClient() {
                 {activeTab === "interpretation" && (
                   <div className="max-w-3xl flex flex-col gap-5">
                     <div>
-                      <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Summary</span>
+                      <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Summary</span>
                       <p className="font-serif text-lg text-text-primary mt-1 leading-relaxed">{view.narration.summary}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Analysis</span>
+                      <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Analysis</span>
                       <p className="text-sm text-text-secondary mt-1 leading-relaxed whitespace-pre-line">{view.narration.analysis}</p>
                     </div>
                     {view.narration.notes && (
                       <div className="bg-background/40 border border-border-warm-light rounded-xl p-4">
-                        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Notes</span>
-                        <p className="text-xs text-text-secondary mt-1 leading-relaxed">{view.narration.notes}</p>
+                        <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Notes</span>
+                        <p className="text-sm text-text-secondary mt-1 leading-relaxed">{view.narration.notes}</p>
                       </div>
                     )}
                   </div>
@@ -725,9 +732,9 @@ export function StudyClient() {
                         <div key={r.clauseId} className="bg-background/40 border border-border-warm-light rounded-xl p-4 flex flex-col gap-2">
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-serif font-bold text-sm text-text-primary">{r.evidence.reference}</span>
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-brand-red-light text-brand-red font-bold uppercase shrink-0">{r.evidence.kind}</span>
+                            <span className="text-[11px] px-2 py-0.5 rounded bg-brand-red-light text-brand-red font-bold uppercase shrink-0">{r.evidence.kind}</span>
                           </div>
-                          {r.evidence.text && <p className="text-xs text-text-secondary italic leading-relaxed">&ldquo;{r.evidence.text}&rdquo;</p>}
+                          {r.evidence.text && <p className="text-sm text-text-secondary italic leading-relaxed">&ldquo;{r.evidence.text}&rdquo;</p>}
                           <div className="flex gap-2 flex-wrap items-center mt-1">
                             <EvidenceBadge grade={r.evidence.grade || (r.evidence.kind === "quran" ? "authentic" : "unverified")} size="sm" />
                             {r.evidence.unreviewed && (
@@ -748,40 +755,40 @@ export function StudyClient() {
                     ) : (
                       <>
                         <div className="flex flex-col gap-2">
-                          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Competing rulings</span>
+                          <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Competing rulings</span>
                           {allGroups.map((g) => (
                             <div key={g.outcome} className="flex items-center justify-between bg-background/40 border border-border-warm-light rounded-xl px-4 py-3">
                               <VerdictBadge verdict={g.outcome} size="sm" />
-                              <span className="text-xs text-text-secondary">{g.confidence}% confidence · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}</span>
+                              <span className="text-sm text-text-secondary">{g.confidence}% confidence · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}</span>
                             </div>
                           ))}
                         </div>
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center gap-2">
                             <WeighingScale size="sm" />
-                            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tarjih (weighing) applied</span>
+                            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Tarjih (weighing) applied</span>
                           </div>
                           {view.resolution.length === 0 ? (
                             <p className="text-sm text-text-secondary">No weighing rule could separate the competing rulings.</p>
                           ) : (
                             view.resolution.map((step, i) => (
                               <div key={i} className="bg-background/40 border border-border-warm-light rounded-xl p-4">
-                                <span className="text-[10px] font-bold text-brand-red uppercase tracking-wider">{step.rule}</span>
+                                <span className="text-[12px] font-bold text-brand-red uppercase tracking-wider">{step.rule}</span>
                                 <p className="text-sm text-text-primary mt-1">
                                   <strong>{hukmLabel(step.winner)}</strong> preferred over <strong>{hukmLabel(step.loser)}</strong>
                                 </p>
-                                <p className="text-xs text-text-secondary mt-1 leading-relaxed">{step.explanation}</p>
+                                <p className="text-sm text-text-secondary mt-1 leading-relaxed">{step.explanation}</p>
                               </div>
                             ))
                           )}
                         </div>
                         {view.relatedOpinions.length > 0 && (
                           <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Related, non-contradicting opinions</span>
+                            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Related, non-contradicting opinions</span>
                             {view.relatedOpinions.map((g) => (
                               <div key={g.outcome} className="flex items-center justify-between bg-background/40 border border-border-warm-light rounded-xl px-4 py-3">
-                                <span className="text-xs px-2.5 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold uppercase">{hukmLabel(g.outcome)}</span>
-                                <span className="text-xs text-text-secondary">{g.confidence}% confidence</span>
+                                <span className="text-sm px-2.5 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold uppercase">{hukmLabel(g.outcome)}</span>
+                                <span className="text-sm text-text-secondary">{g.confidence}% confidence</span>
                               </div>
                             ))}
                           </div>
@@ -790,7 +797,7 @@ export function StudyClient() {
                     )}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -808,7 +815,7 @@ export function StudyClient() {
             <span className="font-serif font-bold text-base text-text-primary tracking-wide animate-pulse">
               Tarjih Resolution Engine
             </span>
-            <span className="text-xs text-brand-red font-bold font-serif min-h-[1.5rem]">{loadingStep}</span>
+            <span className="text-sm text-brand-red font-bold font-serif min-h-[1.5rem]">{loadingStep}</span>
           </div>
         </div>
       )}

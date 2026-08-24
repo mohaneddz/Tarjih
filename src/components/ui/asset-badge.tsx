@@ -90,8 +90,8 @@ export function VerdictBadge({ verdict, className, size = "md", showLabel = true
   const asset = VERDICT_ASSETS[normalizedKey] ?? VERDICT_ASSETS.permissible;
 
   const sizeClasses = {
-    sm: "h-6 w-auto text-[10px]",
-    md: "h-9 w-auto text-xs",
+    sm: "h-6 w-auto text-[12px]",
+    md: "h-9 w-auto text-sm",
     lg: "h-14 w-auto text-sm font-bold",
   }[size];
 
@@ -113,7 +113,7 @@ export function VerdictBadge({ verdict, className, size = "md", showLabel = true
         />
       </div>
       {showLabel && (
-        <span className="font-serif font-bold text-text-primary text-xs capitalize drop-shadow-2xs">
+        <span className="font-serif font-bold text-text-primary text-sm capitalize drop-shadow-2xs">
           {verdict}
         </span>
       )}
@@ -133,8 +133,8 @@ export function EvidenceBadge({ grade, className, size = "md", showLabel = true 
   const asset = EVIDENCE_ASSETS[normalizedKey] ?? EVIDENCE_ASSETS.unverified;
 
   const sizeClasses = {
-    sm: "h-5 w-auto text-[9px]",
-    md: "h-7 w-auto text-xs",
+    sm: "h-5 w-auto text-[11px]",
+    md: "h-7 w-auto text-sm",
     lg: "h-10 w-auto text-sm",
   }[size];
 
@@ -156,7 +156,7 @@ export function EvidenceBadge({ grade, className, size = "md", showLabel = true 
         />
       </div>
       {showLabel && (
-        <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+        <span className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider">
           {grade || "Unverified"}
         </span>
       )}
@@ -189,7 +189,7 @@ export function AuthenticStamp({ className, size = "md", showLabel = false }: Au
         />
       </div>
       {showLabel && (
-        <span className="text-[9px] font-extrabold uppercase tracking-widest text-brand-green">
+        <span className="text-[11px] font-extrabold uppercase tracking-widest text-brand-green">
           Verified Authentic
         </span>
       )}

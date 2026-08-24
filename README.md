@@ -1,7 +1,4 @@
-<h1>
-  <img src="public/logo/tarjih-icon-transparent.png" alt="Tarjih icon" width="42" />
-  Tarjih
-</h1>
+# Tarjih
 
 Tarjih (ترجيح, "weighing") is an experiment in explainable Islamic legal
 reasoning. Instead of asking an LLM to guess a fatwa, it asks a question,
@@ -11,16 +8,6 @@ family of technique as classical Prolog/expert systems. When the evidence
 conflicts, it resolves the conflict using the classical rules jurists
 themselves use for weighing conflicting evidence (*al-murajjihat*), and only
 then asks an LLM to explain the result in plain language.
-
-## App pages
-
-| Home | Study |
-| --- | --- |
-| <img src="design/home.png" alt="Tarjih home page" width="400" /> | <img src="design/study.png" alt="Tarjih study page" width="400" /> |
-| **Cases** | **Study detail** |
-| <img src="design/cases.png" alt="Tarjih cases page" width="400" /> | <img src="design/study2.png" alt="Tarjih study detail page" width="400" /> |
-
-The repository includes these current page captures in `design/`, covering the public landing, study experience, cases ledger, and study detail view.
 
 The LLM never decides the ruling. It only translates the question into
 something the engine can prove, and narrates the answer the engine already

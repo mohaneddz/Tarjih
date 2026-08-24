@@ -67,7 +67,7 @@ export function SettingsClient() {
             <h2 className="font-serif text-xl font-bold text-text-primary">
               Default Madhhab (School of Law)
             </h2>
-            <p className="text-xs text-text-secondary mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Select the primary legal school whose Usul (principles) will govern the initial derivation.
             </p>
           </div>
@@ -89,11 +89,11 @@ export function SettingsClient() {
                     <span className="font-serif text-base font-bold text-text-primary">
                       {m.name}
                     </span>
-                    <span className="text-[10px] text-brand-gold font-semibold uppercase tracking-wider">
+                    <span className="text-[12px] text-brand-gold font-semibold uppercase tracking-wider">
                       {m.founder}
                     </span>
                   </div>
-                  <p className="text-xs text-text-secondary leading-relaxed">
+                  <p className="text-sm text-text-secondary leading-relaxed">
                     {m.description}
                   </p>
                 </button>
@@ -108,7 +108,7 @@ export function SettingsClient() {
             <h2 className="font-serif text-xl font-bold text-text-primary">
               Derivation Rigor & Source Weights
             </h2>
-            <p className="text-xs text-text-secondary mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Adjust the mathematical weights and strictness thresholds used by the Tarjih analytical engine.
             </p>
           </div>
@@ -116,7 +116,7 @@ export function SettingsClient() {
           <Card hoverable={false} className="p-8 flex flex-col gap-8">
             {/* Slider 1: Strictness */}
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs">
+              <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-text-primary">Juristic Strictness Filter</span>
                 <span className="font-serif font-bold text-brand-gold">
                   {strictness < 35 ? "Concessive (Rukhshah)" : strictness > 70 ? "Strict (Azeemah)" : "Moderate"} ({strictness}%)
@@ -130,7 +130,7 @@ export function SettingsClient() {
                 onChange={(e) => setStrictness(Number(e.target.value))}
                 className="w-full h-1 bg-border-warm rounded-lg appearance-none cursor-pointer accent-brand-green"
               />
-              <div className="flex justify-between text-[9px] text-text-secondary font-semibold uppercase tracking-wider">
+              <div className="flex justify-between text-[11px] text-text-secondary font-semibold uppercase tracking-wider">
                 <span>Rukhshah</span>
                 <span>Moderate</span>
                 <span>Azeemah</span>
@@ -139,7 +139,7 @@ export function SettingsClient() {
 
             {/* Slider 2: Qiyas */}
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs">
+              <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-text-primary">Analogical Deduction Weight (Qiyas)</span>
                 <span className="font-bold text-brand-green">{qiyasWeight}%</span>
               </div>
@@ -155,7 +155,7 @@ export function SettingsClient() {
 
             {/* Slider 3: Maslahah */}
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs">
+              <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-text-primary">Public Welfare Weight (Maslahah Mursalah)</span>
                 <span className="font-bold text-brand-green">{maslahahWeight}%</span>
               </div>
@@ -171,7 +171,7 @@ export function SettingsClient() {
 
             {/* Slider 4: Urf */}
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs">
+              <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-text-primary">Custom & Local Custom Weight (Urf)</span>
                 <span className="font-bold text-brand-green">{urfWeight}%</span>
               </div>

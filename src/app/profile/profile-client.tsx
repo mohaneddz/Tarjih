@@ -74,10 +74,10 @@ export function ProfileClient() {
               </div>
               <AuthenticStamp size="sm" showLabel={false} />
             </div>
-            <p className="text-xs text-brand-gold font-bold font-serif">
+            <p className="text-sm text-brand-gold font-bold font-serif">
               Tarjih Juristic Assembly • Fiqh al-Nawazil Division
             </p>
-            <p className="text-xs text-text-secondary leading-relaxed max-w-2xl mt-1">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-2xl mt-1">
               Dedicated to evaluating contemporary legal issues and synthesizing classical Usul al-Fiqh principles with modern societal realities, ensuring authentic, consistent, and balanced legal resolutions.
             </p>
           </div>
@@ -88,13 +88,13 @@ export function ProfileClient() {
           {stats.map((s, idx) => (
             <Card key={idx} hoverable={false} className="p-6 flex items-center justify-between gap-4 text-left relative overflow-hidden">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">
                   {s.title}
                 </span>
                 <span className="text-3xl font-serif font-bold text-brand-green leading-tight">
                   {s.value}
                 </span>
-                <span className="text-[10px] text-text-secondary mt-1">
+                <span className="text-[12px] text-text-secondary mt-1">
                   {s.desc}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export function ProfileClient() {
               {expertises.map((exp, idx) => (
                 <div
                   key={idx}
-                  className="bg-card-warm/60 border border-border-warm rounded-xl p-3 text-xs font-semibold text-[#1E2A22] dark:text-[#E2E8E5] flex items-center gap-2.5 shadow-sm"
+                  className="bg-card-warm/60 border border-border-warm rounded-xl p-3 text-sm font-semibold text-[#1E2A22] dark:text-[#E2E8E5] flex items-center gap-2.5 shadow-sm"
                 >
                   <span className="h-2 w-2 rounded-full bg-brand-gold shrink-0" />
                   <span>{exp}</span>
@@ -140,17 +140,17 @@ export function ProfileClient() {
                   {/* Activity Details */}
                   <div className="flex flex-col gap-1.5 bg-card-warm/40 hover:bg-card-warm/80 border border-transparent hover:border-border-warm p-4 rounded-xl transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <span className="text-[10px] font-extrabold text-brand-green uppercase tracking-wider">
+                      <span className="text-[12px] font-extrabold text-brand-green uppercase tracking-wider">
                         {act.action}
                       </span>
-                      <span className="text-[9px] text-text-secondary font-semibold">
+                      <span className="text-[11px] text-text-secondary font-semibold">
                         {act.date}
                       </span>
                     </div>
                     <h4 className="font-serif text-sm font-bold text-text-primary leading-snug">
                       {act.target}
                     </h4>
-                    <p className="text-[11px] text-text-secondary leading-relaxed">
+                    <p className="text-[13px] text-text-secondary leading-relaxed">
                       {act.details}
                     </p>
                   </div>

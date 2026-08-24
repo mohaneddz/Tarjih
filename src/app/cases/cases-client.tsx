@@ -101,7 +101,7 @@ export function CasesClient() {
           </div>
 
           <Link href="/study">
-            <Button variant="primary" size="sm" className="h-10 px-5 text-xs font-bold shrink-0 shadow-sm">
+            <Button variant="primary" size="sm" className="h-10 px-5 text-sm font-bold shrink-0 shadow-sm">
               New Analysis
             </Button>
           </Link>
@@ -114,7 +114,7 @@ export function CasesClient() {
               placeholder="Search cases by question or madhhab..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 text-xs rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/60 focus:outline-none focus:border-brand-red transition-all"
+              className="w-full h-10 pl-10 pr-4 text-sm rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/60 focus:outline-none focus:border-brand-red transition-all"
             />
             <svg
               className="absolute left-3.5 top-3 h-4 w-4 text-brand-red"
@@ -127,7 +127,7 @@ export function CasesClient() {
             </svg>
           </div>
 
-          <div className="flex bg-card-warm/80 p-1 rounded-xl text-[10px] font-bold border border-border-warm">
+          <div className="flex bg-card-warm/80 p-1 rounded-xl text-[12px] font-bold border border-border-warm">
             {["All", "Resolved", "Contested", "Unresolved"].map((s) => (
               <button
                 key={s}
@@ -146,9 +146,9 @@ export function CasesClient() {
 
         <Card hoverable={false} className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border-warm bg-border-warm-light/60 text-[10px] font-bold text-text-secondary uppercase tracking-wider select-none">
+                <tr className="border-b border-border-warm bg-border-warm-light/60 text-[12px] font-bold text-text-secondary uppercase tracking-wider select-none">
                   <th className="p-4.5 pl-6">Question</th>
                   <th className="p-4.5">Madhhab / Usul</th>
                   <th className="p-4.5 text-center">Ruling</th>
@@ -201,7 +201,7 @@ export function CasesClient() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-4 text-[10px] font-bold border-brand-red/30 text-brand-red hover:bg-brand-red-light hover:text-brand-red"
+                            className="h-8 px-4 text-[12px] font-bold border-brand-red/30 text-brand-red hover:bg-brand-red-light hover:text-brand-red"
                           >
                             Open in Study
                           </Button>

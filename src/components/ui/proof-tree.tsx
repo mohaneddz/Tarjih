@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ProofView } from "@/lib/pipeline/present";
 import { cn } from "@/utils/cn";
 import { EvidenceBadge, RulingRosette, AuthenticStamp } from "@/components/ui/asset-badge";
@@ -147,8 +147,12 @@ function layoutTree(root: ProofView): { nodes: LaidOutNode[]; totalWidth: number
 const COL_WIDTH = 240;
 const CARD_W = 212;
 /* Taller than before: the primary label is now a full readable sentence
-   (goalHuman) rather than a short symbolic term, and can run up to 3 lines. */
-const CARD_H = 136;
+   (goalHuman) rather than a short symbolic term, and can run up to 3 lines.
+   Also fits a 2-line citation subtitle rather than clipping it to one. */
+const CARD_H = 150;
+
+const MIN_SCALE = 0.4;
+const MAX_SCALE = 2;
 /** Fixed height for the optional note strip below a card, capped rather than left to grow with text length. */
 const NOTE_H = 48;
 const NOTE_GAP = 6;
@@ -169,6 +173,58 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
 
   const width = totalWidth * COL_WIDTH;
   const height = (maxDepth + 1) * ROW_HEIGHT;
+
+  // Pan/zoom is a plain CSS transform on the content layer, driven by the
+  // mouse — wheel to zoom (around the cursor, so the point under it stays
+  // put), click-drag to pan. The viewport itself never scrolls natively
+  // (no overflow-auto), which is what used to produce a second, nested
+  // scrollbar fighting the page's own one.
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [transform, setTransform] = useState({ scale: 1, x: 24, y: 24 });
+  const dragState = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Re-center the tree in the viewport whenever a new proof is laid out.
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const vw = viewport.clientWidth;
+    setTransform({ scale: 1, x: Math.max((vw - width) / 2, 24), y: 24 });
+  }, [proof, width]);
+
+  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const pointerX = e.clientX - rect.left;
+    const pointerY = e.clientY - rect.top;
+    setTransform((prev) => {
+      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * (1 - e.deltaY * 0.0015)));
+      const ratio = nextScale / prev.scale;
+      return {
+        scale: nextScale,
+        x: pointerX - (pointerX - prev.x) * ratio,
+        y: pointerY - (pointerY - prev.y) * ratio,
+      };
+    });
+  }, []);
+
+  const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    dragState.current = { startX: e.clientX, startY: e.clientY, origX: transform.x, origY: transform.y };
+    setIsDragging(true);
+  }, [transform.x, transform.y]);
+
+  const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!dragState.current) return;
+    const { startX, startY, origX, origY } = dragState.current;
+    setTransform((prev) => ({ ...prev, x: origX + (e.clientX - startX), y: origY + (e.clientY - startY) }));
+  }, []);
+
+  const endDrag = useCallback(() => {
+    dragState.current = null;
+    setIsDragging(false);
+  }, []);
 
   const positionOf = (n: LaidOutNode) => ({
     cx: n.x * COL_WIDTH,
@@ -207,14 +263,40 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
 
   return (
     <div
-      className="relative w-full h-[560px] overflow-auto rounded-2xl border border-border-warm-light/40 custom-scrollbar"
+      ref={viewportRef}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={endDrag}
+      onMouseLeave={endDrag}
+      className={cn(
+        "relative w-full h-[75vh] min-h-[560px] overflow-hidden rounded-2xl border border-border-warm-light/40 select-none",
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      )}
       style={{
         backgroundImage: "radial-gradient(var(--color-border-warm) 1px, transparent 1px)",
-        backgroundSize: "18px 18px",
+        backgroundSize: `${18 * transform.scale}px ${18 * transform.scale}px`,
+        backgroundPosition: `${transform.x}px ${transform.y}px`,
         backgroundColor: "var(--color-background)",
       }}
     >
-      <div className="relative" style={{ width: Math.max(width, 400), height: Math.max(height, 200), margin: "0 auto" }}>
+      <button
+        type="button"
+        onClick={() => setTransform((prev) => ({ ...prev, scale: 1 }))}
+        className="absolute bottom-3 right-3 z-10 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-card-warm border border-border-warm text-text-secondary hover:text-text-primary hover:border-brand-red/40 shadow-sm cursor-pointer"
+      >
+        {Math.round(transform.scale * 100)}%
+      </button>
+
+      <div
+        className="relative"
+        style={{
+          width: Math.max(width, 400),
+          height: Math.max(height, 200),
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          transformOrigin: "0 0",
+        }}
+      >
         <svg className="absolute inset-0 pointer-events-none text-slate-400 dark:text-slate-500" width={width} height={height}>
           <defs>
             <marker id="proof-tree-arrow" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
@@ -266,7 +348,7 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                 )}
               >
                 {/* Sequence badge */}
-                <span className="absolute -top-2.5 -left-2.5 h-6 w-6 rounded-full bg-brand-red text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-background">
+                <span className="absolute -top-2.5 -left-2.5 h-6 w-6 rounded-full bg-brand-red text-white text-[12px] font-bold flex items-center justify-center shadow-sm border-2 border-background">
                   {n.number}
                 </span>
 
@@ -275,22 +357,22 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
                   <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0", ICON_STYLE)}>
                     {meta.icon}
                   </span>
-                  <span className="text-[9px] font-semibold text-text-secondary uppercase tracking-wide">{meta.label}</span>
+                  <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wide">{meta.label}</span>
                   {n.view.evidence.unreviewed && (
-                    <span className="text-[7px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase shrink-0 ml-auto">
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase shrink-0 ml-auto">
                       unreviewed
                     </span>
                   )}
                 </div>
 
                 <span
-                  className="font-serif text-[11px] font-bold text-text-primary leading-snug line-clamp-3"
+                  className="font-serif text-[13px] font-bold text-text-primary leading-snug line-clamp-3"
                   title={`Formal goal: ${n.view.goal}`}
                 >
                   {title}
                 </span>
                 {subtitle && (
-                  <span className="text-[9px] text-brand-red font-semibold leading-tight line-clamp-1" title={subtitle}>
+                  <span className="text-[11px] text-brand-red font-semibold leading-tight line-clamp-2" title={subtitle}>
                     {subtitle}
                   </span>
                 )}
@@ -307,7 +389,7 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
               {hasNote && (
                 <div
                   style={{ marginTop: NOTE_GAP, maxHeight: NOTE_H }}
-                  className="w-full text-[9px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 line-clamp-2 overflow-hidden"
+                  className="w-full text-[11px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 line-clamp-2 overflow-hidden"
                   title={n.view.evidence.notes}
                 >
                   {n.view.evidence.notes}
@@ -329,7 +411,7 @@ export function ProofTreeLegend() {
     { label: "Source", icon: TYPE_META.source.icon },
   ];
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 py-3 text-[10px] text-text-secondary border-t border-border-warm-light/60">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 py-3 text-[12px] text-text-secondary border-t border-border-warm-light/60">
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
           <span className={cn("h-4 w-4 rounded-full flex items-center justify-center", ICON_STYLE)}>{item.icon}</span>

@@ -33,7 +33,7 @@ export function PipelineExample() {
                 <span className="h-8 w-8 rounded-full bg-brand-red text-white text-sm font-bold flex items-center justify-center">
                   {s.n}
                 </span>
-                <span className="text-xs font-bold text-text-primary whitespace-nowrap">{s.label}</span>
+                <span className="text-sm font-bold text-text-primary whitespace-nowrap">{s.label}</span>
               </div>
               {i < steps.length - 1 && <div className="flex-1 h-px bg-brand-red/30 mx-2 mb-6" />}
             </React.Fragment>
@@ -51,15 +51,15 @@ export function PipelineExample() {
 
           {/* 2. Formal Goal */}
           <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Grounded as</span>
-            <code className="font-mono text-xs text-text-primary bg-background rounded-lg px-2 py-2 leading-relaxed">
+            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Grounded as</span>
+            <code className="font-mono text-sm text-text-primary bg-background rounded-lg px-2 py-2 leading-relaxed">
               ruling(consume(carrion), H)
             </code>
           </div>
 
           {/* 3. Proof Tree (simplified) */}
-          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-1.5 text-[11px]">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">2 derivations</span>
+          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-1.5 text-[13px]">
+            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-1">2 derivations</span>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-brand-green shrink-0" />
               <span className="text-text-secondary truncate">Qur&apos;an 5:3 — forbidden foods</span>
@@ -75,9 +75,9 @@ export function PipelineExample() {
           </div>
 
           {/* 4. Weighing */}
-          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2 text-[11px] relative overflow-hidden">
+          <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2 text-[13px] relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
+              <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
               <WeighingScale size="sm" className="opacity-80 scale-75 -mr-2 -mt-1" />
             </div>
             <div className="flex items-center justify-between">
@@ -98,15 +98,15 @@ export function PipelineExample() {
           <div className="border-2 border-brand-red rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center bg-card-warm/40 relative">
             <div className="flex items-center gap-1.5">
               <RulingRosette size="sm" />
-              <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-secondary">Verdict</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-text-secondary">Verdict</span>
             </div>
             <VerdictBadge verdict="permissible" size="md" showLabel={false} />
             <span className="font-serif text-lg font-bold text-brand-red">Permitted</span>
-            <span className="text-[10px] text-text-secondary">55% confidence</span>
+            <span className="text-[12px] text-text-secondary">55% confidence</span>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[10px] text-text-secondary">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-text-secondary">
           <span>[1] Qur&apos;an 5:3</span>
           <span>[2] Qur&apos;an 2:173</span>
           <span>[3] al-darurat tubih al-mahzurat (usul al-fiqh)</span>
