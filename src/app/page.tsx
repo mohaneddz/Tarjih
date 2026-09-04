@@ -2,6 +2,8 @@ import React from "react";
 import { Header } from "@/sections/header";
 import { Hero } from "@/sections/hero";
 import { PipelineExample } from "@/sections/pipeline-example";
+import { Architecture } from "@/sections/architecture";
+import { Comparison } from "@/sections/comparison";
 import { ReasoningSteps } from "@/sections/features";
 import { Footer } from "@/sections/footer";
 import { loadCoreKb } from "@/lib/kb/core";
@@ -31,7 +33,9 @@ export default async function Home() {
       <main className="flex-1">
         <Hero />
         <PipelineExample />
+        <Architecture />
         <ReasoningSteps coreClauseCount={core.clauses.length} reviewedClauseCount={reviewedClauseCount} />
+        <Comparison />
       </main>
 
       <Footer />
