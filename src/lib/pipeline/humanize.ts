@@ -82,6 +82,9 @@ const TEMPLATES: Record<string, Template> = {
   "custom/2": ([a, b]) => `${cap(h(b))} is the settled custom of ${h(a)}`,
   "intention/3": ([a, b, c]) => `${cap(h(a))} performs ${h(b)} for the purpose of ${h(c)}`,
   "certain/1": ([a]) => `${cap(h(a))} is established with certainty`,
+  // Phrased in the second person because this node is the asker's own claim,
+  // not something a source asserts. See `kb/premises.ts`.
+  "circumstance/1": ([a]) => `You stated that ${h(a)} applies to you`,
   "established/1": ([a]) => `${cap(h(a))} is settled by explicit text or consensus`,
   "generalisable/1": ([a]) => `${cap(h(a))} may serve as the basis for an analogy`,
   "excepted/2": ([a, b]) => `${cap(h(a))} is excepted, due to ${h(b)}`,

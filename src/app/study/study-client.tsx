@@ -538,6 +538,29 @@ export function StudyClient() {
                     The search hit a resource budget and may not have found every derivation. Treat this result as partial.
                   </div>
                 )}
+                {view.premises.length > 0 && (
+                  /*
+                   * The one part of the result a reader cannot check against a
+                   * source. Everything else here traces to a text; these are
+                   * what the engine understood about *them*, and a concession
+                   * resting on a misread one is the failure worth catching, so
+                   * it sits above the answer rather than inside the proof.
+                   */
+                  <div className="mb-6 text-sm bg-brand-red-light border border-brand-red/25 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                    <span className="text-[12px] font-bold text-brand-red uppercase tracking-widest">
+                      Taken from your question
+                    </span>
+                    <ul className="flex flex-col gap-1 text-text-secondary">
+                      {view.premises.map((p) => (
+                        <li key={p.situation}>{p.label}</li>
+                      ))}
+                    </ul>
+                    <span className="text-text-secondary/80">
+                      The ruling below holds only so far as this is true of you. Without it, the
+                      general ruling applies instead.
+                    </span>
+                  </div>
+                )}
                 {view.unresolved && (
                   <div className="mb-6 text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3">
                     The engine found genuinely conflicting rulings that its weighing rules could not separate. No single
