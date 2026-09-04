@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/utils/cn";
 import { ProofTree, ProofTreeLegend } from "@/components/ui/proof-tree";
 import type { ResolutionView } from "@/lib/pipeline/resolve";
@@ -8,6 +9,7 @@ import type { EvidenceView, OutcomeGroupView } from "@/lib/pipeline/present";
 import { HUKM_LABELS } from "@/lib/kb/ontology";
 import type { Hukm } from "@/lib/kb/ontology";
 import { VerdictBadge, EvidenceBadge, RulingRosette, WeighingScale, AuthenticStamp } from "@/components/ui/asset-badge";
+import { getSavedCases, toggleSavedCase } from "@/lib/saved-cases";
 
 interface ResolutionSummary {
   readonly id: string;
@@ -78,10 +80,74 @@ async function fetchHistory(): Promise<ResolutionSummary[] | null> {
   }
 }
 
+interface HistoryCardProps {
+  readonly entry: ResolutionSummary;
+  readonly isActive: boolean;
+  readonly isSaved: boolean;
+  readonly onSelect: () => void;
+  readonly onToggleSave: () => void;
+}
+
+function HistoryCard({ entry, isActive, isSaved, onSelect, onToggleSave }: HistoryCardProps) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        "w-full text-left p-4 lg:p-5 rounded-2xl border transition-all text-sm select-none cursor-pointer flex flex-col gap-3",
+        isActive
+          ? "bg-card-warm border-border-warm shadow-sm ring-1 ring-brand-red/10 text-text-primary"
+          : "bg-transparent border-transparent text-text-secondary hover:bg-card-warm hover:border-border-warm/50 hover:shadow-sm"
+      )}
+    >
+      <div className="flex items-center justify-between w-full gap-2">
+        <span className="text-[12px] uppercase tracking-wider font-extrabold text-brand-green truncate">
+          {entry.contested ? "Contested" : "Resolved"}
+        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {entry.verdict && <VerdictBadge verdict={entry.verdict} size="sm" showLabel={false} />}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSave();
+            }}
+            title={isSaved ? "Remove from saved cases" : "Save this case"}
+            className="p-1 rounded-md text-text-secondary hover:text-brand-red transition-colors cursor-pointer"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" fill={isSaved ? "currentColor" : "none"}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <span className="font-serif font-bold text-sm text-text-primary leading-snug line-clamp-2">{entry.question}</span>
+      {entry.confidence !== null && <span className="text-sm text-text-secondary">{entry.confidence}% confidence</span>}
+    </div>
+  );
+}
+
 export function StudyClient() {
+  // React Compiler's memoization of the deeply-nested history-list JSX below
+  // (a ternary inside a mapped conditional) has been observed to drop
+  // references to identifiers defined outside that region — it threw
+  // "X is not defined" at runtime for two unrelated identifiers in a row
+  // while the component itself compiled cleanly. Opting this component out
+  // is the documented escape hatch rather than restructuring working JSX
+  // around a compiler bug.
+  "use no memo";
+  const searchParams = useSearchParams();
   const [history, setHistory] = useState<ResolutionSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
 
   const [inputVal, setInputVal] = useState(SUGGESTIONS[0]);
   const [madhhab, setMadhhab] = useState("Shafi'i");
@@ -113,6 +179,18 @@ export function StudyClient() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setSavedIds(new Set(getSavedCases().map((c) => c.id)));
+  }, []);
+
+  // Arriving from the Saved Cases page (`/study?id=...`) loads that
+  // resolution straight away, the same as clicking it in the sidebar would.
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) handleHistoryClick(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   /*
    * Advances the loading caption. Held as an index rather than the string so
@@ -334,31 +412,28 @@ export function StudyClient() {
               </div>
             ) : (
               filteredHistory.map((h) => (
-                <button
+                <HistoryCard
                   key={h.id}
-                  onClick={() => handleHistoryClick(h.id)}
-                  className={cn(
-                    "w-full text-left p-4 lg:p-5 rounded-2xl border transition-all text-sm select-none cursor-pointer flex flex-col gap-3",
-                    view?.question === h.question
-                      ? "bg-card-warm border-border-warm shadow-sm ring-1 ring-brand-red/10 text-text-primary"
-                      : "bg-transparent border-transparent text-text-secondary hover:bg-card-warm hover:border-border-warm/50 hover:shadow-sm"
-                  )}
-                >
-                  <div className="flex items-center justify-between w-full gap-2">
-                    <span className="text-[12px] uppercase tracking-wider font-extrabold text-brand-green truncate">
-                      {h.contested ? "Contested" : "Resolved"}
-                    </span>
-                    {h.verdict && (
-                      <VerdictBadge verdict={h.verdict} size="sm" showLabel={false} />
-                    )}
-                  </div>
-                  <span className="font-serif font-bold text-sm text-text-primary leading-snug line-clamp-2">
-                    {h.question}
-                  </span>
-                  {h.confidence !== null && (
-                    <span className="text-sm text-text-secondary">{h.confidence}% confidence</span>
-                  )}
-                </button>
+                  entry={h}
+                  isActive={view?.question === h.question}
+                  isSaved={savedIds.has(h.id)}
+                  onSelect={() => handleHistoryClick(h.id)}
+                  onToggleSave={() => {
+                    const saved = toggleSavedCase({
+                      id: h.id,
+                      question: h.question,
+                      verdict: h.verdict,
+                      confidence: h.confidence,
+                      contested: h.contested,
+                    });
+                    setSavedIds((prev) => {
+                      const next = new Set(prev);
+                      if (saved) next.add(h.id);
+                      else next.delete(h.id);
+                      return next;
+                    });
+                  }}
+                />
               ))
             )}
           </div>

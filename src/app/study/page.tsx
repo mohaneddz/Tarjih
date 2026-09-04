@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Header } from "@/sections/header";
 import { StudyClient } from "./study-client";
 import { Metadata } from "next";
@@ -22,7 +22,9 @@ export default function StudyPage() {
     <div className="h-screen w-full overflow-hidden flex flex-col bg-background text-foreground transition-colors duration-300">
       <Header />
       <main className="flex-1 min-h-0 relative max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-6 pb-6">
-        <StudyClient />
+        <Suspense fallback={null}>
+          <StudyClient />
+        </Suspense>
       </main>
     </div>
   );

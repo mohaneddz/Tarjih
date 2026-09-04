@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useSyncExternalStore } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/utils/cn";
+import { CommandPalette } from "@/components/ui/command-palette";
 
 const NAV_ITEMS = [
   { href: "/study", label: "Study" },
@@ -50,6 +51,18 @@ function readThemeOnServer(): boolean {
 export function Header() {
   const pathname = usePathname();
   const isDark = useSyncExternalStore(subscribeToTheme, readTheme, readThemeOnServer);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const toggleTheme = () => {
     const next = !document.documentElement.classList.contains("dark");
@@ -99,22 +112,26 @@ export function Header() {
 
         <div className="flex items-center gap-1">
           <button
+            onClick={() => setPaletteOpen(true)}
             className="text-text-secondary hover:text-text-primary transition-colors p-2.5 rounded-lg hover:bg-border-warm-light cursor-pointer"
             aria-label="Search"
+            title="Search (Ctrl+K)"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
 
-          <button
+          <Link
+            href="/saved"
             className="text-text-secondary hover:text-text-primary transition-colors p-2.5 rounded-lg hover:bg-border-warm-light cursor-pointer"
-            aria-label="Bookmarks"
+            aria-label="Saved cases"
+            title="Saved cases"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
             </svg>
-          </button>
+          </Link>
 
           <button
             onClick={toggleTheme}
@@ -133,6 +150,7 @@ export function Header() {
           </button>
         </div>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>
   );
 }
