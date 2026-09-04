@@ -32,6 +32,13 @@ export const ATOM_GLOSSES: Record<string, string> = {
   sound_sale: "a sale free of the named defects",
   ownership: "owning what is sold",
   maysir: "gambling",
+  traders: "the trading community",
+  instalment_sale: "an instalment sale",
+  debt: "a debt",
+
+  // Relations and duties
+  mafsada: "a corruption to be averted",
+  birr: "dutiful kindness",
 
   // Effective causes ('ilal) and effects
   qata_rahim: "severance of the womb-tie",

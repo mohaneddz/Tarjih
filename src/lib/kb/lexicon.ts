@@ -37,8 +37,7 @@ export interface AtomEntry {
  * These are the only atoms allowed inside `circumstance/1`, and they are
  * deliberately a separate list from `KNOWN_ATOMS`: a circumstance unlocks a
  * concession, so letting the grounding stage put an arbitrary atom there
- * would let a mis-parse hand out an exemption. The `whenAbsent` text is what
- * the UI shows to explain what the ruling would have been without it.
+ * would let a mis-parse hand out an exemption.
  */
 export interface CircumstanceEntry {
   readonly atom: string;
@@ -57,6 +56,8 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "shorten", arity: 1, label: "shortening", argumentHint: "an act of worship" },
   { functor: "omit", arity: 1, label: "omitting / not performing", argumentHint: "an obligation" },
   { functor: "perform", arity: 1, label: "performing", argumentHint: "an act of worship" },
+  { functor: "maintain", arity: 1, label: "keeping ties with / staying in touch with", argumentHint: "a relative" },
+  { functor: "document", arity: 1, label: "writing down / recording", argumentHint: "a debt or agreement" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -108,6 +109,10 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "obligatory_prayer", label: "an obligatory prayer", aliases: ["salah", "the prayer", "prayers"] },
   { atom: "fasting", label: "fasting in Ramadan", aliases: ["the fast", "fasting", "Ramadan"] },
   { atom: "tayammum", label: "tayammum (dry ablution with clean earth)", aliases: ["dry ablution", "wiping with earth instead of washing"] },
+
+  // Other
+  { atom: "debt", label: "a debt owed for a fixed term", aliases: ["a loan between people", "money owed"] },
+  { atom: "instalment_sale", label: "an instalment sale — a higher price for deferred payment, fixed at contract", aliases: ["buying in instalments", "paying monthly", "hire purchase"] },
 ];
 
 export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
@@ -140,6 +145,18 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "menstruating",
     cue: "the asker says they are on their period or menstruating",
     aliases: ["on my period", "menstruating"],
+  },
+  {
+    atom: "certain_prior_purity",
+    label: "certain of having been in a state of purity beforehand",
+    cue: "the asker says they know they had wudu, and are now unsure whether they broke it",
+    aliases: ["I had wudu", "I know I was pure"],
+  },
+  {
+    atom: "doubt_about_breaking_purity",
+    label: "unsure whether that purity was broken",
+    cue: "the asker says they are not sure whether they broke wudu",
+    aliases: ["not sure if I broke wudu", "I might have broken it"],
   },
   {
     atom: "ritual_impurity",

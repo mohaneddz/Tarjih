@@ -85,7 +85,6 @@ const TEMPLATES: Record<string, Template> = {
   // Phrased in the second person because this node is the asker's own claim,
   // not something a source asserts. See `kb/premises.ts`.
   "circumstance/1": ([a]) => `You stated that ${h(a)} applies to you`,
-  "established/1": ([a]) => `${cap(h(a))} is settled by explicit text or consensus`,
   "generalisable/1": ([a]) => `${cap(h(a))} may serve as the basis for an analogy`,
   "excepted/2": ([a, b]) => `${cap(h(a))} is excepted, due to ${h(b)}`,
 };

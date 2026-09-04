@@ -303,7 +303,12 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "intention",
     ["Agent", "Act", "Purpose"],
     "circumstantial",
-    "Agent performs Act for Purpose. Drives 'actions are by intentions'.",
+    "Agent performs Act for Purpose. Drives 'actions are by intentions'. " +
+      "Declared for the formalisation pipeline, which will meet this in the " +
+      "texts; no hand-authored clause uses it yet. Where the asker's own " +
+      "intent is what matters, prefer a `condition` plus a `circumstance` — " +
+      "an intention is a fact about one person at one moment, so it belongs " +
+      "with the query-supplied premises rather than in the KB.",
     "intention(buyer, purchase(shares), long_term_holding)"
   ),
   spec(
@@ -326,14 +331,6 @@ export const PREDICATES: readonly PredicateSpec[] = [
   ),
 
   // --- Derivational: bookkeeping the reasoning rules need ---
-  spec(
-    "established",
-    ["Proposition"],
-    "derivational",
-    "Proposition is settled by an explicit text or by ijma', and so may serve as " +
-      "the source case (asl) of an analogy.",
-    "established(ruling(consume(wine), haram))"
-  ),
   spec(
     "generalisable",
     ["Case"],
