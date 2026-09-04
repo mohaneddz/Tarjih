@@ -28,8 +28,24 @@ type Tab = "tree" | "interpretation" | "sources" | "conflicts";
 interface ApiErrorBody {
   readonly error: string;
   readonly message: string;
-  readonly detail?: { readonly term?: string };
+  readonly detail?: { readonly term?: string; readonly kind?: string };
 }
+
+interface ErrorInfo {
+  readonly message: string;
+  /**
+   * True when the question itself was the problem — not a yes/no ruling
+   * question, unrelated to fiqh, or too malformed to parse — as opposed to
+   * a well-formed question the KB simply has no rule for yet. These get a
+   * "please ask it like this" panel with examples instead of a bare error
+   * line, since telling someone their phrasing was wrong is only useful if
+   * it also shows the right shape.
+   */
+  readonly isFormatIssue: boolean;
+}
+
+/** Goal-grounding failures caused by how the question was asked, not by a real KB coverage gap. */
+const FORMAT_ISSUE_KINDS = new Set(["not-covered", "unsupported-shape", "parse-error"]);
 
 const SUGGESTIONS = [
   "Is mistreating my maternal aunt haram?",
@@ -160,7 +176,7 @@ export function StudyClient() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
 
   const [view, setView] = useState<ResolutionView | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("tree");
@@ -263,27 +279,37 @@ export function StudyClient() {
     setSelectedOutcome(next.verdict ?? next.groups[0]?.outcome ?? null);
     setSelectedClauseId(null);
     setActiveTab("tree");
-    setErrorMessage(null);
+    setErrorInfo(null);
     setPendingPreview(null);
   }
 
-  function describeError(body: ApiErrorBody): string {
+  function describeError(body: ApiErrorBody): ErrorInfo {
     if (body.error === "no_derivation") {
-      return "The knowledge base has no rule covering this yet — that's a real gap in its current coverage, not a failure to understand the question.";
+      return {
+        message: "The knowledge base has no rule covering this yet — that's a real gap in its current coverage, not a failure to understand the question.",
+        isFormatIssue: false,
+      };
     }
     if (body.error === "grounding_failed") {
+      const kind = body.detail?.kind;
+      if (kind && FORMAT_ISSUE_KINDS.has(kind)) {
+        return { message: body.message, isFormatIssue: true };
+      }
       const term = body.detail?.term;
-      return term
-        ? `"${term}" isn't a term the knowledge base recognises yet, so this can't be answered from what it currently knows.`
-        : body.message;
+      return {
+        message: term
+          ? `"${term}" isn't a term the knowledge base recognises yet, so this can't be answered from what it currently knows.`
+          : body.message,
+        isFormatIssue: false,
+      };
     }
-    return body.message || "Something went wrong.";
+    return { message: body.message || "Something went wrong.", isFormatIssue: false };
   }
 
   async function runFullResolve(question: string) {
     setIsSubmitting(true);
     setLoadingStepIndex(0);
-    setErrorMessage(null);
+    setErrorInfo(null);
     try {
       const res = await fetch("/api/resolve", {
         method: "POST",
@@ -291,7 +317,7 @@ export function StudyClient() {
         body: JSON.stringify({ question, madhhab, strictness }),
       });
       if (!res.ok) {
-        setErrorMessage(describeError(await res.json()));
+        setErrorInfo(describeError(await res.json()));
         return;
       }
       const data: ResolutionView = await res.json();
@@ -300,7 +326,7 @@ export function StudyClient() {
       if (rows) setHistory(rows);
       if (historyListRef.current) historyListRef.current.scrollTop = 0;
     } catch {
-      setErrorMessage("Could not reach the resolution engine. Check your connection and try again.");
+      setErrorInfo({ message: "Could not reach the resolution engine. Check your connection and try again.", isFormatIssue: false });
     } finally {
       setIsSubmitting(false);
     }
@@ -308,7 +334,7 @@ export function StudyClient() {
 
   async function handlePreview(question: string) {
     setPreviewLoading(true);
-    setErrorMessage(null);
+    setErrorInfo(null);
     try {
       const res = await fetch("/api/ground", {
         method: "POST",
@@ -316,13 +342,13 @@ export function StudyClient() {
         body: JSON.stringify({ question }),
       });
       if (!res.ok) {
-        setErrorMessage(describeError(await res.json()));
+        setErrorInfo(describeError(await res.json()));
         return;
       }
       const data: { goalText: string } = await res.json();
       setPendingPreview(data.goalText);
     } catch {
-      setErrorMessage("Could not reach the grounding preview.");
+      setErrorInfo({ message: "Could not reach the grounding preview.", isFormatIssue: false });
     } finally {
       setPreviewLoading(false);
     }
@@ -640,19 +666,51 @@ export function StudyClient() {
 
           {/* Body */}
           <div className="flex-grow min-h-0 overflow-y-auto custom-scrollbar">
-            {!view && !errorMessage && (
+            {!view && !errorInfo && (
               <div className="h-full flex items-center justify-center text-center text-text-secondary text-sm max-w-md mx-auto p-6 lg:p-8">
                 Ask a question above to see the engine derive, weigh, and explain a ruling.
               </div>
             )}
 
-            {errorMessage && (
-              <div className="max-w-2xl mx-auto bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 text-sm text-brand-red m-6 lg:m-8">
-                {errorMessage}
+            {errorInfo && errorInfo.isFormatIssue && (
+              <div className="max-w-2xl mx-auto m-6 lg:m-8 flex flex-col gap-5">
+                <div className="bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 flex flex-col gap-2">
+                  <span className="text-[12px] font-bold text-brand-red uppercase tracking-widest">Please ask a ruling question</span>
+                  <p className="text-sm text-text-primary leading-relaxed">
+                    Tarjih answers yes/no questions about whether a specific act is permitted, forbidden, or
+                    something in between — not open-ended, unrelated, or ambiguous questions. {errorInfo.message}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Try one of these instead</span>
+                  <div className="flex flex-col gap-2">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setInputVal(s);
+                          setPendingPreview(null);
+                          setErrorInfo(null);
+                          inputRef.current?.focus();
+                        }}
+                        className="text-left text-sm font-semibold text-text-primary bg-card-warm border border-border-warm rounded-xl px-4 py-3 hover:border-brand-red/40 hover:text-brand-red transition-colors cursor-pointer"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
-            {view && !errorMessage && (
+            {errorInfo && !errorInfo.isFormatIssue && (
+              <div className="max-w-2xl mx-auto bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 text-sm text-brand-red m-6 lg:m-8">
+                {errorInfo.message}
+              </div>
+            )}
+
+            {view && !errorInfo && (
               <div className={cn(activeTab === "tree" ? "px-3 pt-3 pb-4 lg:px-4" : "p-6 lg:p-8")}>
                 {view.truncated && (
                   <div className="mb-6 text-sm bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3">
