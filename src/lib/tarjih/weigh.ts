@@ -141,13 +141,28 @@ function adjudicate(
  * contradictions via the murajjihat and leaving ordinary scholarly spread
  * (e.g. mubah alongside makruh) alone.
  *
- * Implemented as a sequential elimination tournament: the current leader is
- * challenged by each remaining contradicting group in turn. This is a
- * simplification — a fully general treatment would check the preference
- * relation for transitivity across all pairs — but the murajjihat compare on
- * a fixed, mostly-ordered set of textual attributes, so intransitive cycles
- * are not a realistic concern for this KB, and the sequential form is what
- * keeps the trail of reasoning legible in the UI.
+ * An elimination tournament: the current leader is challenged by every group
+ * that contradicts *it*, and a challenger that wins takes its place and faces
+ * the rest. Two things follow from "contradicts it" rather than "contradicts
+ * the opening leader", and both were wrong before:
+ *
+ * - The contested/related split has to be recomputed as the leader moves.
+ *   Fixing it against `groups[0]` misfiles any group that sits close to the
+ *   opening leader but far from the eventual winner — mandub is one step from
+ *   wajib and three from haram, so a wajib-led question that resolves to haram
+ *   would have shown mandub as a merely "related" opinion while it in fact
+ *   gives the opposite instruction.
+ * - Whether the question is unresolved is a property of the *surviving*
+ *   leader, so it is settled by a final audit rather than latched the first
+ *   time any pair ties. A tie against a leader that is later displaced is no
+ *   longer the live question, and latching it reported an open question that
+ *   the tournament had in fact decided.
+ *
+ * This remains a simplification — a fully general treatment would check the
+ * preference relation for transitivity across all pairs — but the murajjihat
+ * compare on a fixed, mostly-ordered set of textual attributes, so intransitive
+ * cycles are not a realistic concern for this KB, and the sequential form is
+ * what keeps the trail of reasoning legible in the UI.
  */
 export function weighRuling(result: ProveResult, evidence: EvidenceStore): TarjihResult | undefined {
   const groups = groupByOutcome(result, evidence);
@@ -163,47 +178,71 @@ export function weighRuling(result: ProveResult, evidence: EvidenceStore): Tarji
     };
   }
 
-  const contesting: OutcomeGroup[] = [];
-  const related: OutcomeGroup[] = [];
-  let current = groups[0];
-  for (const g of groups.slice(1)) {
-    if (contradicts(current.outcome, g.outcome)) contesting.push(g);
-    else related.push(g);
-  }
-
-  if (contesting.length === 0) {
-    return {
-      groups,
-      contested: false,
-      verdict: current.outcome,
-      unresolved: false,
-      resolution: [],
-      relatedOpinions: related,
-    };
-  }
-
   const resolution: TarjihStep[] = [];
-  let unresolved = false;
-  for (const challenger of contesting) {
-    const { winner, loser, step } = adjudicate(current, challenger, evidence);
-    if (!step) {
-      unresolved = true;
-      // Keep going: a later, more decisive challenger might still resolve
-      // against whichever side remains current.
-      continue;
+  const recorded = new Set<string>();
+  let current = groups[0];
+  let contested = false;
+
+  // Each pass challenges the leader with everything that contradicts it. A
+  // pass that displaces the leader is followed by another, since the new
+  // leader faces a different set of contradictions. Bounded by the number of
+  // groups: every displacement consumes one, and there are at most five.
+  for (let pass = 0; pass < groups.length; pass++) {
+    let displaced = false;
+
+    for (const challenger of groups) {
+      if (challenger === current) continue;
+      if (!contradicts(current.outcome, challenger.outcome)) continue;
+
+      contested = true;
+      const { winner, step } = adjudicate(current, challenger, evidence);
+      if (!step) continue; // Inseparable; the audit below decides what that means.
+
+      // A displacement is always followed by a rematch — the new leader is
+      // challenged by the side it just beat — and the murajjihat are
+      // symmetric, so that rematch re-derives a step already recorded. Key the
+      // pairing on the unordered pair so the trail shows each comparison once.
+      const pairing = [current.outcome, challenger.outcome].sort().join("|");
+      if (!recorded.has(pairing)) {
+        recorded.add(pairing);
+        resolution.push(step);
+      }
+
+      if (winner !== current) {
+        current = winner;
+        displaced = true;
+        break;
+      }
     }
-    resolution.push(step);
-    current = winner;
-    void loser;
+
+    if (!displaced) break;
   }
+
+  /*
+   * The verdict stands only if the surviving leader can actually be separated
+   * from every ruling that opposes it. Asking this at the end, of the leader
+   * that survived, is the whole point: a tie recorded mid-tournament against a
+   * leader that was later displaced is no longer the live question, and
+   * treating it as one reported an open question the tournament had decided.
+   */
+  const deadlocked = groups.some(
+    (g) =>
+      g !== current &&
+      contradicts(current.outcome, g.outcome) &&
+      adjudicate(current, g, evidence).step === undefined
+  );
+
+  const relatedOpinions = groups.filter(
+    (g) => g !== current && !contradicts(current.outcome, g.outcome)
+  );
 
   return {
     groups,
-    contested: true,
-    verdict: unresolved ? undefined : current.outcome,
-    unresolved,
+    contested,
+    verdict: deadlocked ? undefined : current.outcome,
+    unresolved: deadlocked,
     resolution,
-    relatedOpinions: related,
+    relatedOpinions,
   };
 }
 

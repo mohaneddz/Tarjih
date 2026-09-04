@@ -250,6 +250,76 @@ describe("uncontested and related-opinion handling", () => {
     expect(result?.verdict).toBe("haram");
     expect(result?.groups[0].confidence).toBeGreaterThan(50);
   });
+
+  it("classifies related opinions against the surviving verdict, not the opening leader", () => {
+    /*
+     * wajib leads on confidence, mandub sits one step from it (not a
+     * contradiction) and haram sits four steps away (a contradiction that
+     * haram goes on to win). Splitting contested from related against the
+     * opening leader filed mandub as "related" and left it there, so the
+     * result advertised "do this, it's rewarded" as compatible with a haram
+     * verdict three steps away from it.
+     */
+    const kb = new KnowledgeBase(
+      parseProgram(
+        "ruling(act, wajib) :- r1. ruling(act, mandub) :- r2. ruling(act, haram) :- r3. r1. r2. r3.",
+        { sourceName: "t" }
+      )
+    );
+    const evidence = new EvidenceStore([
+      // Leads on confidence (77) but is only probably transmitted.
+      { clauseId: "t:0", kind: "sunnah", reference: "wajib report", grade: "sahih", thubut: "zanni" },
+      // Second on confidence (63); one step from wajib, three from haram.
+      { clauseId: "t:1", kind: "istihsan", reference: "mandub position", grade: "sahih" },
+      // Last on confidence (60), but certainly transmitted, which decides it.
+      { clauseId: "t:2", kind: "qaida", reference: "prohibition maxim", grade: "hasan", thubut: "qati" },
+      { clauseId: "t:3", kind: "ontology", reference: "def" },
+      { clauseId: "t:4", kind: "ontology", reference: "def" },
+      { clauseId: "t:5", kind: "ontology", reference: "def" },
+    ]);
+    const result = weighRuling(prove(parseQuery("ruling(act, H)"), kb), evidence);
+
+    expect(result?.groups[0].outcome).toBe("wajib"); // pins the fixture's ordering
+    expect(result?.verdict).toBe("haram");
+    // mandub contradicts haram, so it must not be presented as merely related.
+    expect(result?.relatedOpinions.map((g) => g.outcome)).not.toContain("mandub");
+  });
+
+  it("does not stay unresolved once a later challenger settles the question", () => {
+    /*
+     * mubah and wajib are backed by identical evidence, so every murajjih rule
+     * ties between them and the first comparison deadlocks. The specific text
+     * behind haram then beats both, and nothing that contradicts haram ties
+     * with it — so the question is decided. Latching `unresolved` on that
+     * first tie reported an open question the tournament had already settled.
+     */
+    const kb = new KnowledgeBase(
+      parseProgram(
+        "ruling(act, mubah) :- r1. ruling(act, wajib) :- r2. ruling(act, haram) :- r3. r1. r2. r3.",
+        { sourceName: "t" }
+      )
+    );
+    const evidence = new EvidenceStore([
+      { clauseId: "t:0", kind: "sunnah", reference: "general report A", grade: "sahih", scope: "amm" },
+      { clauseId: "t:1", kind: "sunnah", reference: "general report B", grade: "sahih", scope: "amm" },
+      { clauseId: "t:2", kind: "sunnah", reference: "specific report", grade: "hasan", scope: "khass" },
+      { clauseId: "t:3", kind: "ontology", reference: "def" },
+      { clauseId: "t:4", kind: "ontology", reference: "def" },
+      { clauseId: "t:5", kind: "ontology", reference: "def" },
+    ]);
+    const result = weighRuling(prove(parseQuery("ruling(act, H)"), kb), evidence);
+
+    // The deadlocked pair leads on confidence; the decisive text is last.
+    expect(result?.groups.at(-1)?.outcome).toBe("haram");
+    expect(result?.verdict).toBe("haram");
+    expect(result?.unresolved).toBe(false);
+  });
+
+  it("records each pairwise comparison once, despite the rematch after a displacement", () => {
+    const result = weighRuling(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const pairings = result!.resolution.map((s) => [s.winner, s.loser].sort().join("|"));
+    expect(new Set(pairings).size).toBe(pairings.length);
+  });
 });
 
 describe("end to end: the carrion conflict", () => {
