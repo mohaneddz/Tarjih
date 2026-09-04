@@ -32,6 +32,18 @@ describe("buildFormalizationPrompt", () => {
     expect(system).toContain("causes/2");
   });
 
+  it("does not offer the asker-supplied vocabulary to a stage reading scripture", () => {
+    /*
+     * A hadith establishes what the law is, never that whoever reads it is
+     * starving. Offering `circumstance/1` here can only invite a clause that
+     * asserts a situation on everyone's behalf — which `validateClause`
+     * refuses outright, so advertising it just spends attempts on a rejection.
+     */
+    const { system } = buildFormalizationPrompt(baseInput);
+    expect(system).not.toContain("circumstance/1");
+    expect(system).not.toContain("circumstance(starvation)");
+  });
+
   it("embeds the hadith text, reference, and grade", () => {
     const { user } = buildFormalizationPrompt(baseInput);
     expect(user).toContain("Jami` at-Tirmidhi 1");

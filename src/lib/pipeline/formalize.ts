@@ -25,7 +25,7 @@ import { validateClause } from "../kb/validate";
 import { parseClause, ParseError } from "../logic/parse";
 import { literalKey } from "../logic/types";
 import { lexiconPromptBlock } from "../kb/lexicon";
-import { AHKAM_TAKLIFIYYA, PREDICATES } from "../kb/ontology";
+import { AHKAM_TAKLIFIYYA, PREDICATES, QUERY_SUPPLIED_PREDICATES } from "../kb/ontology";
 import type { HadithGrade } from "../kb/evidence";
 import type { KbIssue } from "../kb/validate";
 import type { LlmClient } from "./llm";
@@ -60,7 +60,9 @@ export type FormalizeResult =
   | { readonly ok: false; readonly reason: "llm-error"; readonly message: string };
 
 function predicateReference(): string {
-  return PREDICATES.filter((p) => p.group !== "derivational")
+  return PREDICATES.filter(
+    (p) => p.group !== "derivational" && !QUERY_SUPPLIED_PREDICATES.has(`${p.name}/${p.arity}`)
+  )
     .map((p) => `  - ${p.name}/${p.arity}: ${p.meaning}`)
     .join("\n");
 }
@@ -81,7 +83,7 @@ rather than inventing a rule that is not there.
 Available predicates (use ONLY these; do not invent new ones):
 ${predicateReference()}
 
-${lexiconPromptBlock()}
+${lexiconPromptBlock(false)}
 
 If the act or entity the hadith concerns is not in the known-entities list above,
 introduce a new lowercase snake_case atom for it rather than forcing it into an

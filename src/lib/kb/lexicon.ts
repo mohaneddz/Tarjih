@@ -188,8 +188,17 @@ export function findCircumstance(name: string): CircumstanceEntry | undefined {
   return CIRCUMSTANCE_INDEX.get(name);
 }
 
-/** Renders the vocabulary as a block for the NL-parsing prompt. */
-export function lexiconPromptBlock(): string {
+/**
+ * Renders the vocabulary as a block for an LLM prompt.
+ *
+ * `includeCircumstances` is off for the formalisation stage. A hadith
+ * establishes what the law is, never that the person reading it is starving,
+ * so offering that vocabulary there can only invite a clause that asserts a
+ * situation on everyone's behalf. `validateClause` refuses such a clause
+ * outright; not advertising the predicate keeps the model from spending
+ * attempts on one.
+ */
+export function lexiconPromptBlock(includeCircumstances = true): string {
   const acts = KNOWN_ACTS.map((a) => `  - ${a.functor}(X) — ${a.label}; X must be ${a.argumentHint} from the list below`).join(
     "\n"
   );
@@ -197,12 +206,13 @@ export function lexiconPromptBlock(): string {
     const aliasText = a.aliases?.length ? ` (aka: ${a.aliases.join(", ")})` : "";
     return `  - ${a.atom} — ${a.label}${aliasText}`;
   }).join("\n");
+  const base =
+    `Known acts:\n${acts}\n\n` +
+    `Known entities (use exactly these atom names, lowercase with underscores):\n${atoms}`;
+  if (!includeCircumstances) return base;
+
   const circumstances = KNOWN_CIRCUMSTANCES.map(
     (c) => `  - circumstance(${c.atom}) — ${c.label}. Add this only when ${c.cue}.`
   ).join("\n");
-  return (
-    `Known acts:\n${acts}\n\n` +
-    `Known entities (use exactly these atom names, lowercase with underscores):\n${atoms}\n\n` +
-    `Known circumstances (about the ASKER's own situation, not the act):\n${circumstances}`
-  );
+  return `${base}\n\nKnown circumstances (about the ASKER's own situation, not the act):\n${circumstances}`;
 }

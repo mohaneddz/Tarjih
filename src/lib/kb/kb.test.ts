@@ -202,6 +202,32 @@ describe("clause validation", () => {
     expect(found).toContain("invalid-hukm");
     expect(found).toContain("unknown-predicate");
   });
+
+  describe("query-supplied predicates", () => {
+    /*
+     * A clause may depend on the asker's circumstance but must never assert
+     * one. `circumstance(starvation).` in the KB is not a fact about the law,
+     * it is a claim that everyone who asks is starving — which hands every
+     * concession keyed on it to every asker, the exact bug the predicate
+     * exists to prevent. The formalisation pipeline is the likeliest source,
+     * since it proposes clauses from text, but a hand-authored one would be
+     * just as wrong, so the check lives with the other KB invariants.
+     */
+    it("refuses a clause that asserts a circumstance as a fact", () => {
+      const c = parseClause("circumstance(starvation).");
+      expect(codes(validateClause(c))).toContain("asserts-query-predicate");
+    });
+
+    it("refuses a rule that concludes one", () => {
+      const c = parseClause("circumstance(S) :- necessity(S).");
+      expect(codes(validateClause(c))).toContain("asserts-query-predicate");
+    });
+
+    it("allows a clause that merely depends on one", () => {
+      const c = parseClause("ruling(consume(x), mubah) :- circumstance(starvation).");
+      expect(codes(validateClause(c))).not.toContain("asserts-query-predicate");
+    });
+  });
 });
 
 describe("KB validation", () => {

@@ -53,6 +53,28 @@ export function validateClause(clause: Clause): KbIssue[] {
   const issues: KbIssue[] = [];
   const literals = [clause.head, ...clause.body];
 
+  /*
+   * A clause may *depend* on a query-supplied predicate but must never
+   * conclude one. `circumstance(starvation).` in the KB is not a fact about
+   * the law, it is a claim that everyone who asks is starving — and it hands
+   * every concession keyed on it to every asker, which is exactly the bug
+   * that predicate exists to prevent. Checked here rather than only in the
+   * formalisation pipeline because a hand-authored clause would be just as
+   * wrong, and because a generated one reaches the KB through the same gate.
+   */
+  const headKey = `${clause.head.predicate}/${clause.head.args.length}`;
+  if (QUERY_SUPPLIED_PREDICATES.has(headKey)) {
+    issues.push({
+      severity: "error",
+      clauseId: clause.id,
+      code: "asserts-query-predicate",
+      message:
+        `${literalToString(clause.head)} concludes ${headKey}, which is supplied by the ` +
+        `question rather than by the knowledge base. Asserting it here would apply it to ` +
+        `every asker.`,
+    });
+  }
+
   for (const literal of literals) {
     const spec = lookupPredicate(literal.predicate, literal.args.length);
     if (!spec) {
