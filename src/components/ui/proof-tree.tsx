@@ -3,7 +3,7 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ProofView } from "@/lib/pipeline/present";
 import { cn } from "@/utils/cn";
-import { EvidenceBadge, RulingRosette, AuthenticStamp } from "@/components/ui/asset-badge";
+import { EvidenceBadge, RulingRosette } from "@/components/ui/asset-badge";
 
 interface ProofTreeProps {
   readonly proof: ProofView;

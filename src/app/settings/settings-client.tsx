@@ -5,7 +5,7 @@ import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RulingRosette, WeighingScale, EvidenceBadge } from "@/components/ui/asset-badge";
+import { RulingRosette, WeighingScale } from "@/components/ui/asset-badge";
 
 export function SettingsClient() {
   const [defaultMadhhab, setDefaultMadhhab] = useState("Shafi'i");

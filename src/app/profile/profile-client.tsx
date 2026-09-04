@@ -4,7 +4,7 @@ import React from "react";
 import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
-import { AuthenticStamp, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
+import { AuthenticStamp, WeighingScale, RulingRosette } from "@/components/ui/asset-badge";
 
 export function ProfileClient() {
   const stats = [

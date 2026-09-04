@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/utils/cn";
 import type { kbStatistics } from "@/lib/kb/entry";
 import type { ReviewQueueItem, ExcludedLiveEntry } from "@/app/api/kb/review-queue/route";
-import { EvidenceBadge, AuthenticStamp, RulingRosette } from "@/components/ui/asset-badge";
+import { EvidenceBadge, RulingRosette } from "@/components/ui/asset-badge";
 
 export interface CoreClauseView {
   readonly id: string;
@@ -50,29 +50,41 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
   const [tab, setTab] = useState<Tab>("core");
   const [search, setSearch] = useState("");
 
-  const [queue, setQueue] = useState<ReviewQueueItem[]>([]);
+  // `null` means "not fetched yet", which is also what makes the queue
+  // loading. Deriving the flag from the data rather than tracking it removes
+  // the only synchronous setState in the effect below, and stops the spinner
+  // flashing over an already-populated list on every approve.
+  const [queue, setQueue] = useState<ReviewQueueItem[] | null>(null);
   const [excludedLive, setExcludedLive] = useState<ExcludedLiveEntry[]>([]);
-  const [queueLoading, setQueueLoading] = useState(true);
+  const [reloadToken, setReloadToken] = useState(0);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function loadQueue() {
-    setQueueLoading(true);
-    try {
-      const res = await fetch("/api/kb/review-queue");
-      if (res.ok) {
-        const data = await res.json();
-        setQueue(data.items ?? []);
-        setExcludedLive(data.excluded ?? []);
-      }
-    } finally {
-      setQueueLoading(false);
-    }
-  }
+  const queueLoading = queue === null;
+  const queueItems = queue ?? [];
 
   useEffect(() => {
-    if (tab === "queue") loadQueue();
-  }, [tab]);
+    if (tab !== "queue") return;
+    // Guarded against a stale response landing after the tab has moved on or
+    // a newer reload has been requested.
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/kb/review-queue");
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setQueue(data.items ?? []);
+        setExcludedLive(data.excluded ?? []);
+      } catch {
+        // Leave the previous list in place; the review queue is not worth
+        // blanking the page over.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, reloadToken]);
 
   const filteredCore = useMemo(() => {
     if (!search.trim()) return coreClauses;
@@ -96,7 +108,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
         setActionError(body.message || "Action failed.");
         return;
       }
-      await loadQueue();
+      setReloadToken((t) => t + 1);
     } catch {
       setActionError("Could not reach the server.");
     } finally {
@@ -117,7 +129,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
           onClick={() => setTab("queue")}
           className={cn("px-4 py-2 rounded-lg transition-all cursor-pointer", tab === "queue" ? "bg-background text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary")}
         >
-          Review Queue {queue.length > 0 && `(${queue.length})`}
+          Review Queue {queueItems.length > 0 && `(${queueItems.length})`}
         </button>
       </div>
 
@@ -197,13 +209,13 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
           {queueLoading ? (
             <div className="text-center py-12 text-text-secondary text-sm">Loading review queue...</div>
-          ) : queue.length === 0 ? (
+          ) : queueItems.length === 0 ? (
             <div className="text-center py-12 text-text-secondary text-sm bg-card-warm border border-border-warm rounded-2xl">
               Nothing awaiting review. Run the formalization pipeline to generate candidates.
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {queue.map((item) => (
+              {queueItems.map((item) => (
                 <div key={item.id} className="bg-card-warm border border-border-warm rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">

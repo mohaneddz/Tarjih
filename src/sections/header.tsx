@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useSyncExternalStore } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/utils/cn";
@@ -11,6 +12,35 @@ const NAV_ITEMS = [
   { href: "/cases", label: "Cases" },
 ] as const;
 
+/*
+ * The theme is not React state. It lives as a class on <html>, put there by
+ * the pre-hydration script in layout.tsx before React runs at all, so the
+ * button reads it as an external store rather than keeping a copy that has to
+ * be pushed back into sync on mount.
+ *
+ * Subscribing rather than snapshotting once also keeps the icon honest when
+ * the class changes without going through this button — which is what
+ * happens on a back/forward restore.
+ */
+function subscribeToTheme(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => observer.disconnect();
+}
+
+function readTheme(): boolean {
+  return document.documentElement.classList.contains("dark");
+}
+
+/**
+ * There is no document on the server and no way to know the reader's
+ * preference before the script runs, so the markup is rendered light and the
+ * first client read corrects it.
+ */
+function readThemeOnServer(): boolean {
+  return false;
+}
+
 /**
  * Site navigation. Matches the white/burgundy identity in design/*.png:
  * a slim three-item nav (Study / Knowledge Base / Cases) with a red
@@ -19,26 +49,26 @@ const NAV_ITEMS = [
  */
 export function Header() {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const isDark = useSyncExternalStore(subscribeToTheme, readTheme, readThemeOnServer);
 
   const toggleTheme = () => {
     const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
-    setIsDark(next);
+    // No setState: the class change is the state, and the observer above
+    // reports it back.
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border-warm bg-background/95 backdrop-blur-md shrink-0 select-none transition-colors duration-200">
       <div className="mx-auto flex h-16 max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-3 group">
-          <img
+          <Image
             src="/logo/tarjih-icon-transparent.png"
-            alt="Tarjih Logo"
+            alt=""
+            width={40}
+            height={40}
+            priority
             className="h-9 w-9 lg:h-10 lg:w-10 object-contain transition-transform group-hover:scale-105 dark:brightness-0 dark:invert"
           />
           <span className="font-serif text-xl lg:text-2xl font-bold tracking-wide text-text-primary transition-colors">

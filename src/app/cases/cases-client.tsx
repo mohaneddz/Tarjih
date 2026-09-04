@@ -5,8 +5,6 @@ import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { HUKM_LABELS } from "@/lib/kb/ontology";
-import type { Hukm } from "@/lib/kb/ontology";
 import Link from "next/link";
 import { VerdictBadge, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
 
@@ -29,10 +27,6 @@ interface ResolutionSummary {
   confidence: number | null;
   contested: boolean;
   createdAt: string;
-}
-
-function hukmLabel(h: string): string {
-  return HUKM_LABELS[h as Hukm]?.en ?? h;
 }
 
 export function CasesClient() {

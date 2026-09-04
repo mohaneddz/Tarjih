@@ -61,6 +61,23 @@ function countUses(proof: OutcomeGroupView["proof"], clauseId: string): number {
   return count;
 }
 
+/**
+ * Fetches past resolutions, returning null on any failure.
+ *
+ * Returns the rows rather than setting state itself so the caller owns the
+ * write. History is a convenience: a failed fetch leaves whatever is already
+ * on screen, and never surfaces an error.
+ */
+async function fetchHistory(): Promise<ResolutionSummary[] | null> {
+  try {
+    const res = await fetch("/api/resolutions");
+    if (!res.ok) return null;
+    return (await res.json()) as ResolutionSummary[];
+  } catch {
+    return null;
+  }
+}
+
 export function StudyClient() {
   const [history, setHistory] = useState<ResolutionSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,7 +93,7 @@ export function StudyClient() {
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingStep, setLoadingStep] = useState(LOADING_STEPS[0]);
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [view, setView] = useState<ResolutionView | null>(null);
@@ -87,27 +104,27 @@ export function StudyClient() {
   const historyListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const loadHistory = async () => {
-    try {
-      const res = await fetch("/api/resolutions");
-      if (!res.ok) return;
-      setHistory(await res.json());
-    } catch {
-      // History is a convenience; a failed fetch just leaves the list empty.
-    }
-  };
-
   useEffect(() => {
-    loadHistory();
+    let cancelled = false;
+    fetchHistory().then((rows) => {
+      if (!cancelled && rows) setHistory(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  /*
+   * Advances the loading caption. Held as an index rather than the string so
+   * the first step can be shown by resetting the index alongside
+   * `setIsSubmitting(true)` in the event handler, instead of being pushed in
+   * synchronously from here — a setState in an effect body forces a second
+   * render pass before anything is painted.
+   */
   useEffect(() => {
     if (!isSubmitting) return;
-    let idx = 0;
-    setLoadingStep(LOADING_STEPS[0]);
     const interval = setInterval(() => {
-      idx = (idx + 1) % LOADING_STEPS.length;
-      setLoadingStep(LOADING_STEPS[idx]);
+      setLoadingStepIndex((i) => (i + 1) % LOADING_STEPS.length);
     }, 1400);
     return () => clearInterval(interval);
   }, [isSubmitting]);
@@ -187,6 +204,7 @@ export function StudyClient() {
 
   async function runFullResolve(question: string) {
     setIsSubmitting(true);
+    setLoadingStepIndex(0);
     setErrorMessage(null);
     try {
       const res = await fetch("/api/resolve", {
@@ -200,7 +218,8 @@ export function StudyClient() {
       }
       const data: ResolutionView = await res.json();
       applyView(data);
-      loadHistory();
+      const rows = await fetchHistory();
+      if (rows) setHistory(rows);
       if (historyListRef.current) historyListRef.current.scrollTop = 0;
     } catch {
       setErrorMessage("Could not reach the resolution engine. Check your connection and try again.");
@@ -869,7 +888,7 @@ export function StudyClient() {
             <span className="font-serif font-bold text-base text-text-primary tracking-wide animate-pulse">
               Tarjih Resolution Engine
             </span>
-            <span className="text-sm text-brand-red font-bold font-serif min-h-[1.5rem]">{loadingStep}</span>
+            <span className="text-sm text-brand-red font-bold font-serif min-h-[1.5rem]">{LOADING_STEPS[loadingStepIndex]}</span>
           </div>
         </div>
       )}
