@@ -80,7 +80,16 @@ export interface OutcomeGroupView {
   readonly proof: ProofView;
 }
 
-export function presentGroup(group: OutcomeGroup, evidence: EvidenceStore): OutcomeGroupView {
+/**
+ * Generic over the outcome axis: a view carries the outcome as a plain string
+ * because the UI renders a label either way, and the alternative — a separate
+ * view type per axis — would duplicate the whole presentation layer to express
+ * a distinction the presentation layer does not act on.
+ */
+export function presentGroup<T extends string>(
+  group: OutcomeGroup<T>,
+  evidence: EvidenceStore
+): OutcomeGroupView {
   return {
     outcome: group.outcome,
     confidence: group.confidence,
@@ -96,7 +105,7 @@ export interface TarjihStepView {
   readonly explanation: string;
 }
 
-export function presentStep(step: TarjihStep): TarjihStepView {
+export function presentStep<T extends string>(step: TarjihStep<T>): TarjihStepView {
   return { rule: step.ruleLabel, winner: step.winner, loser: step.loser, explanation: step.explanation };
 }
 

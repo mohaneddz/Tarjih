@@ -10,77 +10,116 @@
 
 import type { ProveResult, Solution } from "../engine/prover";
 import type { EvidenceStore } from "../kb/evidence";
-import { contradicts, isHukm } from "../kb/ontology";
-import type { Hukm } from "../kb/ontology";
+import { contradicts, isHukm, isValidity, validityContradicts } from "../kb/ontology";
+import type { Hukm, Validity } from "../kb/ontology";
 import { buildRuleInput, MURAJJIH_RULES, overallStrength, rootClauseId } from "./murajjih";
 import { chainStrength, combinedConfidence } from "./strength";
 
-export interface Derivation {
+/**
+ * The set of answers one kind of question can come back with.
+ *
+ * Everything in this module — grouping, contest detection, the tournament —
+ * is about the *shape* of a disagreement, not about what is being disagreed
+ * over, so it is parameterised over the axis rather than hard-wired to the
+ * five ahkam. The murajjihat compare evidence, and evidence does not care
+ * whether the conclusion is "forbidden" or "void".
+ *
+ * The axis supplies the two things that genuinely differ: which query
+ * variable carries the answer, and when two answers are far enough apart that
+ * one has to be chosen rather than both being reported.
+ */
+export interface OutcomeAxis<T extends string> {
+  readonly id: string;
+  /** Query variable the answer is bound to, e.g. "H" for ruling/2. */
+  readonly variable: string;
+  isValue(name: string): name is T;
+  contradicts(a: T, b: T): boolean;
+}
+
+/** al-ahkam al-taklifiyya: the five defining rulings, as `ruling(Act, H)`. */
+export const AHKAM_AXIS: OutcomeAxis<Hukm> = {
+  id: "ahkam",
+  variable: "H",
+  isValue: isHukm,
+  contradicts,
+};
+
+/** al-ahkam al-wad'iyya: declaratory status, as `validity(Transaction, V)`. */
+export const VALIDITY_AXIS: OutcomeAxis<Validity> = {
+  id: "validity",
+  variable: "V",
+  isValue: isValidity,
+  contradicts: validityContradicts,
+};
+
+export interface Derivation<T extends string = Hukm> {
   readonly solution: Solution;
-  readonly outcome: Hukm;
+  readonly outcome: T;
   readonly strength: number;
   readonly rootClauseId: string;
 }
 
-export interface OutcomeGroup {
-  readonly outcome: Hukm;
-  readonly derivations: readonly Derivation[];
+export interface OutcomeGroup<T extends string = Hukm> {
+  readonly outcome: T;
+  readonly derivations: readonly Derivation<T>[];
   /** The single strongest derivation, used as this group's representative in tarjih comparisons. */
-  readonly best: Derivation;
+  readonly best: Derivation<T>;
   /** Computed from `best.strength` plus a capped bump for independent corroboration. */
   readonly confidence: number;
 }
 
-export interface TarjihStep {
+export interface TarjihStep<T extends string = Hukm> {
   readonly rule: string;
   readonly ruleLabel: string;
-  readonly winner: Hukm;
-  readonly loser: Hukm;
+  readonly winner: T;
+  readonly loser: T;
   readonly explanation: string;
 }
 
-export interface TarjihResult {
-  /** One group per distinct ruling reached, sorted by confidence descending. */
-  readonly groups: readonly OutcomeGroup[];
+export interface TarjihResult<T extends string = Hukm> {
+  /** One group per distinct answer reached, sorted by confidence descending. */
+  readonly groups: readonly OutcomeGroup<T>[];
   /**
-   * True when at least two groups give instructions that cannot honestly be
-   * presented as a spread of opinion (see `contradicts`) and had to be
-   * weighed against each other.
+   * True when at least two groups give answers that cannot honestly be
+   * presented as a spread of opinion (see the axis's `contradicts`) and had to
+   * be weighed against each other.
    */
   readonly contested: boolean;
-  /** The prevailing ruling. Present even when uncontested (there is still exactly one answer). */
-  readonly verdict?: Hukm;
+  /** The prevailing answer. Present even when uncontested (there is still exactly one). */
+  readonly verdict?: T;
   /** True when contested and the murajjihat could not separate the sides — reported, not papered over. */
   readonly unresolved: boolean;
   /** The tournament's reasoning, in order. Empty when uncontested. */
-  readonly resolution: readonly TarjihStep[];
-  /** Outcome groups that differ from the verdict but do not rise to genuine contradiction (e.g. makruh alongside mubah). */
-  readonly relatedOpinions: readonly OutcomeGroup[];
+  readonly resolution: readonly TarjihStep<T>[];
+  /** Groups that differ from the verdict but do not rise to genuine contradiction (e.g. makruh alongside mubah). */
+  readonly relatedOpinions: readonly OutcomeGroup<T>[];
 }
 
-const HUKM_VAR = "H";
-
-function outcomeVar(solution: Solution): Hukm | undefined {
-  const term = solution.bindings[HUKM_VAR];
-  if (!term || term.kind !== "atom" || !isHukm(term.name)) return undefined;
+function outcomeVar<T extends string>(solution: Solution, axis: OutcomeAxis<T>): T | undefined {
+  const term = solution.bindings[axis.variable];
+  if (!term || term.kind !== "atom" || !axis.isValue(term.name)) return undefined;
   return term.name;
 }
 
 /**
- * Groups the solutions of a `ruling(Act, H)`-shaped query by the value bound
- * to `H`, computing each group's representative derivation and confidence.
+ * Groups a query's solutions by the value bound to the axis variable,
+ * computing each group's representative derivation and confidence.
  *
- * Solutions that do not bind `H` to one of the five ahkam (a different query
- * shape entirely) are silently skipped rather than erroring, since this
- * function is meant to be called speculatively on any ProveResult.
+ * Solutions that do not bind that variable to a value on the axis (a
+ * different query shape entirely) are silently skipped rather than erroring,
+ * since this function is meant to be called speculatively on any ProveResult.
  */
-export function groupByOutcome(result: ProveResult, evidence: EvidenceStore): OutcomeGroup[] {
-  const byOutcome = new Map<Hukm, Derivation[]>();
+export function groupByOutcome<T extends string = Hukm>(
+  result: ProveResult,
+  evidence: EvidenceStore,
+  axis: OutcomeAxis<T> = AHKAM_AXIS as unknown as OutcomeAxis<T>
+): OutcomeGroup<T>[] {
+  const byOutcome = new Map<T, Derivation<T>[]>();
 
   for (const solution of result.solutions) {
-    const outcome = outcomeVar(solution);
+    const outcome = outcomeVar(solution, axis);
     if (!outcome) continue;
-    const derivation: Derivation = {
+    const derivation: Derivation<T> = {
       solution,
       outcome,
       strength: chainStrength(solution, evidence),
@@ -91,7 +130,7 @@ export function groupByOutcome(result: ProveResult, evidence: EvidenceStore): Ou
     else byOutcome.set(outcome, [derivation]);
   }
 
-  const groups: OutcomeGroup[] = [];
+  const groups: OutcomeGroup<T>[] = [];
   for (const [outcome, derivations] of byOutcome) {
     const best = derivations.reduce((a, b) => (b.strength > a.strength ? b : a));
     const confidence = combinedConfidence(derivations.map((d) => d.strength));
@@ -105,11 +144,11 @@ export function groupByOutcome(result: ProveResult, evidence: EvidenceStore): Ou
  * Runs the murajjihat between two representative derivations. Returns the
  * winner and, when one was found, which rule decided and why.
  */
-function adjudicate(
-  a: OutcomeGroup,
-  b: OutcomeGroup,
+function adjudicate<T extends string>(
+  a: OutcomeGroup<T>,
+  b: OutcomeGroup<T>,
   evidence: EvidenceStore
-): { winner: OutcomeGroup; loser: OutcomeGroup; step?: TarjihStep } {
+): { winner: OutcomeGroup<T>; loser: OutcomeGroup<T>; step?: TarjihStep<T> } {
   const inputA = buildRuleInput(a.best.solution, evidence);
   const inputB = buildRuleInput(b.best.solution, evidence);
 
@@ -164,8 +203,12 @@ function adjudicate(
  * cycles are not a realistic concern for this KB, and the sequential form is
  * what keeps the trail of reasoning legible in the UI.
  */
-export function weighRuling(result: ProveResult, evidence: EvidenceStore): TarjihResult | undefined {
-  const groups = groupByOutcome(result, evidence);
+export function weighRuling<T extends string = Hukm>(
+  result: ProveResult,
+  evidence: EvidenceStore,
+  axis: OutcomeAxis<T> = AHKAM_AXIS as unknown as OutcomeAxis<T>
+): TarjihResult<T> | undefined {
+  const groups = groupByOutcome(result, evidence, axis);
   if (groups.length === 0) return undefined;
   if (groups.length === 1) {
     return {
@@ -178,7 +221,7 @@ export function weighRuling(result: ProveResult, evidence: EvidenceStore): Tarji
     };
   }
 
-  const resolution: TarjihStep[] = [];
+  const resolution: TarjihStep<T>[] = [];
   const recorded = new Set<string>();
   let current = groups[0];
   let contested = false;
@@ -192,7 +235,7 @@ export function weighRuling(result: ProveResult, evidence: EvidenceStore): Tarji
 
     for (const challenger of groups) {
       if (challenger === current) continue;
-      if (!contradicts(current.outcome, challenger.outcome)) continue;
+      if (!axis.contradicts(current.outcome, challenger.outcome)) continue;
 
       contested = true;
       const { winner, step } = adjudicate(current, challenger, evidence);
@@ -228,12 +271,12 @@ export function weighRuling(result: ProveResult, evidence: EvidenceStore): Tarji
   const deadlocked = groups.some(
     (g) =>
       g !== current &&
-      contradicts(current.outcome, g.outcome) &&
+      axis.contradicts(current.outcome, g.outcome) &&
       adjudicate(current, g, evidence).step === undefined
   );
 
   const relatedOpinions = groups.filter(
-    (g) => g !== current && !contradicts(current.outcome, g.outcome)
+    (g) => g !== current && !axis.contradicts(current.outcome, g.outcome)
   );
 
   return {
@@ -247,12 +290,12 @@ export function weighRuling(result: ProveResult, evidence: EvidenceStore): Tarji
 }
 
 /** Renders a group's outcome as `haram (72% confidence)` style text, for logging and quick display. */
-export function summariseGroup(group: OutcomeGroup): string {
+export function summariseGroup<T extends string>(group: OutcomeGroup<T>): string {
   return `${group.outcome} (${group.confidence}% confidence, ${group.derivations.length} derivation${group.derivations.length === 1 ? "" : "s"})`;
 }
 
 /** Debug helper: renders a full tarjih result as readable text. */
-export function tarjihToString(result: TarjihResult): string {
+export function tarjihToString<T extends string>(result: TarjihResult<T>): string {
   const lines: string[] = [];
   lines.push(`Groups: ${result.groups.map(summariseGroup).join("; ")}`);
   if (result.contested) {

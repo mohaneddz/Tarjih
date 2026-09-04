@@ -28,6 +28,11 @@ export const ATOM_GLOSSES: Record<string, string> = {
   khamr: "khamr (wine)",
   small_measure_of_muskir: "small quantity of an intoxicant",
 
+  // Transactions
+  sound_sale: "a sale free of the named defects",
+  ownership: "owning what is sold",
+  maysir: "gambling",
+
   // Effective causes ('ilal) and effects
   qata_rahim: "severance of the womb-tie",
   iskar: "intoxication",

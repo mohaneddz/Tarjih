@@ -50,7 +50,10 @@ export interface CircumstanceEntry {
 
 export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "mistreat", arity: 1, label: "mistreating / disrespecting", argumentHint: "a relative" },
-  { functor: "consume", arity: 1, label: "eating or drinking", argumentHint: "a foodstuff" },
+  { functor: "consume", arity: 1, label: "eating or drinking", argumentHint: "a foodstuff or drink" },
+  { functor: "sell", arity: 1, label: "selling / entering into", argumentHint: "a kind of sale contract" },
+  { functor: "lend", arity: 1, label: "lending under", argumentHint: "a kind of loan" },
+  { functor: "play", arity: 1, label: "taking part in", argumentHint: "a game of chance" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -76,6 +79,27 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "spirits", label: "spirits (distilled liquor)", aliases: ["liquor", "vodka", "whisky"] },
   { atom: "sip_of_khamr", label: "a sip of wine, below the intoxicating amount", aliases: ["a small amount of alcohol", "one drink"] },
   { atom: "narcotic", label: "a narcotic or recreational drug", aliases: ["drugs", "cannabis", "hashish", "cocaine"] },
+
+  // Contracts and dealings
+  { atom: "interest_loan", label: "a loan repaid with stipulated interest", aliases: ["interest", "usury", "a bank loan with interest"] },
+  { atom: "unequal_gold_exchange", label: "exchanging gold for gold in unequal amounts", aliases: ["gold for gold", "currency exchange at unequal weight"] },
+  { atom: "unborn_calf", label: "an animal not yet born, or not yet conceived", aliases: ["unborn animal", "an unborn calf", "next year's offspring"] },
+  {
+    atom: "fish_still_in_water",
+    // Distinguished from salam by what is *unspecified*, not by the delay.
+    // Both are sales of goods not yet in hand; only this one leaves the
+    // quantity and the delivery unfixed, which is the whole difference.
+    label: "an uncaught catch, with nothing fixed about how much will be caught or whether it will be",
+    aliases: ["fish still in the sea", "whatever the net brings up", "the catch before it is caught"],
+  },
+  { atom: "maysir", label: "maysir (gambling)", aliases: ["gambling", "betting", "a wager", "the lottery"] },
+  { atom: "spot_sale", label: "an ordinary sale, goods and price exchanged at once", aliases: ["a normal sale", "buying something outright"] },
+  {
+    atom: "salam_contract",
+    label:
+      "salam — paying in full now for goods whose quantity, quality and delivery date are all fixed at the time of contract",
+    aliases: ["paying upfront for a fixed order", "advance purchase of a specified quantity"],
+  },
 ];
 
 export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [

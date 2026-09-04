@@ -20,10 +20,11 @@ import type { LlmClient } from "./llm";
 import { presentGroup, presentStep } from "./present";
 import type { OutcomeGroupView, TarjihStepView } from "./present";
 import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
-import { weighRuling } from "../tarjih/weigh";
-import { literalToString } from "../logic/term";
-import type { Literal } from "../logic/types";
+import { VALIDITY_AXIS, weighRuling } from "../tarjih/weigh";
+import { literalToString, v } from "../logic/term";
+import type { Literal, Term } from "../logic/types";
 import { findCircumstance } from "../kb/lexicon";
+import { VALIDITY_LABELS } from "../kb/ontology";
 
 export interface Narration {
   readonly summary: string;
@@ -65,7 +66,32 @@ export interface ResolutionView {
   readonly resolution: readonly TarjihStepView[];
   readonly relatedOpinions: readonly OutcomeGroupView[];
 
+  /**
+   * The declaratory ruling (al-hukm al-wad'i), when the act is a transaction
+   * the KB says something about. Absent for everything else.
+   *
+   * A separate answer, not a restatement of the verdict. "May I enter this
+   * contract" and "does this contract transfer ownership" are different
+   * questions whose answers routinely diverge — a sale can be sinful to enter
+   * and still binding once entered — so someone acting on the result needs
+   * both, and folding one into the other would leave them with whichever
+   * question the engine happened to prove.
+   */
+  readonly declaratory?: DeclaratoryView;
+
   readonly narration: Narration;
+}
+
+export interface DeclaratoryView {
+  /** sahih | fasid | batil. */
+  readonly status: string;
+  readonly label: string;
+  readonly gloss: string;
+  readonly confidence: number;
+  readonly contested: boolean;
+  readonly unresolved: boolean;
+  readonly groups: readonly OutcomeGroupView[];
+  readonly resolution: readonly TarjihStepView[];
 }
 
 export type ResolveError =
@@ -129,6 +155,38 @@ export async function groundQuestion(question: string, llm: LlmClient): Promise<
  */
 function goalToText(goal: GroundedGoal): string {
   return [goal.literal, ...goal.circumstances].map(literalToString).join(", ");
+}
+
+/**
+ * Proves and weighs `validity(Act, V)` for the same act, if the KB has
+ * anything to say about it.
+ *
+ * Run unconditionally rather than gated on the act "looking like" a contract:
+ * whether a declaratory ruling exists is a fact about the KB, and the prover
+ * answering with nothing is both cheap and the correct signal. Gating it on a
+ * guess about the act would mean silently withholding an answer the KB holds.
+ */
+function resolveDeclaratory(
+  act: Term,
+  kb: LoadedKb,
+  maxSolutions: number
+): DeclaratoryView | undefined {
+  const proved = prove([{ predicate: "validity", args: [act, v("V")] }], kb.kb, { maxSolutions });
+  const weighed = weighRuling(proved, kb.evidence, VALIDITY_AXIS);
+  if (!weighed || weighed.groups.length === 0) return undefined;
+
+  const status = weighed.verdict ?? weighed.groups[0].outcome;
+  const labels = VALIDITY_LABELS[status];
+  return {
+    status,
+    label: labels.en,
+    gloss: labels.gloss,
+    confidence: weighed.groups.find((g) => g.outcome === status)?.confidence ?? 0,
+    contested: weighed.contested,
+    unresolved: weighed.unresolved,
+    groups: weighed.groups.map((g) => presentGroup(g, kb.evidence)),
+    resolution: weighed.resolution.map(presentStep),
+  };
 }
 
 function describePremises(circumstances: readonly Literal[]): PremiseView[] {
@@ -198,6 +256,8 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
     ? tarjih.groups.find((g) => g.outcome === tarjih.verdict)?.confidence
     : undefined;
 
+  const declaratory = resolveDeclaratory(grounded.goal.act, scoped, maxSolutions);
+
   // --- Stage 4: narrate ---
   const narrationPrompt = buildNarrationPrompt({
     question,
@@ -209,6 +269,11 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
     groups,
     resolution,
     truncated: proveResult.truncated,
+    declaratory: declaratory && {
+      status: declaratory.status,
+      label: declaratory.label,
+      gloss: declaratory.gloss,
+    },
   });
 
   const fallback = computedFallbackNarration(groups, tarjih.verdict);
@@ -236,6 +301,7 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       groups,
       resolution,
       relatedOpinions,
+      declaratory,
       narration,
     },
   };

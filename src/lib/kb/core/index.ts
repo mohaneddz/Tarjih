@@ -12,6 +12,7 @@ import { INTOXICANTS } from "./intoxicants";
 import { QAWAID } from "./qawaid";
 import { SCRIPTURE } from "./scripture";
 import { TAXONOMY } from "./taxonomy";
+import { TRANSACTIONS } from "./transactions";
 import { USUL } from "./usul";
 
 export const CORE_ENTRIES: readonly KbEntry[] = [
@@ -20,6 +21,7 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...QAWAID,
   ...SCRIPTURE,
   ...INTOXICANTS,
+  ...TRANSACTIONS,
 ];
 
 /** Loads the core KB, throwing if it fails validation. */
@@ -27,4 +29,4 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { INTOXICANTS, QAWAID, SCRIPTURE, TAXONOMY, USUL };
+export { INTOXICANTS, QAWAID, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL };

@@ -79,6 +79,31 @@ export const VALIDITY_LABELS: Record<Validity, { en: string; ar: string; gloss: 
   batil: { en: "Void", ar: "باطل", gloss: "Defective in its essence; legally without effect." },
 };
 
+export function isValidity(value: string): value is Validity {
+  return (VALIDITY_VALUES as readonly string[]).includes(value);
+}
+
+/** How legally effective each status leaves the transaction. */
+const VALIDITY_POLARITY: Record<Validity, number> = {
+  sahih: 2, // takes effect in full
+  fasid: 1, // takes effect defectively; often rectifiable
+  batil: 0, // no effect at all
+};
+
+/**
+ * True when two declaratory statuses cannot be presented as a spread.
+ *
+ * Same threshold as `contradicts`, for the same reason, but the middle term
+ * does different work here. sahih against fasid, or fasid against batil, is a
+ * live disagreement about whether a defect is curable — the parties are still
+ * told the contract is defective either way. sahih against batil is the
+ * question the parties actually need answered: does this transfer ownership
+ * or does it not?
+ */
+export function validityContradicts(a: Validity, b: Validity): boolean {
+  return Math.abs(VALIDITY_POLARITY[a] - VALIDITY_POLARITY[b]) >= 2;
+}
+
 // ---------------------------------------------------------------------------
 // Predicate registry
 // ---------------------------------------------------------------------------

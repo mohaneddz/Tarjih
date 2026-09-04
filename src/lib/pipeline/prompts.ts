@@ -62,6 +62,14 @@ they ask the general rule, and the general rule is what they must get. When in
 doubt, leave the circumstance off: omitting one gives the asker the ordinary
 ruling, which is the safe direction to be wrong in.
 
+Some entities in the list are deliberately close to each other and differ on
+one detail that changes the ruling — two sales of goods not yet in hand, say,
+where one fixes the quantity and delivery and the other does not. Read the
+whole label, not the first few words, and pick on the detail rather than on
+the general resemblance. If the question does not settle which of two near
+neighbours it means, answer NONE: a confident answer to the wrong one of a
+pair is worse than no answer, because nothing downstream can detect it.
+
 The question must genuinely be ABOUT the act and entity you choose — not merely
 built from words that happen to appear in the lists above. "Is it halal to fight
 back against an attacker?" is NOT a question about food, even though the only
@@ -98,6 +106,8 @@ export interface NarrationInput {
   readonly groups: readonly OutcomeGroupView[];
   readonly resolution: readonly TarjihStepView[];
   readonly truncated: boolean;
+  /** Declaratory status of the transaction, when there is one. */
+  readonly declaratory?: { readonly status: string; readonly label: string; readonly gloss: string };
 }
 
 function renderGroups(groups: readonly OutcomeGroupView[]): string {
@@ -136,6 +146,10 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
     ? "\nNote: the search hit a resource budget and may not have found every derivation. Mention this as a limitation."
     : "";
 
+  const declaratoryLine = input.declaratory
+    ? `\nThe engine also determined the transaction's declaratory status (al-hukm al-wad'i): ${input.declaratory.status} — ${input.declaratory.label}. ${input.declaratory.gloss} This answers a different question from the ruling above: whether the act is permitted is one thing, whether the contract legally takes effect is another, and the two can diverge. Report both, and do not merge them into a single verdict.`
+    : "";
+
   const verdictLine = input.unresolved
     ? "The engine found genuinely conflicting rulings that its weighing rules could not separate. Do NOT pick a side yourself — present both positions as an open, unresolved tension."
     : `The engine has already determined the verdict: ${input.verdict}. This is FINAL. Do not propose a different verdict, hedge it away, or suggest the engine might be wrong about which ruling applies — your job is only to explain, in accessible language, why the evidence below leads here.`;
@@ -145,7 +159,7 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
 A deterministic prover has already found every applicable derivation and a
 weighing algorithm has already resolved any conflict between them using the
 classical murajjihat (rules for preferring between conflicting evidences).
-${verdictLine}
+${verdictLine}${declaratoryLine}
 
 Write for an educated layperson, not a scholar audience. Reference the actual
 citations given below rather than generic phrases like "textual evidence

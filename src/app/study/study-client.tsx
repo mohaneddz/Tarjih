@@ -487,6 +487,21 @@ export function StudyClient() {
                 <span className="text-sm text-text-secondary">({view.confidence}% confidence)</span>
               )}
             </div>
+            {/*
+              * A second answer to a second question, not a restatement.
+              * "May I enter this?" and "does this take effect?" diverge often
+              * enough that showing only the first would leave someone acting
+              * on a contract they think is void, or vice versa.
+              */}
+            {view.declaratory && (
+              <div className="flex items-center gap-2 border-l border-border-warm pl-4">
+                <span className="text-sm text-text-secondary font-semibold">Contract:</span>
+                <span className="font-serif text-lg font-bold text-text-primary">
+                  {view.declaratory.label}
+                </span>
+                <span className="text-sm text-text-secondary">({view.declaratory.confidence}%)</span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab("interpretation")}
@@ -734,6 +749,22 @@ export function StudyClient() {
                       <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Summary</span>
                       <p className="font-serif text-lg text-text-primary mt-1 leading-relaxed">{view.narration.summary}</p>
                     </div>
+                    {view.declaratory && (
+                      <div className="bg-background/40 border border-border-warm-light rounded-xl p-4 flex flex-col gap-1">
+                        <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">
+                          Declaratory ruling (al-hukm al-wad&apos;i)
+                        </span>
+                        <p className="font-serif text-base font-bold text-text-primary">
+                          {view.declaratory.label}
+                          {view.declaratory.contested && " — contested"}
+                        </p>
+                        <p className="text-sm text-text-secondary leading-relaxed">{view.declaratory.gloss}</p>
+                        <p className="text-sm text-text-secondary/80 leading-relaxed mt-1">
+                          Whether the act is permitted and whether the contract takes legal effect are
+                          separate questions; this answers the second.
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Analysis</span>
                       <p className="text-sm text-text-secondary mt-1 leading-relaxed whitespace-pre-line">{view.narration.analysis}</p>
