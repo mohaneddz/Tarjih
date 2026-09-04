@@ -2,6 +2,15 @@
 @import "../style/theme.css";
 
 /*
+ * Tailwind v4 defaults `dark:` to a `prefers-color-scheme` media query. This
+ * app's dark mode is driven entirely by the `.dark` class set on <html> (see
+ * below and the toggle in header.tsx), so `dark:` must be repointed at that
+ * class or every `dark:` utility silently follows the OS setting instead of
+ * the user's toggle.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * Palette: white background + a single burgundy/red accent, replacing the
  * earlier warm cream/gold/green academic theme (see design/*.png). Green is
  * now reserved specifically for authenticity/verified/success meaning (the
