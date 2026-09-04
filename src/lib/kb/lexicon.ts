@@ -54,6 +54,9 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "sell", arity: 1, label: "selling / entering into", argumentHint: "a kind of sale contract" },
   { functor: "lend", arity: 1, label: "lending under", argumentHint: "a kind of loan" },
   { functor: "play", arity: 1, label: "taking part in", argumentHint: "a game of chance" },
+  { functor: "shorten", arity: 1, label: "shortening", argumentHint: "an act of worship" },
+  { functor: "omit", arity: 1, label: "omitting / not performing", argumentHint: "an obligation" },
+  { functor: "perform", arity: 1, label: "performing", argumentHint: "an act of worship" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -100,6 +103,11 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
       "salam — paying in full now for goods whose quantity, quality and delivery date are all fixed at the time of contract",
     aliases: ["paying upfront for a fixed order", "advance purchase of a specified quantity"],
   },
+
+  // Acts of worship
+  { atom: "obligatory_prayer", label: "an obligatory prayer", aliases: ["salah", "the prayer", "prayers"] },
+  { atom: "fasting", label: "fasting in Ramadan", aliases: ["the fast", "fasting", "Ramadan"] },
+  { atom: "tayammum", label: "tayammum (dry ablution with clean earth)", aliases: ["dry ablution", "wiping with earth instead of washing"] },
 ];
 
 export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
@@ -108,6 +116,36 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "facing starvation — a genuine threat to life from lack of food",
     cue: "the asker says they are starving, have no other food, or would die without eating this",
     aliases: ["starving", "famine", "no other food"],
+  },
+  {
+    atom: "travel",
+    label: "on a journey",
+    cue: "the asker says they are travelling, on a journey, or away from home",
+    aliases: ["travelling", "on a trip", "away from home"],
+  },
+  {
+    atom: "illness",
+    label: "ill",
+    cue: "the asker says they are ill, sick, or unwell",
+    aliases: ["sick", "unwell", "not well"],
+  },
+  {
+    atom: "water_unavailable",
+    label: "with no water available for ablution",
+    cue: "the asker says there is no water, or none they can reach or use",
+    aliases: ["no water", "cannot find water"],
+  },
+  {
+    atom: "menstruation",
+    label: "menstruating",
+    cue: "the asker says they are on their period or menstruating",
+    aliases: ["on my period", "menstruating"],
+  },
+  {
+    atom: "ritual_impurity",
+    label: "in a state of ritual impurity (without wudu or ghusl)",
+    cue: "the asker says they have not performed wudu or ghusl, or are in a state of janaba",
+    aliases: ["without wudu", "not in a state of purity", "junub"],
   },
 ];
 

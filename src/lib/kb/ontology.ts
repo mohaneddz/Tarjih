@@ -288,9 +288,9 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "hardship",
     ["Situation", "Degree"],
     "circumstantial",
-    "Situation involves mashaqqa of the given Degree (mu'tada or ghayr_mu'tada). " +
+    "Situation involves mashaqqa of the given Degree (mutada or ghayr_mutada). " +
       "Only extraordinary hardship triggers a concession.",
-    "hardship(travel, ghayr_mu'tada)"
+    "hardship(travel, ghayr_mutada)"
   ),
   spec(
     "custom",
@@ -397,5 +397,13 @@ export type Maqsid = (typeof MAQASID)[number];
 /** Effects an act may produce, as used in the `causes` and `prevents` predicates. */
 export const EFFECTS = ["darar", "maslaha", "fitna", "gharar", "riba", "zulm"] as const;
 
-/** Degrees of hardship. Only `ghayr_mu'tada` warrants a concession. */
-export const HARDSHIP_DEGREES = ["mu'tada", "ghayr_mu'tada"] as const;
+/**
+ * Degrees of hardship. Only `ghayr_mutada` warrants a concession.
+ *
+ * Written without the transliteration apostrophe of mu'tada on purpose. An
+ * atom carrying one has to be quoted and escaped in clause source, and an
+ * unescaped one fails at KB load as "unterminated quoted atom" — a message
+ * that points nowhere near the actual mistake. Atoms are identifiers; the
+ * transliteration belongs in the gloss.
+ */
+export const HARDSHIP_DEGREES = ["mutada", "ghayr_mutada"] as const;

@@ -43,10 +43,21 @@ export const ATOM_GLOSSES: Record<string, string> = {
   riba: "usury",
   zulm: "injustice",
 
+  // Worship
+  purity: "ritual purity",
+  obligatory_prayer: "an obligatory prayer",
+  fasting: "fasting",
+  tayammum: "tayammum (dry ablution)",
+
   // Circumstances
   starvation: "starvation",
-  "mu'tada": "ordinary",
-  "ghayr_mu'tada": "extraordinary",
+  travel: "being on a journey",
+  illness: "illness",
+  water_unavailable: "the absence of water",
+  menstruation: "menstruation",
+  ritual_impurity: "ritual impurity",
+  mutada: "hardship an act ordinarily carries",
+  ghayr_mutada: "hardship beyond what the act ordinarily carries",
   ego: "oneself",
 
   // The five maqasid

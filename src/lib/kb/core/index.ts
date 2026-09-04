@@ -14,6 +14,7 @@ import { SCRIPTURE } from "./scripture";
 import { TAXONOMY } from "./taxonomy";
 import { TRANSACTIONS } from "./transactions";
 import { USUL } from "./usul";
+import { WORSHIP } from "./worship";
 
 export const CORE_ENTRIES: readonly KbEntry[] = [
   ...TAXONOMY,
@@ -22,6 +23,7 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...SCRIPTURE,
   ...INTOXICANTS,
   ...TRANSACTIONS,
+  ...WORSHIP,
 ];
 
 /** Loads the core KB, throwing if it fails validation. */
@@ -29,4 +31,4 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { INTOXICANTS, QAWAID, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL };
+export { INTOXICANTS, QAWAID, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };

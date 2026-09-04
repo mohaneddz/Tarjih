@@ -78,4 +78,41 @@ export const USUL: KbEntry[] = [
         "models whether the concession applies, not how far it extends.",
     },
   },
+
+  {
+    id: "usul:mashaqqa-brings-facility",
+    /*
+     * al-mashaqqa tajlib al-taysir — hardship brings facility.
+     *
+     * The sibling of the darura rule above, and deliberately not merged with
+     * it. Both take an `excepted` pairing and a matching `circumstance`, but
+     * they gate on different things and license different things:
+     *
+     * - darura is a threat to one of the five essentials, and suspends a
+     *   prohibition. Starvation makes carrion lawful.
+     * - mashaqqa is difficulty beyond what an act ordinarily costs, and
+     *   attaches a lighter alternative to an obligation. Travel does not make
+     *   anything forbidden lawful; it shortens a prayer.
+     *
+     * Collapsing them into one rule keyed on "some hard situation" would let
+     * ordinary inconvenience excuse the forbidden, which is the confusion the
+     * usulis spend the most effort forestalling — hence the explicit
+     * `ghayr_mutada` guard, since hardship the act inherently carries
+     * (mu'tada, in the transliteration) is the reason for the obligation, not an excuse from it.
+     */
+    clause:
+      "ruling(Act, mubah) :- excepted(Act, Situation), hardship(Situation, ghayr_mutada), circumstance(Situation).",
+    evidence: {
+      kind: "qaida",
+      reference: "al-mashaqqa tajlib al-taysir",
+      text: "Hardship brings facility.",
+      textArabic: "المشقة تجلب التيسير",
+      dalala: "zanni",
+      notes:
+        "Inductive from the concessions the texts grant — the shortened " +
+        "prayer, the deferred fast, dry ablution — rather than a text in its " +
+        "own right, so a derivation resting on it loses to one resting on a " +
+        "verse that names the same concession directly.",
+    },
+  },
 ];
