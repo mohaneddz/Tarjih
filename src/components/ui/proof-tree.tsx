@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ProofView } from "@/lib/pipeline/present";
 import { cn } from "@/utils/cn";
 import { EvidenceBadge, RulingRosette } from "@/components/ui/asset-badge";
@@ -203,22 +203,30 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
     setTransform({ scale: 1, x: Math.max((vw - width) / 2, 24), y: 24 });
   }, [proof, width]);
 
-  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  // React attaches onWheel as a passive listener, so e.preventDefault() there
+  // silently no-ops — the page scrolled underneath the zoom on every wheel
+  // tick. A native listener registered with { passive: false } is the only
+  // way to actually stop that scroll.
+  useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    const rect = viewport.getBoundingClientRect();
-    const pointerX = e.clientX - rect.left;
-    const pointerY = e.clientY - rect.top;
-    setTransform((prev) => {
-      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * (1 - e.deltaY * 0.0015)));
-      const ratio = nextScale / prev.scale;
-      return {
-        scale: nextScale,
-        x: pointerX - (pointerX - prev.x) * ratio,
-        y: pointerY - (pointerY - prev.y) * ratio,
-      };
-    });
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = viewport.getBoundingClientRect();
+      const pointerX = e.clientX - rect.left;
+      const pointerY = e.clientY - rect.top;
+      setTransform((prev) => {
+        const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * (1 - e.deltaY * 0.0015)));
+        const ratio = nextScale / prev.scale;
+        return {
+          scale: nextScale,
+          x: pointerX - (pointerX - prev.x) * ratio,
+          y: pointerY - (pointerY - prev.y) * ratio,
+        };
+      });
+    };
+    viewport.addEventListener("wheel", handler, { passive: false });
+    return () => viewport.removeEventListener("wheel", handler);
   }, []);
 
   const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -275,7 +283,6 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
   return (
     <div
       ref={viewportRef}
-      onWheel={onWheel}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={endDrag}

@@ -170,7 +170,6 @@ export function StudyClient() {
   const [strictness, setStrictness] = useState("Moderate");
   const [showSettings, setShowSettings] = useState(false);
 
-  const [groundingPreviewOn, setGroundingPreviewOn] = useState(false);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -358,7 +357,7 @@ export function StudyClient() {
     e.preventDefault();
     const question = inputVal.trim();
     if (!question || isSubmitting || previewLoading) return;
-    if (groundingPreviewOn && !pendingPreview) {
+    if (!pendingPreview) {
       await handlePreview(question);
       return;
     }
@@ -498,29 +497,6 @@ export function StudyClient() {
               disabled={isSubmitting}
               className="flex-grow bg-transparent h-11 px-1 text-sm md:text-base text-text-primary font-serif font-semibold placeholder-text-secondary/60 focus:outline-none disabled:opacity-50 min-w-0"
             />
-            <label className="hidden lg:flex items-center gap-2 text-sm text-text-secondary shrink-0 select-none cursor-pointer">
-              Grounding preview
-              <button
-                type="button"
-                role="switch"
-                aria-checked={groundingPreviewOn}
-                onClick={() => {
-                  setGroundingPreviewOn((v) => !v);
-                  setPendingPreview(null);
-                }}
-                className={cn(
-                  "relative h-5 w-9 rounded-full transition-colors cursor-pointer shrink-0",
-                  groundingPreviewOn ? "bg-brand-red" : "bg-border-warm"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-                    groundingPreviewOn ? "translate-x-4" : "translate-x-0.5"
-                  )}
-                />
-              </button>
-            </label>
             <button
               type="button"
               onClick={() => setShowSettings((v) => !v)}
@@ -575,8 +551,8 @@ export function StudyClient() {
           )}
 
           {pendingPreview && (
-            <div className="flex items-center gap-3 bg-brand-red-light/60 border border-brand-red/25 rounded-xl px-4 py-2.5 text-sm">
-              <span className="font-bold text-brand-red uppercase tracking-wider shrink-0">Grounded as</span>
+            <div className="flex items-center gap-3 bg-background border border-border-warm rounded-xl px-4 py-2.5 text-sm">
+              <span className="font-bold text-text-secondary uppercase tracking-wider shrink-0">Grounded as</span>
               <code className="font-mono text-text-primary truncate">{pendingPreview}</code>
               <button
                 type="button"
@@ -674,8 +650,8 @@ export function StudyClient() {
 
             {errorInfo && errorInfo.isFormatIssue && (
               <div className="max-w-2xl mx-auto m-6 lg:m-8 flex flex-col gap-5">
-                <div className="bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 flex flex-col gap-2">
-                  <span className="text-[12px] font-bold text-brand-red uppercase tracking-widest">Please ask a ruling question</span>
+                <div className="bg-card-warm border border-border-warm rounded-2xl p-6 flex flex-col gap-2">
+                  <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Please ask a ruling question</span>
                   <p className="text-sm text-text-primary leading-relaxed">
                     Tarjih answers yes/no questions about whether a specific act is permitted, forbidden, or
                     something in between — not open-ended, unrelated, or ambiguous questions. {errorInfo.message}
@@ -705,7 +681,7 @@ export function StudyClient() {
             )}
 
             {errorInfo && !errorInfo.isFormatIssue && (
-              <div className="max-w-2xl mx-auto bg-brand-red-light border border-brand-red/30 rounded-2xl p-6 text-sm text-brand-red m-6 lg:m-8">
+              <div className="max-w-2xl mx-auto bg-card-warm border border-border-warm rounded-2xl p-6 text-sm text-text-primary m-6 lg:m-8">
                 {errorInfo.message}
               </div>
             )}
@@ -725,8 +701,8 @@ export function StudyClient() {
                    * resting on a misread one is the failure worth catching, so
                    * it sits above the answer rather than inside the proof.
                    */
-                  <div className="mb-6 text-sm bg-brand-red-light border border-brand-red/25 rounded-xl px-4 py-3 flex flex-col gap-1.5">
-                    <span className="text-[12px] font-bold text-brand-red uppercase tracking-widest">
+                  <div className="mb-6 text-sm bg-background border border-border-warm rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                    <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">
                       Taken from your question
                     </span>
                     <ul className="flex flex-col gap-1 text-text-secondary">
