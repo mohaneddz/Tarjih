@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local sqlite database — scratch, not source. It holds the formalisation
+# review queue and the resolution cache, both regenerable; `pnpm db:push`
+# creates it from prisma/schema.prisma.
+*.db
+*.db-journal
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

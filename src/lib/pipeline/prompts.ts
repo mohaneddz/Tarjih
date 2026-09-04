@@ -100,6 +100,7 @@ export interface NarrationInput {
   readonly question: string;
   readonly goalText: string;
   readonly madhhabRequested?: string;
+  readonly strictnessRequested?: string;
   readonly contested: boolean;
   readonly unresolved: boolean;
   readonly verdict?: string;
@@ -142,6 +143,18 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
     ? `\nNote: the user asked for the ${input.madhhabRequested} school specifically. The knowledge base used here is currently madhhab-neutral and does not yet model inter-school variation — say so plainly rather than implying school-specific analysis was performed.`
     : "";
 
+  /*
+   * The strictness control is live in the UI and changes nothing in the
+   * engine. Saying so is the only honest option: a reader who chose "Strict"
+   * and got an unqualified answer will otherwise take the strictness for
+   * granted, and a setting silently ignored is worse than one absent, because
+   * it manufactures confidence in a distinction that was never drawn.
+   */
+  const strictnessCaveat =
+    input.strictnessRequested && input.strictnessRequested !== "Moderate"
+      ? `\nNote: the user selected "${input.strictnessRequested}". The engine does not yet model the choice between taking a concession (rukhsa) and holding to the original ruling ('azima) — every applicable concession in the knowledge base was applied regardless of this setting. Say so plainly rather than presenting the answer as tuned to it.`
+      : "";
+
   const truncationCaveat = input.truncated
     ? "\nNote: the search hit a resource budget and may not have found every derivation. Mention this as a limitation."
     : "";
@@ -165,7 +178,7 @@ Write for an educated layperson, not a scholar audience. Reference the actual
 citations given below rather than generic phrases like "textual evidence
 suggests". Where the reasoning used qiyas (analogy) or a legal maxim rather
 than a direct text, say so plainly rather than implying certainty it doesn't
-have.${madhhabCaveat}${truncationCaveat}
+have.${madhhabCaveat}${strictnessCaveat}${truncationCaveat}
 
 Respond with a single JSON object, no markdown fences, matching:
 {

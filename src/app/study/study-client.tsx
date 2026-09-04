@@ -458,6 +458,18 @@ export function StudyClient() {
                   <option value="Concessive">Concessive (Rukhshah)</option>
                 </select>
               </div>
+              {/*
+                * Both controls are recorded with the question and neither
+                * changes what the engine derives yet. Saying so here is the
+                * point: a setting that looks live and is quietly ignored is
+                * worse than one that is absent, because it lends the answer a
+                * precision nobody computed.
+                */}
+              <span className="text-[12px] text-text-secondary/80 basis-full">
+                Recorded with the question, but not yet used in the reasoning — the knowledge
+                base is madhhab-neutral, and every applicable concession is applied regardless of
+                strictness. The answer will say so.
+              </span>
             </div>
           )}
 

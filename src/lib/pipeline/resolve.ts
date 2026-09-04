@@ -263,6 +263,7 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
     question,
     goalText,
     madhhabRequested: madhhab,
+    strictnessRequested: strictness,
     contested: tarjih.contested,
     unresolved: tarjih.unresolved,
     verdict: tarjih.verdict,
