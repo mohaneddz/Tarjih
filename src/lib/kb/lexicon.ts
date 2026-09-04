@@ -68,6 +68,14 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "carrion", label: "carrion (an animal dead otherwise than by lawful slaughter)", aliases: ["carcass", "dead animal meat"] },
   { atom: "swine", label: "swine / pork", aliases: ["pork", "pig meat"] },
   { atom: "blood", label: "blood" },
+
+  // Intoxicants
+  { atom: "khamr", label: "khamr (grape wine)", aliases: ["wine", "alcohol"] },
+  { atom: "nabidh", label: "nabidh (fermented date or raisin infusion)", aliases: ["date wine"] },
+  { atom: "beer", label: "beer" },
+  { atom: "spirits", label: "spirits (distilled liquor)", aliases: ["liquor", "vodka", "whisky"] },
+  { atom: "sip_of_khamr", label: "a sip of wine, below the intoxicating amount", aliases: ["a small amount of alcohol", "one drink"] },
+  { atom: "narcotic", label: "a narcotic or recreational drug", aliases: ["drugs", "cannabis", "hashish", "cocaine"] },
 ];
 
 export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [

@@ -23,8 +23,14 @@ export const ATOM_GLOSSES: Record<string, string> = {
   affinal_kin: "relative by marriage",
   forbidden_food: "forbidden food",
 
+  // Substances and their attributes
+  muskir: "intoxicating",
+  khamr: "khamr (wine)",
+  small_measure_of_muskir: "small quantity of an intoxicant",
+
   // Effective causes ('ilal) and effects
   qata_rahim: "severance of the womb-tie",
+  iskar: "intoxication",
   darar: "harm",
   maslaha: "benefit",
   fitna: "discord",

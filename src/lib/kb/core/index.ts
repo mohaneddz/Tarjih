@@ -8,16 +8,23 @@
 
 import type { KbEntry } from "../entry";
 import { loadKbStrict } from "../entry";
+import { INTOXICANTS } from "./intoxicants";
 import { QAWAID } from "./qawaid";
 import { SCRIPTURE } from "./scripture";
 import { TAXONOMY } from "./taxonomy";
 import { USUL } from "./usul";
 
-export const CORE_ENTRIES: readonly KbEntry[] = [...TAXONOMY, ...USUL, ...QAWAID, ...SCRIPTURE];
+export const CORE_ENTRIES: readonly KbEntry[] = [
+  ...TAXONOMY,
+  ...USUL,
+  ...QAWAID,
+  ...SCRIPTURE,
+  ...INTOXICANTS,
+];
 
 /** Loads the core KB, throwing if it fails validation. */
 export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { QAWAID, SCRIPTURE, TAXONOMY, USUL };
+export { INTOXICANTS, QAWAID, SCRIPTURE, TAXONOMY, USUL };
