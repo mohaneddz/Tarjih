@@ -80,6 +80,25 @@ describe("blocking the means", () => {
     expect(result?.groups.map((g) => g.outcome).sort()).toEqual(["mandub", "wajib"]);
     expect(result?.relatedOpinions.length).toBeGreaterThan(0);
   });
+
+  it("settles the spread on specificity rather than on which source scores higher", () => {
+    /*
+     * Both readings rest on a verse; 2:283 addresses the narrower case, so
+     * khass over amm decides it and the majority position prevails.
+     *
+     * This is the case that showed weighing must not be skipped for
+     * non-contradicting groups. Left to raw confidence, the general verse
+     * outscored the specific one and the engine reported the Zahiri minority
+     * as its verdict — an answer arrived at by score, in a tool whose claim is
+     * that it does not answer by score.
+     */
+    const result = weighRuling(
+      prove(parseQuery("ruling(document(debt), H)"), core.kb, { maxSolutions: 200 }),
+      core.evidence
+    );
+    expect(result?.verdict).toBe("mandub");
+    expect(result?.resolution.map((s) => s.rule)).toContain("specificity");
+  });
 });
 
 describe("custom", () => {

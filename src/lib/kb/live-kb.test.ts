@@ -86,6 +86,21 @@ describe("getLiveKb", () => {
     expect(findMany).toHaveBeenCalledTimes(2);
   });
 
+  it("retries after a failed build instead of caching the failure", async () => {
+    /*
+     * Caching the promise is what makes concurrent requests share one database
+     * read, but caching a *rejected* one made a single transient database
+     * hiccup permanent: every later query failed on the stored rejection, with
+     * no retry and no way back short of restarting the process.
+     */
+    findMany.mockRejectedValueOnce(new Error("database unavailable"));
+    await expect(getLiveKb()).rejects.toThrow("database unavailable");
+
+    findMany.mockResolvedValue([]);
+    const { loaded } = await getLiveKb();
+    expect(loaded.kb.size).toBeGreaterThan(0);
+  });
+
   it("wouldValidate approves a well-formed candidate without touching the database", async () => {
     const candidate = clauseRowToEntry(row({ id: "sunnah:test:1", source: "instance(camel, kin)." }));
     const report = wouldValidate([], candidate);

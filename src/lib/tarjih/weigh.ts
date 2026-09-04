@@ -176,26 +176,42 @@ function adjudicate<T extends string>(
 }
 
 /**
- * Weighs every outcome group against every other, resolving genuine
- * contradictions via the murajjihat and leaving ordinary scholarly spread
- * (e.g. mubah alongside makruh) alone.
+ * Weighs every outcome group against every other and returns the prevailing
+ * answer, the reasoning that got there, and what else remains standing.
  *
- * An elimination tournament: the current leader is challenged by every group
- * that contradicts *it*, and a challenger that wins takes its place and faces
- * the rest. Two things follow from "contradicts it" rather than "contradicts
- * the opening leader", and both were wrong before:
+ * An elimination tournament: the current leader is challenged by every other
+ * group in turn, and a challenger the murajjihat prefer takes its place and
+ * faces the rest.
  *
- * - The contested/related split has to be recomputed as the leader moves.
- *   Fixing it against `groups[0]` misfiles any group that sits close to the
- *   opening leader but far from the eventual winner — mandub is one step from
- *   wajib and three from haram, so a wajib-led question that resolves to haram
- *   would have shown mandub as a merely "related" opinion while it in fact
- *   gives the opposite instruction.
- * - Whether the question is unresolved is a property of the *surviving*
- *   leader, so it is settled by a final audit rather than latched the first
- *   time any pair ties. A tie against a leader that is later displaced is no
- *   longer the live question, and latching it reported an open question that
- *   the tournament had in fact decided.
+ * **Every** other group — `contradicts` decides how a result is *presented*,
+ * never whether it gets weighed. Those are separate questions and merging
+ * them was wrong. wajib against mandub is one step apart, so it is not a
+ * crisis and both readings genuinely stand; but which of them prevails is
+ * still a question the murajjihat answer, and skipping the comparison left it
+ * to raw confidence instead. That handed the verdict to whichever side had
+ * the higher-scoring source — reporting a minority reading backed by a direct
+ * verse over the majority one backed by the verse that qualifies it, which is
+ * precisely the judgement the specificity rule exists to make. An engine
+ * whose whole claim is that it weighs rather than scores cannot decide its
+ * closest calls by score.
+ *
+ * `contradicts` then does exactly two jobs: it decides whether the result is
+ * flagged contested, and whether a losing group is suppressed or shown as a
+ * live alternative.
+ *
+ * Two further properties, both of which were wrong before:
+ *
+ * - The contested/related split is recomputed against the *surviving* leader,
+ *   not the opening one. Fixing it against `groups[0]` misfiles any group that
+ *   sits close to the opening leader but far from the eventual winner — mandub
+ *   is one step from wajib and three from haram, so a wajib-led question that
+ *   resolves to haram would have shown mandub as merely "related" while it in
+ *   fact gives the opposite instruction.
+ * - Whether the question is unresolved is a property of the surviving leader,
+ *   so it is settled by a final audit rather than latched the first time any
+ *   pair ties. Only a tie with a *contradicting* group leaves the question
+ *   open: two compatible readings the rules cannot separate is what a spread
+ *   of scholarly opinion looks like, not a failure to answer.
  *
  * This remains a simplification — a fully general treatment would check the
  * preference relation for transitivity across all pairs — but the murajjihat
@@ -226,18 +242,17 @@ export function weighRuling<T extends string = Hukm>(
   let current = groups[0];
   let contested = false;
 
-  // Each pass challenges the leader with everything that contradicts it. A
-  // pass that displaces the leader is followed by another, since the new
-  // leader faces a different set of contradictions. Bounded by the number of
-  // groups: every displacement consumes one, and there are at most five.
+  // Each pass challenges the leader with every other group. A pass that
+  // displaces the leader is followed by another, since the new leader has yet
+  // to face the rest. Bounded by the number of groups: every displacement
+  // consumes one, and there are at most five.
   for (let pass = 0; pass < groups.length; pass++) {
     let displaced = false;
 
     for (const challenger of groups) {
       if (challenger === current) continue;
-      if (!axis.contradicts(current.outcome, challenger.outcome)) continue;
 
-      contested = true;
+      if (axis.contradicts(current.outcome, challenger.outcome)) contested = true;
       const { winner, step } = adjudicate(current, challenger, evidence);
       if (!step) continue; // Inseparable; the audit below decides what that means.
 
@@ -262,11 +277,17 @@ export function weighRuling<T extends string = Hukm>(
   }
 
   /*
-   * The verdict stands only if the surviving leader can actually be separated
-   * from every ruling that opposes it. Asking this at the end, of the leader
-   * that survived, is the whole point: a tie recorded mid-tournament against a
-   * leader that was later displaced is no longer the live question, and
-   * treating it as one reported an open question the tournament had decided.
+   * The verdict stands only if the surviving leader can be separated from
+   * every ruling that genuinely opposes it. Two conditions, both load-bearing:
+   *
+   * - Asked of the leader that survived, not of every pair seen along the way.
+   *   A tie against a leader later displaced is no longer the live question,
+   *   and treating it as one reported an open question the tournament had in
+   *   fact decided.
+   * - Only contradictions count. Two compatible readings the rules cannot
+   *   separate — wajib and mandub, say — is what a spread of scholarly opinion
+   *   looks like; reporting no verdict there would refuse to answer a question
+   *   on which both answers point the same way.
    */
   const deadlocked = groups.some(
     (g) =>

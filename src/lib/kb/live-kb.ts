@@ -84,9 +84,26 @@ async function buildLiveKb(): Promise<LiveKbResult> {
   return mergeSafely(reviewed);
 }
 
-/** Returns the merged, validated KB, computing and caching it on first use. */
+/**
+ * Returns the merged, validated KB, computing and caching it on first use.
+ *
+ * A failed build clears the cache rather than being remembered. Caching the
+ * promise is what makes the concurrent case correct — two requests arriving
+ * together share one database read — but a rejected promise cached under the
+ * same rule would make one transient database hiccup permanent for the life
+ * of the process: every later query would fail on the stored rejection, with
+ * nothing to retry and no way back short of a restart.
+ */
 export function getLiveKb(): Promise<LiveKbResult> {
-  if (!cached) cached = buildLiveKb();
+  if (!cached) {
+    const attempt = buildLiveKb();
+    cached = attempt;
+    attempt.catch(() => {
+      // Only drop it if nothing has replaced it in the meantime; an
+      // `invalidateLiveKb()` racing this must not be undone.
+      if (cached === attempt) cached = null;
+    });
+  }
   return cached;
 }
 

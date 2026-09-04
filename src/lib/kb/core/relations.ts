@@ -196,15 +196,14 @@ export const RELATIONS: KbEntry[] = [
      * The minority reading, included on purpose.
      *
      * The verse's imperative is unqualified, and the Zahiris take it at face
-     * value: writing the debt down is obligatory. The majority read 2:283 —
-     * "but if one of you entrusts another, let him fulfil his trust" — as
-     * showing the command is guidance rather than binding.
+     * value: writing the debt down is obligatory. The majority read the verse
+     * that immediately follows as showing the command is guidance.
      *
      * Both are in the KB because this is what an honest disagreement looks
-     * like: wajib against mandub is one step apart, so the engine reports it
-     * as a spread of opinion rather than a crisis, which is exactly right.
-     * A KB carrying only majority positions would never produce that, and
-     * would quietly present settled and contested questions identically.
+     * like: wajib against mandub is one step apart, so the engine reports a
+     * spread of opinion rather than a crisis. A KB carrying only majority
+     * positions would never produce that, and would present settled and
+     * contested questions identically.
      */
     clause: "ruling(document(debt), wajib).",
     evidence: {
@@ -214,12 +213,43 @@ export const RELATIONS: KbEntry[] = [
       thubut: "qati",
       dalala: "zanni",
       scope: "amm",
-      madhahib: [],
       notes:
         "The Zahiri reading, holding the imperative to its apparent sense. " +
-        "The majority take it as guidance on the strength of 2:283. The " +
-        "indication is marked probable because that is precisely what is in " +
-        "dispute — not whether the verse is authentic, but what it requires.",
+        "The indication is marked probable because that is precisely what is " +
+        "in dispute — not whether the verse is authentic, but what it requires.",
+    },
+  },
+  {
+    id: "quran:2-283:writing-recommended",
+    /*
+     * The majority reading, and it has to rest on the verse that actually
+     * carries the argument.
+     *
+     * Modelling it through the harm-aversion maxim instead would have been a
+     * quiet misrepresentation: the majority do not hold this because writing
+     * debts down is generally prudent, they hold it because 2:283 addresses
+     * the very case 2:282 commands and does not require a record. Sourcing it
+     * to a maxim also made it lose — an inductive summary scores below a
+     * direct verse — so the engine reported the Zahiri position as the
+     * verdict. With both readings resting on verses, the specificity rule
+     * decides it on the ground the jurists actually argue from.
+     */
+    clause: "ruling(document(debt), mandub).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:283",
+      text:
+        "And if one of you entrusts another, then let him who is entrusted " +
+        "discharge his trust, and let him fear Allah his Lord.",
+      textArabic: "فَإِنْ أَمِنَ بَعْضُكُم بَعْضًا فَلْيُؤَدِّ الَّذِي اؤْتُمِنَ أَمَانَتَهُ",
+      thubut: "qati",
+      dalala: "zanni",
+      scope: "khass",
+      notes:
+        "The majority position. The verse addresses the specific case of " +
+        "parties who trust one another and contemplates the debt standing " +
+        "without a record at all, which the majority read as showing the " +
+        "command in 2:282 to be guidance rather than binding.",
     },
   },
 
