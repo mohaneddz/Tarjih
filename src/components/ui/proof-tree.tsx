@@ -84,6 +84,17 @@ const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode 
 /** Uniform icon treatment across all four types — see TYPE_META's note. */
 const ICON_STYLE = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300";
 
+/**
+ * `line-clamp` truncation relies on `-webkit-box` layout, which does not
+ * reliably kick in here — the note strip instead renders every wrapped line
+ * up to its fixed height and hard-clips mid-line with no ellipsis. Truncating
+ * the string itself sidesteps that entirely.
+ */
+function truncateNote(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trimEnd()}…`;
+}
+
 function CheckBadge() {
   return (
     <span className="h-4 w-4 rounded-full border border-brand-green text-brand-green flex items-center justify-center shrink-0" title="Confirmed">
@@ -389,10 +400,10 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
               {hasNote && (
                 <div
                   style={{ marginTop: NOTE_GAP, maxHeight: NOTE_H }}
-                  className="w-full text-[11px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 line-clamp-2 overflow-hidden"
+                  className="w-full text-[11px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 overflow-hidden"
                   title={n.view.evidence.notes}
                 >
-                  {n.view.evidence.notes}
+                  {truncateNote(n.view.evidence.notes!, 90)}
                 </div>
               )}
             </div>
