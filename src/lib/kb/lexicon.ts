@@ -30,6 +30,24 @@ export interface AtomEntry {
   readonly aliases?: readonly string[];
 }
 
+/**
+ * A situation the asker can assert about themselves, as distinct from the act
+ * they are asking about.
+ *
+ * These are the only atoms allowed inside `circumstance/1`, and they are
+ * deliberately a separate list from `KNOWN_ATOMS`: a circumstance unlocks a
+ * concession, so letting the grounding stage put an arbitrary atom there
+ * would let a mis-parse hand out an exemption. The `whenAbsent` text is what
+ * the UI shows to explain what the ruling would have been without it.
+ */
+export interface CircumstanceEntry {
+  readonly atom: string;
+  readonly label: string;
+  /** How a question signals this circumstance, for the grounding prompt. */
+  readonly cue: string;
+  readonly aliases?: readonly string[];
+}
+
 export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "mistreat", arity: 1, label: "mistreating / disrespecting", argumentHint: "a relative" },
   { functor: "consume", arity: 1, label: "eating or drinking", argumentHint: "a foodstuff" },
@@ -52,8 +70,20 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "blood", label: "blood" },
 ];
 
+export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
+  {
+    atom: "starvation",
+    label: "facing starvation — a genuine threat to life from lack of food",
+    cue: "the asker says they are starving, have no other food, or would die without eating this",
+    aliases: ["starving", "famine", "no other food"],
+  },
+];
+
 const ACT_INDEX = new Map<string, ActEntry>(KNOWN_ACTS.map((a) => [`${a.functor}/${a.arity}`, a]));
 const ATOM_INDEX = new Map<string, AtomEntry>(KNOWN_ATOMS.map((a) => [a.atom, a]));
+const CIRCUMSTANCE_INDEX = new Map<string, CircumstanceEntry>(
+  KNOWN_CIRCUMSTANCES.map((c) => [c.atom, c])
+);
 
 export function findAct(functor: string, arity: number): ActEntry | undefined {
   return ACT_INDEX.get(`${functor}/${arity}`);
@@ -67,6 +97,10 @@ export function isKnownAtom(name: string): boolean {
   return ATOM_INDEX.has(name);
 }
 
+export function findCircumstance(name: string): CircumstanceEntry | undefined {
+  return CIRCUMSTANCE_INDEX.get(name);
+}
+
 /** Renders the vocabulary as a block for the NL-parsing prompt. */
 export function lexiconPromptBlock(): string {
   const acts = KNOWN_ACTS.map((a) => `  - ${a.functor}(X) — ${a.label}; X must be ${a.argumentHint} from the list below`).join(
@@ -76,5 +110,12 @@ export function lexiconPromptBlock(): string {
     const aliasText = a.aliases?.length ? ` (aka: ${a.aliases.join(", ")})` : "";
     return `  - ${a.atom} — ${a.label}${aliasText}`;
   }).join("\n");
-  return `Known acts:\n${acts}\n\nKnown entities (use exactly these atom names, lowercase with underscores):\n${atoms}`;
+  const circumstances = KNOWN_CIRCUMSTANCES.map(
+    (c) => `  - circumstance(${c.atom}) — ${c.label}. Add this only when ${c.cue}.`
+  ).join("\n");
+  return (
+    `Known acts:\n${acts}\n\n` +
+    `Known entities (use exactly these atom names, lowercase with underscores):\n${atoms}\n\n` +
+    `Known circumstances (about the ASKER's own situation, not the act):\n${circumstances}`
+  );
 }

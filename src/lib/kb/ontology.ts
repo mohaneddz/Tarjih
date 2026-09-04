@@ -288,6 +288,17 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "Proposition is established with certainty (yaqin) rather than mere doubt (shakk).",
     "certain(state(purity))"
   ),
+  spec(
+    "circumstance",
+    ["Situation"],
+    "circumstantial",
+    "Situation actually obtains for the person asking. Asserted per question, " +
+      "never stored in the knowledge base: the KB says what starvation *is* " +
+      "(a darura), the question says whether the asker is starving. Keeping " +
+      "those apart is what stops a concession granted to the compelled from " +
+      "being handed to everyone who asks about the same act.",
+    "circumstance(starvation)"
+  ),
 
   // --- Derivational: bookkeeping the reasoning rules need ---
   spec(
@@ -318,6 +329,17 @@ export const PREDICATES: readonly PredicateSpec[] = [
     "excepted(consume(carrion), necessity)"
   ),
 ];
+
+/**
+ * Predicates the knowledge base is expected to reference but never to define.
+ *
+ * Their facts come from the question, so a KB that defined them would be
+ * asserting something about every asker at once — which is precisely the bug
+ * that made the necessity concession apply universally. The linter's
+ * dangling-goal check has to know about them, or the one rule that correctly
+ * refuses to assume the asker's situation is reported as broken.
+ */
+export const QUERY_SUPPLIED_PREDICATES: ReadonlySet<string> = new Set(["circumstance/1"]);
 
 const BY_KEY = new Map<string, PredicateSpec>(PREDICATES.map((p) => [`${p.name}/${p.arity}`, p]));
 

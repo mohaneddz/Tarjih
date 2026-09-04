@@ -48,6 +48,20 @@ For example, for "Is mistreating my mother wrong?" you would output exactly:
 
   ruling(mistreat(mother), H)
 
+If — and only if — the question states that the asker is in one of the known
+circumstances above, append it to the same line, comma-separated:
+
+  ruling(consume(carrion), H), circumstance(starvation)
+
+This is the most consequential judgement you make. A circumstance unlocks a
+legal concession, so adding one the asker did not claim converts a prohibition
+into a permission for someone who was never entitled to it. "Can I eat carrion
+if I am starving?" states the circumstance. "Is eating carrion permitted?",
+"What is the ruling on carrion?", and "Is carrion halal in Islam?" do NOT —
+they ask the general rule, and the general rule is what they must get. When in
+doubt, leave the circumstance off: omitting one gives the asker the ordinary
+ruling, which is the safe direction to be wrong in.
+
 The question must genuinely be ABOUT the act and entity you choose — not merely
 built from words that happen to appear in the lists above. "Is it halal to fight
 back against an attacker?" is NOT a question about food, even though the only

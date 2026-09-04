@@ -21,7 +21,7 @@
 import { isVar, v } from "../logic/term";
 import { parseQuery, ParseError } from "../logic/parse";
 import type { Literal, Term } from "../logic/types";
-import { findAct, findAtom } from "../kb/lexicon";
+import { findAct, findAtom, findCircumstance } from "../kb/lexicon";
 
 export type GoalError =
   | { readonly kind: "parse-error"; readonly message: string }
@@ -33,6 +33,17 @@ export interface GroundedGoal {
   /** Always `ruling(<Act>, H)` with the ruling variable canonically named H. */
   readonly literal: Literal;
   readonly act: Term;
+  /**
+   * Situations the asker stated about themselves, as ground `circumstance/1`
+   * literals. Deduplicated and drawn only from `KNOWN_CIRCUMSTANCES`.
+   *
+   * These are premises supplied by the person asking, not facts the KB
+   * asserts, so they are carried separately all the way through and injected
+   * into a query-scoped copy of the KB rather than stored in it. A concession
+   * that rests on one of these is only as sound as the asker's account of
+   * their own situation, and the proof has to be able to say so.
+   */
+  readonly circumstances: readonly Literal[];
 }
 
 export type GoalResult = { readonly ok: true; readonly goal: GroundedGoal } | { readonly ok: false; readonly error: GoalError };
@@ -79,13 +90,43 @@ function checkTermGrounded(term: Term): GoalError | undefined {
 }
 
 /**
+ * Validates one `circumstance/1` goal from the model's output.
+ *
+ * Stricter than `checkTermGrounded`: the argument must be a bare atom from
+ * `KNOWN_CIRCUMSTANCES`, not merely something the lexicon knows. A
+ * circumstance is what unlocks a concession, so an atom landing here by
+ * mis-parse — `circumstance(swine)` — would be a fabricated exemption rather
+ * than a harmless nonsense goal.
+ */
+function checkCircumstance(literal: Literal): GoalError | undefined {
+  if (literal.args.length !== 1) {
+    return {
+      kind: "unsupported-shape",
+      message: `circumstance takes exactly one argument, got ${literal.args.length}.`,
+    };
+  }
+  const [situation] = literal.args;
+  if (situation.kind !== "atom" || !findCircumstance(situation.name)) {
+    const shown = situation.kind === "atom" ? situation.name : situation.kind;
+    return {
+      kind: "unknown-term",
+      term: shown,
+      message: `"${shown}" is not a circumstance the knowledge base can act on.`,
+    };
+  }
+  return undefined;
+}
+
+/**
  * Parses and validates the NL-parsing stage's raw output.
  *
  * Required shape: a single goal `ruling(<Act>, <AnyVar>)` where `<Act>` is
- * built entirely from acts and atoms in the lexicon. The ruling variable is
- * renamed to the canonical `H` regardless of what the model called it, since
- * every downstream consumer (`weighRuling`) depends on that name rather than
- * trusting the model to use it consistently.
+ * built entirely from acts and atoms in the lexicon, optionally followed by
+ * `circumstance/1` goals naming what the asker said about their own
+ * situation. The ruling variable is renamed to the canonical `H` regardless
+ * of what the model called it, since every downstream consumer
+ * (`weighRuling`) depends on that name rather than trusting the model to use
+ * it consistently.
  */
 export function groundGoal(rawText: string): GoalResult {
   const trimmed = rawText.trim();
@@ -116,18 +157,19 @@ export function groundGoal(rawText: string): GoalResult {
     });
   }
 
-  if (goals.length !== 1) {
+  const rulings = goals.filter((g) => g.predicate === "ruling");
+  if (rulings.length !== 1) {
     return fail({
       kind: "unsupported-shape",
-      message: `expected exactly one goal, got ${goals.length}.`,
+      message: `expected exactly one ruling/2 goal, got ${rulings.length}.`,
     });
   }
 
-  const [literal] = goals;
-  if (literal.predicate !== "ruling" || literal.args.length !== 2) {
+  const [literal] = rulings;
+  if (literal.args.length !== 2) {
     return fail({
       kind: "unsupported-shape",
-      message: `expected ruling(Act, H), got ${literal.predicate}/${literal.args.length}.`,
+      message: `expected ruling(Act, H), got ruling/${literal.args.length}.`,
     });
   }
 
@@ -142,6 +184,29 @@ export function groundGoal(rawText: string): GoalResult {
   const groundingError = checkTermGrounded(act);
   if (groundingError) return fail(groundingError);
 
+  // Anything alongside the ruling goal must be a circumstance. Rejecting other
+  // predicates rather than dropping them matters: the model reaching for a
+  // predicate it was not offered means it read the question as saying
+  // something this stage cannot express, and quietly proving the bare ruling
+  // instead would answer a narrower question than the one that was asked.
+  const circumstances: Literal[] = [];
+  const seen = new Set<string>();
+  for (const g of goals) {
+    if (g === literal) continue;
+    if (g.predicate !== "circumstance") {
+      return fail({
+        kind: "unsupported-shape",
+        message: `only circumstance/1 may accompany the ruling goal, got ${g.predicate}/${g.args.length}.`,
+      });
+    }
+    const error = checkCircumstance(g);
+    if (error) return fail(error);
+    const name = (g.args[0] as { name: string }).name;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    circumstances.push(g);
+  }
+
   const canonical: Literal = { predicate: "ruling", args: [act, v("H")] };
-  return ok({ literal: canonical, act });
+  return ok({ literal: canonical, act, circumstances });
 }

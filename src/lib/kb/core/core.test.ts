@@ -5,13 +5,27 @@ import type { Solution } from "../../engine/prover";
 import { parseQuery } from "../../logic/parse";
 import { termToString } from "../../logic/term";
 import { kbStatistics } from "../entry";
+import { withPremises } from "../premises";
 import { loadCoreKb } from "./index";
 
 const core = loadCoreKb();
 
+/**
+ * The core KB plus the situations the asker stated, exactly as the pipeline
+ * assembles it per query.
+ *
+ * No situations is the general case — "what is the ruling on X?" — and is the
+ * default every test is written against unless it is specifically about a
+ * concession.
+ */
+function kbFor(situations: readonly string[]) {
+  if (situations.length === 0) return core.kb;
+  return withPremises(core, parseQuery(situations.map((s) => `circumstance(${s})`).join(", "))).kb;
+}
+
 /** Distinct rulings derived for a goal, with how many derivations reached each. */
-function verdicts(query: string): Map<string, Solution[]> {
-  const result = prove(parseQuery(query), core.kb, { maxSolutions: 200 });
+function verdicts(query: string, situations: readonly string[] = []): Map<string, Solution[]> {
+  const result = prove(parseQuery(query), kbFor(situations), { maxSolutions: 200 });
   const grouped = new Map<string, Solution[]>();
   for (const s of result.solutions) {
     const hukm = termToString(s.bindings.H);
@@ -21,8 +35,8 @@ function verdicts(query: string): Map<string, Solution[]> {
 }
 
 /** Every clause id used across all derivations of a query. */
-function supportingClauses(query: string): Set<string> {
-  const result = prove(parseQuery(query), core.kb, { maxSolutions: 200 });
+function supportingClauses(query: string, situations: readonly string[] = []): Set<string> {
+  const result = prove(parseQuery(query), kbFor(situations), { maxSolutions: 200 });
   const ids = new Set<string>();
   for (const s of result.solutions) for (const id of s.clauseIds) ids.add(id);
   return ids;
@@ -125,14 +139,26 @@ describe("case: is mistreating a maternal aunt forbidden?", () => {
   });
 });
 
-describe("case: eating carrion under starvation", () => {
+describe("case: eating carrion", () => {
   const query = "ruling(consume(carrion), H)";
+  const starving = ["starvation"];
 
-  it("derives both the prohibition and the concession", () => {
+  it("gives the plain prohibition when no necessity was claimed", () => {
+    /*
+     * The whole point of `circumstance/1`. Asked as a general question — "is
+     * carrion permitted?" — the answer is the general rule, with no trace of
+     * the concession. Before the premise existed, the necessity exemption in
+     * 2:173 fired for every asker and this query answered "mubah", which
+     * turned the engine's most-cited worked example into a licence to eat
+     * anything the Qur'an forbids.
+     */
+    expect([...verdicts(query).keys()]).toEqual(["haram"]);
+  });
+
+  it("derives both the prohibition and the concession once necessity is claimed", () => {
     // Both are genuinely textual, from the same Qur'anic passage. The engine
     // must surface the tension rather than silently pick a side.
-    const found = verdicts(query);
-    expect([...found.keys()].sort()).toEqual(["haram", "mubah"]);
+    expect([...verdicts(query, starving).keys()].sort()).toEqual(["haram", "mubah"]);
   });
 
   it("grounds the prohibition in the prohibiting verse", () => {
@@ -140,17 +166,30 @@ describe("case: eating carrion under starvation", () => {
   });
 
   it("grounds the concession in the necessity verse", () => {
-    const clauses = supportingClauses(query);
+    const clauses = supportingClauses(query, starving);
     expect(clauses).toContain("quran:2-173:necessity");
     expect(clauses).toContain("usul:darura-lifts-prohibition");
   });
 
+  it("rests the concession on the asker's own premise, visibly", () => {
+    const concession = prove(parseQuery(query), kbFor(starving), { maxSolutions: 200 }).solutions
+      .find((s) => termToString(s.bindings.H) === "mubah");
+    expect(concession?.clauseIds.some((id) => id.startsWith("premise:"))).toBe(true);
+  });
+
   it("applies the same conflict to any forbidden food", () => {
-    expect([...verdicts("ruling(consume(swine), H)").keys()].sort()).toEqual(["haram", "mubah"]);
+    expect([...verdicts("ruling(consume(swine), H)", starving).keys()].sort())
+      .toEqual(["haram", "mubah"]);
+  });
+
+  it("does not let one asker's necessity excuse a different act", () => {
+    // `circumstance(starvation)` unlocks the food concession only; it must not
+    // reach into an unrelated prohibition that happens to be in the KB.
+    expect([...verdicts("ruling(mistreat(mother), H)", starving).keys()]).toEqual(["haram"]);
   });
 
   it("permits nothing that is not a forbidden food to begin with", () => {
-    expect(prove(parseQuery("ruling(consume(bread), H)"), core.kb).solutions).toHaveLength(0);
+    expect(prove(parseQuery("ruling(consume(bread), H)"), kbFor(starving)).solutions).toHaveLength(0);
   });
 });
 
@@ -178,12 +217,23 @@ describe("guards on derivation", () => {
 
   it("requires a real necessity, not merely an asserted exception", () => {
     // `excepted/2` alone must not lift a prohibition.
-    const result = prove(parseQuery("ruling(consume(carrion), mubah)"), core.kb, {
+    const result = prove(parseQuery("ruling(consume(carrion), mubah)"), kbFor(["starvation"]), {
       maxSolutions: 50,
     });
+    expect(result.solutions.length).toBeGreaterThan(0);
     for (const s of result.solutions) {
       expect(s.clauseIds).toContain("fact:starvation-is-necessity");
     }
+  });
+
+  it("will not grant a concession the asker did not claim", () => {
+    // The KB knows starvation is a darura and that carrion is excepted under
+    // it. Neither fact says anything about whoever is asking, so on their own
+    // they must not produce a permission.
+    expect(prove(parseQuery("necessity(starvation)"), core.kb).solutions.length).toBeGreaterThan(0);
+    expect(prove(parseQuery("excepted(consume(carrion), starvation)"), core.kb).solutions.length)
+      .toBeGreaterThan(0);
+    expect(prove(parseQuery("ruling(consume(carrion), mubah)"), core.kb).solutions).toHaveLength(0);
   });
 });
 

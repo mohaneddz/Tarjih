@@ -13,7 +13,13 @@ import type { KnowledgeBase } from "../engine/kb";
 import { collectLiteralVars, literalToString } from "../logic/term";
 import type { Clause } from "../logic/types";
 import type { EvidenceStore } from "./evidence";
-import { AHKAM_TAKLIFIYYA, isHukm, lookupPredicate, PREDICATES } from "./ontology";
+import {
+  AHKAM_TAKLIFIYYA,
+  isHukm,
+  lookupPredicate,
+  PREDICATES,
+  QUERY_SUPPLIED_PREDICATES,
+} from "./ontology";
 
 export type IssueSeverity = "error" | "warning";
 
@@ -121,8 +127,11 @@ export function validateKb(kb: KnowledgeBase, evidence?: EvidenceStore): Validat
     }
   }
 
-  // A body goal nothing can satisfy is a rule that never fires.
+  // A body goal nothing can satisfy is a rule that never fires — unless the
+  // predicate is one the question supplies, in which case being undefined
+  // here is the point.
   for (const { clauseId, goal } of kb.danglingReferences()) {
+    if (QUERY_SUPPLIED_PREDICATES.has(goal)) continue;
     issues.push({
       severity: "warning",
       clauseId,

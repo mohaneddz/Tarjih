@@ -13,6 +13,7 @@
 
 import { prove } from "../engine/prover";
 import type { LoadedKb } from "../kb/entry";
+import { withPremises } from "../kb/premises";
 import { groundGoal } from "./goal";
 import type { GoalError, GroundedGoal } from "./goal";
 import type { LlmClient } from "./llm";
@@ -21,6 +22,8 @@ import type { OutcomeGroupView, TarjihStepView } from "./present";
 import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
 import { weighRuling } from "../tarjih/weigh";
 import { literalToString } from "../logic/term";
+import type { Literal } from "../logic/types";
+import { findCircumstance } from "../kb/lexicon";
 
 export interface Narration {
   readonly summary: string;
@@ -28,11 +31,29 @@ export interface Narration {
   readonly notes: string;
 }
 
+/** One situation the asker stated about themselves, as the UI shows it. */
+export interface PremiseView {
+  /** The circumstance atom, e.g. "starvation". */
+  readonly situation: string;
+  /** Readable form, e.g. "facing starvation — a genuine threat to life from lack of food". */
+  readonly label: string;
+}
+
 export interface ResolutionView {
   readonly question: string;
   readonly goalText: string;
   readonly madhhab?: string;
   readonly strictness?: string;
+
+  /**
+   * Situations taken from the question rather than from any source.
+   *
+   * Surfaced separately from the proof because a reader needs to check them
+   * differently: everything else in the result can be verified against a text,
+   * while these can only be verified against their own situation. A concession
+   * silently resting on a misread premise is the failure mode this guards.
+   */
+  readonly premises: readonly PremiseView[];
 
   readonly verdict?: string;
   readonly confidence?: number;
@@ -95,7 +116,26 @@ export async function groundQuestion(question: string, llm: LlmClient): Promise<
     return { ok: false, error: { stage: "goal-grounding", error: grounded.error } };
   }
 
-  return { ok: true, goal: grounded.goal, goalText: literalToString(grounded.goal.literal) };
+  return { ok: true, goal: grounded.goal, goalText: goalToText(grounded.goal) };
+}
+
+/**
+ * The goal as the grounding preview shows it, circumstances included.
+ *
+ * The preview exists so the asker can catch a bad translation before the
+ * engine commits to it, and a wrongly-added circumstance is the translation
+ * error with the worst consequences — so it has to be visible here, not just
+ * in the proof afterwards.
+ */
+function goalToText(goal: GroundedGoal): string {
+  return [goal.literal, ...goal.circumstances].map(literalToString).join(", ");
+}
+
+function describePremises(circumstances: readonly Literal[]): PremiseView[] {
+  return circumstances.map((c) => {
+    const situation = c.args[0].kind === "atom" ? c.args[0].name : literalToString(c);
+    return { situation, label: findCircumstance(situation)?.label ?? situation };
+  });
 }
 
 /** Best-effort JSON parse of the narration response; never throws. */
@@ -140,16 +180,19 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
   const { goalText } = grounded;
 
   // --- Stage 2: prove ---
-  const proveResult = prove([grounded.goal.literal], kb.kb, { maxSolutions });
+  // Against a query-scoped KB: the asker's stated situation is a premise for
+  // this question alone and must not outlive it. See `kb/premises.ts`.
+  const scoped = withPremises(kb, grounded.goal.circumstances);
+  const proveResult = prove([grounded.goal.literal], scoped.kb, { maxSolutions });
 
   // --- Stage 3: weigh ---
-  const tarjih = weighRuling(proveResult, kb.evidence);
+  const tarjih = weighRuling(proveResult, scoped.evidence);
   if (!tarjih) {
     return { ok: false, error: { stage: "no-derivation", goalText } };
   }
 
-  const groups = tarjih.groups.map((g) => presentGroup(g, kb.evidence));
-  const relatedOpinions = tarjih.relatedOpinions.map((g) => presentGroup(g, kb.evidence));
+  const groups = tarjih.groups.map((g) => presentGroup(g, scoped.evidence));
+  const relatedOpinions = tarjih.relatedOpinions.map((g) => presentGroup(g, scoped.evidence));
   const resolution = tarjih.resolution.map(presentStep);
   const topConfidence = tarjih.verdict
     ? tarjih.groups.find((g) => g.outcome === tarjih.verdict)?.confidence
@@ -184,6 +227,7 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       goalText,
       madhhab,
       strictness,
+      premises: describePremises(grounded.goal.circumstances),
       verdict: tarjih.verdict,
       confidence: topConfidence,
       contested: tarjih.contested,

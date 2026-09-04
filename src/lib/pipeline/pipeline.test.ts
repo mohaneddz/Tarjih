@@ -7,6 +7,7 @@ import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
 import { presentGroup, presentProof, proofViewToText } from "./present";
 import { groundQuestion, resolveQuestion } from "./resolve";
 import { prove } from "../engine/prover";
+import { withPremises } from "../kb/premises";
 import { weighRuling } from "../tarjih/weigh";
 
 const core = loadCoreKb();
@@ -51,8 +52,14 @@ describe("groundGoal", () => {
     if (!result.ok) expect(result.error.kind).toBe("parse-error");
   });
 
-  it("rejects a query with more than one goal", () => {
+  it("rejects a goal alongside the ruling that is not a circumstance", () => {
     const result = groundGoal("ruling(mistreat(mother), H), kin(X, ego)");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.kind).toBe("unsupported-shape");
+  });
+
+  it("rejects a second ruling goal", () => {
+    const result = groundGoal("ruling(mistreat(mother), H), ruling(consume(swine), H2)");
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.kind).toBe("unsupported-shape");
   });
@@ -90,6 +97,56 @@ describe("groundGoal", () => {
 
   it("tolerates a trailing dot", () => {
     expect(groundGoal("ruling(mistreat(mother), H).").ok).toBe(true);
+  });
+
+  describe("circumstances", () => {
+    it("carries a known circumstance through alongside the goal", () => {
+      const result = groundGoal("ruling(consume(carrion), H), circumstance(starvation)");
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.goal.circumstances).toHaveLength(1);
+        expect(result.goal.circumstances[0].args[0]).toEqual({ kind: "atom", name: "starvation" });
+      }
+    });
+
+    it("leaves circumstances empty when the question claimed none", () => {
+      const result = groundGoal("ruling(consume(carrion), H)");
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.goal.circumstances).toEqual([]);
+    });
+
+    it("rejects a circumstance atom that is not in the vocabulary", () => {
+      // Stricter than the act/entity check on purpose: a circumstance unlocks
+      // a concession, so an atom arriving here by mis-parse would be a
+      // fabricated exemption, not a harmless nonsense goal.
+      const result = groundGoal("ruling(consume(carrion), H), circumstance(mild_hunger)");
+      expect(result.ok).toBe(false);
+      if (!result.ok && result.error.kind === "unknown-term") {
+        expect(result.error.term).toBe("mild_hunger");
+      } else {
+        throw new Error("expected unknown-term");
+      }
+    });
+
+    it("rejects an entity atom smuggled into the circumstance slot", () => {
+      // `swine` is a perfectly good lexicon atom, which is exactly why the
+      // circumstance check cannot just reuse the lexicon.
+      const result = groundGoal("ruling(consume(swine), H), circumstance(swine)");
+      expect(result.ok).toBe(false);
+    });
+
+    it("rejects a variable circumstance, which would match anything", () => {
+      const result = groundGoal("ruling(consume(carrion), H), circumstance(S)");
+      expect(result.ok).toBe(false);
+    });
+
+    it("deduplicates a repeated circumstance", () => {
+      const result = groundGoal(
+        "ruling(consume(carrion), H), circumstance(starvation), circumstance(starvation)"
+      );
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.goal.circumstances).toHaveLength(1);
+    });
   });
 
   describe("the NONE sentinel (regression: force-fit guessing)", () => {
@@ -198,12 +255,15 @@ describe("prompts", () => {
   });
 
   it("includes the actual citations so the model can quote them, not paraphrase blindly", () => {
-    const g = groundGoal("ruling(consume(carrion), H)");
+    // Under a claimed necessity, so both the prohibiting and the excusing
+    // verse are in play and the citation list has something to prove.
+    const g = groundGoal("ruling(consume(carrion), H), circumstance(starvation)");
     if (!g.ok) throw new Error("expected grounding to succeed");
-    const proved = prove([g.goal.literal], core.kb);
-    const tarjih = weighRuling(proved, core.evidence);
+    const scoped = withPremises(core, g.goal.circumstances);
+    const proved = prove([g.goal.literal], scoped.kb);
+    const tarjih = weighRuling(proved, scoped.evidence);
     if (!tarjih) throw new Error("expected a tarjih result");
-    const groups = tarjih.groups.map((group) => presentGroup(group, core.evidence));
+    const groups = tarjih.groups.map((group) => presentGroup(group, scoped.evidence));
     const { user } = buildNarrationPrompt({
       question: "q",
       goalText: "g",
@@ -285,8 +345,11 @@ describe("resolveQuestion end to end (LLM mocked)", () => {
     }
   });
 
-  it("resolves the carrion case as contested but decided", async () => {
-    const llm = new FakeLlm(["ruling(consume(carrion), H)", JSON.stringify({ summary: "s", analysis: "a", notes: "n" })]);
+  it("resolves the carrion case as contested but decided once necessity is claimed", async () => {
+    const llm = new FakeLlm([
+      "ruling(consume(carrion), H), circumstance(starvation)",
+      JSON.stringify({ summary: "s", analysis: "a", notes: "n" }),
+    ]);
     const result = await resolveQuestion({ question: "Can I eat carrion if I'm starving?", llm, kb: core });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -294,7 +357,49 @@ describe("resolveQuestion end to end (LLM mocked)", () => {
       expect(result.view.contested).toBe(true);
       expect(result.view.unresolved).toBe(false);
       expect(result.view.resolution).toHaveLength(1);
+      expect(result.view.premises.map((p) => p.situation)).toEqual(["starvation"]);
     }
+  });
+
+  it("gives the plain prohibition when the same question claims no necessity", async () => {
+    /*
+     * "Is carrion permitted?" and "may I eat carrion, I am starving?" are
+     * different questions with different answers, and the only thing telling
+     * them apart is the circumstance the grounding stage did or did not
+     * attach. Without that premise the concession in 2:173 fired for every
+     * asker, so this query — the general one — answered "permitted".
+     */
+    const llm = new FakeLlm(["ruling(consume(carrion), H)", JSON.stringify({ summary: "s", analysis: "a", notes: "n" })]);
+    const result = await resolveQuestion({ question: "Is eating carrion permitted?", llm, kb: core });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.view.verdict).toBe("haram");
+      expect(result.view.contested).toBe(false);
+      expect(result.view.premises).toEqual([]);
+    }
+  });
+
+  it("refuses a circumstance the lexicon does not define, rather than proving without it", async () => {
+    const llm = new FakeLlm(["ruling(consume(carrion), H), circumstance(mild_hunger)"]);
+    const result = await resolveQuestion({ question: "q", llm, kb: core });
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.error.stage === "goal-grounding") {
+      expect(result.error.error.kind).toBe("unknown-term");
+    }
+  });
+
+  it("does not let the asker's premise outlive the query that supplied it", async () => {
+    const starvingLlm = new FakeLlm([
+      "ruling(consume(swine), H), circumstance(starvation)",
+      JSON.stringify({ summary: "s", analysis: "a", notes: "n" }),
+    ]);
+    const first = await resolveQuestion({ question: "starving", llm: starvingLlm, kb: core });
+    expect(first.ok && first.view.verdict).toBe("mubah");
+
+    // A second, unrelated asker must not inherit the first one's necessity.
+    const plainLlm = new FakeLlm(["ruling(consume(swine), H)", JSON.stringify({ summary: "s", analysis: "a", notes: "n" })]);
+    const second = await resolveQuestion({ question: "general", llm: plainLlm, kb: core });
+    expect(second.ok && second.view.verdict).toBe("haram");
   });
 
   it("reports goal-grounding failure distinctly, without ever calling prove on garbage", async () => {
@@ -360,7 +465,7 @@ describe("resolveQuestion end to end (LLM mocked)", () => {
 
   it("never lets the narration call override the computed verdict even if it tries to", async () => {
     const llm = new FakeLlm([
-      "ruling(consume(carrion), H)",
+      "ruling(consume(carrion), H), circumstance(starvation)",
       JSON.stringify({ summary: "Actually this is haram, not mubah!", analysis: "a", notes: "n" }),
     ]);
     const result = await resolveQuestion({ question: "q", llm, kb: core });

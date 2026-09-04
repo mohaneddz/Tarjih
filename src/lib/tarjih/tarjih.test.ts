@@ -5,14 +5,22 @@ import { loadCoreKb } from "../kb/core";
 import { EvidenceStore } from "../kb/evidence";
 import { KnowledgeBase } from "../engine/kb";
 import { parseProgram, parseQuery } from "../logic/parse";
+import { withPremises } from "../kb/premises";
 import { buildRuleInput, MURAJJIH_RULES, overallStrength } from "./murajjih";
 import { chainStrength, combinedConfidence } from "./strength";
 import { groupByOutcome, weighRuling } from "./weigh";
 
 const core = loadCoreKb();
 
-function proveRuling(query: string) {
-  return prove(parseQuery(query), core.kb, { maxSolutions: 200 });
+/**
+ * The carrion conflict only exists once the asker has claimed necessity, so
+ * the fixtures that exercise it prove against a query-scoped KB carrying that
+ * premise — exactly as `resolveQuestion` assembles it. See `kb/premises.ts`.
+ */
+const starving = withPremises(core, parseQuery("circumstance(starvation)"));
+
+function proveRuling(query: string, kb = core) {
+  return prove(parseQuery(query), kb.kb, { maxSolutions: 200 });
 }
 
 describe("chainStrength", () => {
@@ -107,7 +115,7 @@ describe("groupByOutcome", () => {
   });
 
   it("sorts groups by confidence descending", () => {
-    const groups = groupByOutcome(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const groups = groupByOutcome(proveRuling("ruling(consume(carrion), H)", starving), starving.evidence);
     expect(groups[0].confidence).toBeGreaterThanOrEqual(groups[1].confidence);
   });
 
@@ -316,7 +324,7 @@ describe("uncontested and related-opinion handling", () => {
   });
 
   it("records each pairwise comparison once, despite the rematch after a displacement", () => {
-    const result = weighRuling(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const result = weighRuling(proveRuling("ruling(consume(carrion), H)", starving), starving.evidence);
     const pairings = result!.resolution.map((s) => [s.winner, s.loser].sort().join("|"));
     expect(new Set(pairings).size).toBe(pairings.length);
   });
@@ -324,7 +332,7 @@ describe("uncontested and related-opinion handling", () => {
 
 describe("end to end: the carrion conflict", () => {
   it("surfaces the real haram/mubah tension and resolves it correctly", () => {
-    const result = weighRuling(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const result = weighRuling(proveRuling("ruling(consume(carrion), H)", starving), starving.evidence);
     expect(result?.contested).toBe(true);
     expect(result?.unresolved).toBe(false);
     // The classical, agreed answer: necessity permits it.
@@ -336,13 +344,13 @@ describe("end to end: the carrion conflict", () => {
     // chain is textually weaker at the mechanism level, so a naive strength
     // comparison would (wrongly) favour haram. This pins that specificity
     // is what actually decides it.
-    const result = weighRuling(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const result = weighRuling(proveRuling("ruling(consume(carrion), H)", starving), starving.evidence);
     expect(result?.resolution).toHaveLength(1);
     expect(result?.resolution[0].rule).toBe("specificity");
   });
 
   it("names the actual verses in the explanation", () => {
-    const result = weighRuling(proveRuling("ruling(consume(carrion), H)"), core.evidence);
+    const result = weighRuling(proveRuling("ruling(consume(carrion), H)", starving), starving.evidence);
     const explanation = result?.resolution[0].explanation ?? "";
     expect(explanation).toContain("2:173");
     expect(explanation).toContain("5:3");
@@ -362,7 +370,7 @@ describe("murajjih rule set shape", () => {
   });
 
   it("buildRuleInput resolves the root to the derivation's own mechanism, not a nested premise", () => {
-    const result = proveRuling("ruling(consume(carrion), H)");
+    const result = proveRuling("ruling(consume(carrion), H)", starving);
     const mubah = result.solutions.find((s) => s.bindings.H && "name" in s.bindings.H && s.bindings.H.name === "mubah");
     const input = buildRuleInput(mubah!, core.evidence);
     // The root is the usul rule that concludes the ruling directly; the

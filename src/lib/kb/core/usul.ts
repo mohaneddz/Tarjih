@@ -50,11 +50,24 @@ export const USUL: KbEntry[] = [
      * al-darurat tubih al-mahzurat — necessity renders the forbidden
      * permissible. Grounded in Qur'an 2:173, not a free-standing principle.
      *
-     * Requires both an asserted exception and a situation that genuinely
-     * amounts to darura. The gap between real necessity and mere difficulty
-     * is the entire substance of the rule, so the engine will not infer it.
+     * Three body goals, and the third is the one that keeps this rule honest.
+     *
+     * `excepted` and `necessity` between them say only that starvation *is* a
+     * darura and that it *would* excuse this act — both timeless facts about
+     * the law, true whether or not anyone is starving. On their own they fired
+     * for every question about a forbidden food, so "is pork permitted?"
+     * answered "permitted", which is the exact opposite of the ruling and the
+     * single worst thing this engine could get wrong.
+     *
+     * `circumstance(Reason)` is the missing premise: it holds only when the
+     * asker's own situation was stated in the question, and it is never
+     * stored in the KB. The gap between real necessity and mere difficulty is
+     * the entire substance of the rule, so the engine will not infer it — and
+     * because the premise comes from the asker rather than a text, the proof
+     * tree shows it as theirs.
      */
-    clause: "ruling(Act, mubah) :- excepted(Act, Reason), necessity(Reason).",
+    clause:
+      "ruling(Act, mubah) :- excepted(Act, Reason), necessity(Reason), circumstance(Reason).",
     evidence: {
       kind: "usul",
       reference: "al-darurat tubih al-mahzurat",
