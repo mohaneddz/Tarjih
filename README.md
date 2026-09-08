@@ -1,3 +1,5 @@
+![Tarjih](screenshots/cover.avif)
+
 # Tarjih
 
 Tarjih (ترجيح, "weighing") is an experiment in explainable Islamic legal
