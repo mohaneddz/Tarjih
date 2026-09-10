@@ -97,7 +97,8 @@ Two ways clauses get added:
 | `/study` | The main interface. Ask a question, see the verdict, the proof tree, the premises taken from your question, the cited sources, and — if the evidence conflicted — exactly how it was resolved. |
 | `/database` | Browse the knowledge base: every hand-authored clause and its evidence, plus a review queue for approving or rejecting LLM-formalized hadith clauses. |
 | `/cases` | A ledger of past resolved questions. |
-| `/` , `/profile`, `/settings` | Landing page and account pages carried over from the original template — mostly static/decorative, not wired to the engine. |
+| `/saved` | Cases bookmarked on this device (no accounts — kept in localStorage). |
+| `/` | Landing page explaining the proof-of-concept and how the engine reasons. |
 
 ## Project layout
 
