@@ -124,7 +124,12 @@ function HistoryCard({ entry, isActive, isSaved, onSelect, onToggleSave }: Histo
       )}
     >
       <div className="flex items-center justify-between w-full gap-2">
-        <span className="text-[12px] uppercase tracking-wider font-extrabold text-brand-green truncate">
+        <span
+          className={cn(
+            "text-[12px] uppercase tracking-wider font-extrabold truncate",
+            entry.contested ? "text-brand-red" : "text-brand-green"
+          )}
+        >
           {entry.contested ? "Contested" : "Resolved"}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">

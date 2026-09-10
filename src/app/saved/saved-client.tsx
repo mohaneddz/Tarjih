@@ -53,7 +53,9 @@ export function SavedClient() {
                 className="bg-card-warm border border-border-warm rounded-2xl p-5 flex flex-col gap-3 shadow-sm relative"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[12px] uppercase tracking-wider font-extrabold text-brand-green">
+                  <span
+                    className={`text-[12px] uppercase tracking-wider font-extrabold ${c.contested ? "text-brand-red" : "text-brand-green"}`}
+                  >
                     {c.contested ? "Contested" : "Resolved"}
                   </span>
                   {c.verdict && <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />}
