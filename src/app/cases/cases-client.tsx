@@ -191,7 +191,7 @@ export function CasesClient() {
                       </td>
                       <td className="p-4.5 text-center text-text-secondary">{c.date}</td>
                       <td className="p-4.5 pr-6 text-right">
-                        <Link href="/study">
+                        <Link href={`/study?id=${c.id}`}>
                           <Button
                             variant="outline"
                             size="sm"
