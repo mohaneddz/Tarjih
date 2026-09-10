@@ -196,6 +196,10 @@ export function StudyClient() {
   }, []);
 
   useEffect(() => {
+    // Reads localStorage, which isn't available during the server render;
+    // this has to run post-hydration rather than from a lazy useState
+    // initializer, or the saved-bookmark icons would mismatch the SSR markup.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSavedIds(new Set(getSavedCases().map((c) => c.id)));
   }, []);
 

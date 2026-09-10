@@ -32,7 +32,7 @@ export function SavedClient() {
             <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">Saved Cases</h1>
           </div>
           <p className="text-text-secondary mt-2 max-w-2xl">
-            Bookmarked on this device — there's no account, so this list lives in this browser only and won't follow
+            Bookmarked on this device — there&rsquo;s no account, so this list lives in this browser only and won&rsquo;t follow
             you to another one.
           </p>
         </div>
