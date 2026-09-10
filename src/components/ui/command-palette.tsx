@@ -41,9 +41,9 @@ const ITEMS: readonly PaletteItem[] = [
   {
     id: "cases",
     label: "Cases",
-    hint: "Worked examples of the engine in action",
+    hint: "Browse the ledger of resolved queries",
     href: "/cases",
-    keywords: ["examples", "worked"],
+    keywords: ["ledger", "history", "resolved"],
     icon: <NavIcon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
   },
   {
@@ -53,22 +53,6 @@ const ITEMS: readonly PaletteItem[] = [
     href: "/saved",
     keywords: ["bookmarks", "starred"],
     icon: <NavIcon d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />,
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    hint: "Default madhhab and derivation strictness",
-    href: "/settings",
-    keywords: ["preferences", "madhhab", "strictness", "config"],
-    icon: <NavIcon d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />,
-  },
-  {
-    id: "profile",
-    label: "Profile",
-    hint: "Your activity on this device",
-    href: "/profile",
-    keywords: ["account", "activity"],
-    icon: <NavIcon d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />,
   },
 ];
 
@@ -94,18 +78,28 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     );
   }, [query]);
 
-  useEffect(() => {
+  // Reset the search and selection whenever the palette opens or the query
+  // changes, adjusting state during render (per React's guidance) instead of
+  // an effect so it doesn't cost an extra render pass.
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setQuery("");
       setActiveIndex(0);
+    }
+  } else if (query !== prevQuery) {
+    setPrevQuery(query);
+    setActiveIndex(0);
+  }
+
+  useEffect(() => {
+    if (open) {
       // Wait a frame so the element exists post-mount before focusing.
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [results.length, query]);
 
   useEffect(() => {
     if (!open) return;
