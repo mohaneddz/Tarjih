@@ -35,7 +35,6 @@ export const metadata: Metadata = {
   description:
     "A premium analytical workspace for Islamic jurisprudence, weighing juristic opinions using structured reasoning trees, scholarly consensus, and evidence strength.",
   applicationName: "Tarjih",
-  authors: [{ name: "Tarjih Team", url: siteUrl }],
   generator: "Next.js",
   keywords: [
     "Tarjih",
@@ -51,7 +50,6 @@ export const metadata: Metadata = {
     "Reasoning Trees",
     "Madhhab Analysis",
   ],
-  creator: "Tarjih Team",
   publisher: "Tarjih",
   category: "Islamic Technology & Legal Analysis",
   formatDetection: {
@@ -71,8 +69,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/logo/tarjih-lockup-dark.png",
-        width: 1200,
-        height: 630,
+        width: 1914,
+        height: 822,
         alt: "Tarjih Juristic Weighing Engine Logo",
       },
     ],
@@ -85,7 +83,6 @@ export const metadata: Metadata = {
     description:
       "A premium analytical workspace for Islamic jurisprudence, weighing opinions using structured reasoning trees and scholarly consensus.",
     images: ["/logo/tarjih-lockup-dark.png"],
-    creator: "@tarjih",
   },
   icons: {
     icon: [
