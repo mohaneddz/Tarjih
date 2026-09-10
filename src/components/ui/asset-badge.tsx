@@ -95,10 +95,12 @@ export function VerdictBadge({ verdict, className, size = "md", showLabel = true
     lg: "h-14 w-auto text-sm font-bold",
   }[size];
 
+  // Verdict stamp PNGs are portrait cards (960x1120, aspect 6:7) — width is
+  // derived from the fixed height so Image never distorts them.
   const imgDimensions = {
-    sm: { width: 80, height: 24 },
-    md: { width: 110, height: 36 },
-    lg: { width: 160, height: 56 },
+    sm: { width: 21, height: 24 },
+    md: { width: 31, height: 36 },
+    lg: { width: 48, height: 56 },
   }[size];
 
   return (
@@ -138,10 +140,12 @@ export function EvidenceBadge({ grade, className, size = "md", showLabel = true 
     lg: "h-10 w-auto text-sm",
   }[size];
 
+  // Evidence grade PNGs are square (1000x1000) — width matches height so
+  // Image never distorts them.
   const imgDimensions = {
-    sm: { width: 70, height: 20 },
-    md: { width: 100, height: 28 },
-    lg: { width: 140, height: 40 },
+    sm: { width: 20, height: 20 },
+    md: { width: 28, height: 28 },
+    lg: { width: 40, height: 40 },
   }[size];
 
   return (
