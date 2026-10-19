@@ -59,6 +59,7 @@ const SUGGESTIONS = [
   "Is mistreating my maternal aunt haram?",
   "Can I eat carrion if I'm starving?",
   "Is eating swine forbidden?",
+  "Can I skip the fast while travelling?",
 ];
 
 const LOADING_STEPS = [
