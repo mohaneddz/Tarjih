@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/study", label: "Study" },
   { href: "/database", label: "Knowledge Base" },
   { href: "/cases", label: "Cases" },
+  { href: "/console", label: "Console" },
 ] as const;
 
 /*

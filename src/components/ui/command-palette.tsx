@@ -47,6 +47,14 @@ const ITEMS: readonly PaletteItem[] = [
     icon: <NavIcon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
   },
   {
+    id: "console",
+    label: "Prolog Console",
+    hint: "Prove a raw goal and inspect the proof and trace",
+    href: "/console",
+    keywords: ["prolog", "query", "goal", "trace", "prove", "repl"],
+    icon: <NavIcon d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />,
+  },
+  {
     id: "saved",
     label: "Saved Cases",
     hint: "Rulings you've bookmarked on this device",

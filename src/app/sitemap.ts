@@ -4,7 +4,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tarjih.app";
   const currentDate = new Date().toISOString();
 
-  const routes = ["", "/study", "/database", "/cases", "/saved"];
+  const routes = ["", "/study", "/database", "/cases", "/console", "/saved"];
 
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
