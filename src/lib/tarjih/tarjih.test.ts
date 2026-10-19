@@ -420,7 +420,8 @@ describe("independent corroboration", () => {
       parseProgram("ruling(eat(p), haram). ruling(eat(X), haram) :- harmful(X). harmful(p).", { sourceName: "t" })
     );
     const evidence = new EvidenceStore([
-      { clauseId: "t:0", kind: "quran", reference: "verse", thubut: "qati", dalala: "qati" },
+      // Probable in indication, so its strength sits below the 100 cap and the bonus can show.
+      { clauseId: "t:0", kind: "quran", reference: "verse", thubut: "qati", dalala: "zanni" },
       { clauseId: "t:1", kind: "qaida", reference: "maxim", grade: "hasan" },
       { clauseId: "t:2", kind: "ontology", reference: "def" },
     ]);
