@@ -53,6 +53,9 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "consume_beyond_need", arity: 1, label: "eating or drinking more than is needed to survive", argumentHint: "a foodstuff or drink" },
   { functor: "sell", arity: 1, label: "selling / entering into", argumentHint: "a kind of sale contract" },
   { functor: "lend", arity: 1, label: "lending under", argumentHint: "a kind of loan" },
+  { functor: "borrow", arity: 1, label: "borrowing under / paying interest on", argumentHint: "a kind of loan" },
+  { functor: "give", arity: 1, label: "giving / offering", argumentHint: "a payment such as a bribe" },
+  { functor: "take", arity: 1, label: "taking / accepting", argumentHint: "a payment such as a bribe" },
   { functor: "play", arity: 1, label: "taking part in", argumentHint: "a game of chance" },
   { functor: "shorten", arity: 1, label: "shortening", argumentHint: "an act of worship" },
   { functor: "omit", arity: 1, label: "omitting / not performing", argumentHint: "an obligation" },
@@ -123,6 +126,7 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
     aliases: ["fish still in the sea", "whatever the net brings up", "the catch before it is caught"],
   },
   { atom: "maysir", label: "maysir (gambling)", aliases: ["gambling", "betting", "a wager", "the lottery"] },
+  { atom: "bribe", label: "a bribe", aliases: ["bribery", "a kickback", "paying an official to look away"] },
   { atom: "spot_sale", label: "an ordinary sale, goods and price exchanged at once", aliases: ["a normal sale", "buying something outright"] },
   {
     atom: "salam_contract",

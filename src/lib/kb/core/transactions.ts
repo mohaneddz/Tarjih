@@ -102,6 +102,76 @@ export const TRANSACTIONS: KbEntry[] = [
     },
   },
   {
+    id: "muslim:1598:riba-borrower",
+    /*
+     * The same report names four parties, and the KB modelled only the one
+     * taking the interest. The borrower who pays it (mu'kil) is named in the
+     * report itself, so this is the text, not the maxim "what is forbidden to
+     * take is forbidden to give" standing in for it.
+     */
+    clause: "ruling(borrow(Loan), haram) :- causes(lend(Loan), riba).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sahih Muslim 1598",
+      text: "The Messenger of Allah cursed the one who consumes riba, the one who pays it …",
+      textArabic: "لعن رسول الله آكل الربا وموكله",
+      grade: "sahih",
+      thubut: "qati",
+      dalala: "qati",
+      notes:
+        "Some contemporary bodies permit an interest-bearing loan under " +
+        "genuine necessity through the darura rule; no `excepted` pairing " +
+        "exists for it here, so the engine does not extend that concession.",
+    },
+  },
+  {
+    id: "muslim:1598:riba-scribe",
+    clause: "ruling(document(Loan), haram) :- causes(lend(Loan), riba).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sahih Muslim 1598",
+      text: "… the one who records it and its two witnesses, and said: they are all alike.",
+      textArabic: "وكاتبه وشاهديه وقال هم سواء",
+      grade: "sahih",
+      thubut: "qati",
+      dalala: "qati",
+      notes:
+        "Meets the debt-recording verse in relations.ts at the act and not at " +
+        "the ruling: 2:282 is about `debt`, this about a riba loan, so writing " +
+        "down a lawful debt stays recommended and writing down a ribawi one " +
+        "is forbidden.",
+    },
+  },
+  {
+    id: "abudawud:3580:bribery",
+    clause: "ruling(give(bribe), haram).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sunan Abi Dawud 3580, Jami' at-Tirmidhi 1337",
+      text: "The Messenger of Allah cursed the one who gives a bribe and the one who takes it.",
+      textArabic: "لعن رسول الله الراشي والمرتشي",
+      grade: "sahih",
+      thubut: "zanni",
+      dalala: "qati",
+      notes:
+        "Many jurists allow paying to obtain a right that cannot be had " +
+        "otherwise, placing the sin on the taker alone. That exception is " +
+        "not formalised.",
+    },
+  },
+  {
+    id: "abudawud:3580:taking-bribe",
+    clause: "ruling(take(bribe), haram).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sunan Abi Dawud 3580, Jami' at-Tirmidhi 1337, Qur'an 2:188",
+      text: "… and the one who takes it.",
+      grade: "sahih",
+      thubut: "zanni",
+      dalala: "qati",
+    },
+  },
+  {
     id: "bukhari:2177:riba-exchange",
     clause: "causes(sell(unequal_gold_exchange), riba).",
     evidence: {

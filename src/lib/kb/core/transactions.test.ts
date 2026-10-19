@@ -54,6 +54,22 @@ describe("riba", () => {
   });
 });
 
+describe("the other parties to riba", () => {
+  it("forbids paying interest and recording the loan, as Muslim 1598 names them", () => {
+    expect(verdicts("ruling(borrow(interest_loan), H)")).toEqual(["haram"]);
+    expect(verdicts("ruling(document(interest_loan), H)")).toEqual(["haram"]);
+  });
+
+  it("leaves recording a lawful debt where 2:282 put it", () => {
+    expect(verdicts("ruling(document(debt), H)")).toEqual(["mandub", "wajib"]);
+  });
+
+  it("forbids giving and taking a bribe", () => {
+    expect(verdicts("ruling(give(bribe), H)")).toEqual(["haram"]);
+    expect(verdicts("ruling(take(bribe), H)")).toEqual(["haram"]);
+  });
+});
+
 describe("gharar", () => {
   it("forbids a sale whose object is not established", () => {
     expect(verdicts("ruling(sell(unborn_calf), H)")).toEqual(["haram"]);
