@@ -22,7 +22,7 @@ question
   → LLM grounds it into a goal, e.g. ruling(mistreat(aunt_maternal), H)
   → engine proves every way that goal can be derived from the knowledge base
   → if derivations disagree, they're weighed against each other
-    (specific text beats general, certain beats probable, text beats analogy, ...)
+    (abrogation, then specific qualifies general, then certain beats probable, text beats analogy, ...)
   → LLM narrates the already-decided verdict and cites the real sources used
 ```
 
@@ -181,12 +181,11 @@ to live queries automatically.
   strictness controls on `/study` are recorded with the question and change
   nothing the engine derives; the answer says so. Every applicable concession
   is applied, with the original ruling shown beside it.
-- **Reconciliation is not yet its own step.** Classically, a specific text
-  qualifying a general one (*jam'*) is applied before any preference between
-  them (*tarjih*). Here specificity is one murajjih among others, ordered after
-  certainty of transmission and indication — so a concession has to be keyed
-  on the text that names it, not only on a probable maxim, or a certain general
-  text can outrank it.
+- **Reconciliation follows the majority.** A specific text qualifying a
+  general one (*jam'*) is applied after abrogation and before any preference
+  between them (*tarjih*), so a probable specific text can qualify a certain
+  general one. The Hanafi view, that a certain general text can only be
+  specified by something as certain, isn't modelled.
 - **Concessions are modelled as applying, not as extending.** The engine
   decides whether a concession is available. How far it reaches — *al-darura
   tuqaddar bi-qadariha* — is not modelled, and neither are the classical
