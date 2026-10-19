@@ -10,6 +10,7 @@
 
 import { literalKey, predicateKey } from "../logic/types";
 import type { Clause, Literal, PredicateKey } from "../logic/types";
+import { isBuiltinKey } from "./builtins";
 
 export class KnowledgeBase {
   /**
@@ -75,7 +76,7 @@ export class KnowledgeBase {
     for (const clause of this.byId.values()) {
       for (const b of clause.body) {
         const key = predicateKey(b.predicate, b.args.length);
-        if (!defined.has(key)) dangling.push({ clauseId: clause.id, goal: key });
+        if (!defined.has(key) && !isBuiltinKey(key)) dangling.push({ clauseId: clause.id, goal: key });
       }
     }
     return dangling;

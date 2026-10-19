@@ -9,11 +9,10 @@
  * exactly the information the product exists to present.
  */
 
-import { renameClause } from "../logic/term";
-import { collectLiteralVars } from "../logic/term";
+import { collectLiteralVars, literalToString, renameClause } from "../logic/term";
 import { isVariant, mark, resolve, resolveLiteral, undoTo, unifyLiterals } from "../logic/unify";
-import { literalToString } from "../logic/term";
 import type { Literal, Substitution, Term, Trail } from "../logic/types";
+import { builtinClauseId, lookupBuiltin } from "./builtins";
 import type { KnowledgeBase } from "./kb";
 
 // ---------------------------------------------------------------------------
@@ -53,14 +52,28 @@ export type TraceEventType =
   | "unify-fail"
   | "depth-cut"
   | "loop-cut"
-  | "budget-cut";
+  | "budget-cut"
+  | "builtin"
+  | "instantiation";
 
 /** One step of the search, for the Resolution Trace view. */
 export interface TraceEvent {
   readonly type: TraceEventType;
   readonly depth: number;
   readonly goal: string;
+  /**
+   * On `exit` and `unify-fail`, the clause being tried. On `fail`, the rule
+   * whose body needed this goal (absent for a top-level query goal).
+   */
   readonly clauseId?: string;
+  /**
+   * On `fail` only: true when not a single clause head matched the goal, so
+   * the search stopped here rather than somewhere below it. These are the
+   * goals a failure explanation is built from.
+   */
+  readonly leaf?: boolean;
+  /** On `fail` only: the goal as a term, as it stood when called. */
+  readonly literal?: Literal;
 }
 
 export interface ProveResult {
@@ -81,6 +94,13 @@ export interface ProveResult {
    * derivations, so it is reported rather than swallowed.
    */
   readonly loopCuts: number;
+  /**
+   * Builtin goals that could not be decided because an argument was still
+   * unbound, and so failed. Nonzero means a rule body is ordered so that a
+   * check runs before the goal that binds what it checks — a KB defect that
+   * hides derivations, so it is reported rather than swallowed.
+   */
+  readonly instantiationFaults: number;
   readonly trace: readonly TraceEvent[];
 }
 
@@ -117,6 +137,7 @@ interface SearchState {
   readonly trail: Trail;
   steps: number;
   loopCuts: number;
+  instantiationFaults: number;
   readonly maxSteps: number;
   readonly maxDepth: number;
   readonly deadline: number;
@@ -164,15 +185,16 @@ function* proveConjunction(
   index: number,
   state: SearchState,
   ancestors: readonly Literal[],
-  depth: number
+  depth: number,
+  via?: string
 ): Generator<RawProofNode[]> {
   if (index >= goals.length) {
     yield [];
     return;
   }
 
-  for (const head of proveGoal(goals[index], state, ancestors, depth)) {
-    for (const rest of proveConjunction(goals, index + 1, state, ancestors, depth)) {
+  for (const head of proveGoal(goals[index], state, ancestors, depth, via)) {
+    for (const rest of proveConjunction(goals, index + 1, state, ancestors, depth, via)) {
       yield [head, ...rest];
     }
     if (overBudget(state)) return;
@@ -184,7 +206,8 @@ function* proveGoal(
   goal: Literal,
   state: SearchState,
   ancestors: readonly Literal[],
-  depth: number
+  depth: number,
+  via?: string
 ): Generator<RawProofNode> {
   if (depth >= state.maxDepth) {
     state.truncated = true;
@@ -199,6 +222,26 @@ function* proveGoal(
 
   const current = resolveLiteral(goal, state.subst);
   const rendered = state.trace ? literalToString(current) : "";
+
+  // Builtins are decided here and never reach the clause store. They bind
+  // nothing and leave no choicepoint, so the loop check has nothing to guard.
+  const builtin = lookupBuiltin(current);
+  if (builtin) {
+    state.steps++;
+    const outcome = builtin.run(current.args, state.subst);
+    if (outcome === "true") {
+      record(state, { type: "builtin", depth, goal: rendered, clauseId: builtinClauseId(builtin) });
+      yield { goal: current, clauseId: builtinClauseId(builtin), children: [], depth };
+      return;
+    }
+    if (outcome === "instantiation") {
+      state.instantiationFaults++;
+      record(state, { type: "instantiation", depth, goal: rendered, clauseId: via });
+      return;
+    }
+    record(state, { type: "fail", depth, goal: rendered, clauseId: via, leaf: true, literal: current });
+    return;
+  }
 
   /*
    * Loop check. A goal that is a variant of one of its own ancestors is a
@@ -224,6 +267,7 @@ function* proveGoal(
 
   const nextAncestors = [...ancestors, current];
   let succeeded = false;
+  let headMatched = false;
 
   for (const clause of state.kb.clausesFor(current)) {
     if (overBudget(state)) {
@@ -240,8 +284,9 @@ function* proveGoal(
       undoTo(checkpoint, state.subst, state.trail);
       continue;
     }
+    headMatched = true;
 
-    for (const children of proveConjunction(renamed.body, 0, state, nextAncestors, depth + 1)) {
+    for (const children of proveConjunction(renamed.body, 0, state, nextAncestors, depth + 1, clause.id)) {
       succeeded = true;
       record(state, { type: "exit", depth, goal: rendered, clauseId: clause.id });
       yield { goal: current, clauseId: clause.id, children, depth };
@@ -252,7 +297,7 @@ function* proveGoal(
   }
 
   if (!succeeded) {
-    record(state, { type: "fail", depth, goal: rendered });
+    record(state, { type: "fail", depth, goal: rendered, clauseId: via, leaf: !headMatched, literal: current });
   }
 }
 
@@ -310,6 +355,7 @@ export function prove(
     trail: [],
     steps: 0,
     loopCuts: 0,
+    instantiationFaults: 0,
     maxSteps,
     maxDepth,
     deadline: Date.now() + timeBudgetMs,
@@ -357,6 +403,7 @@ export function prove(
     truncated: state.truncated,
     truncationReason: state.truncationReason,
     loopCuts: state.loopCuts,
+    instantiationFaults: state.instantiationFaults,
     trace: state.trace ?? [],
   };
 }

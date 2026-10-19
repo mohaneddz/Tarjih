@@ -11,6 +11,7 @@
  * rather than a comment.
  */
 
+import { isBuiltinClauseId } from "../engine/builtins";
 import type { ProofNode, Solution } from "../engine/prover";
 import { baseStrength, EvidenceStore } from "../kb/evidence";
 
@@ -33,6 +34,10 @@ import { baseStrength, EvidenceStore } from "../kb/evidence";
  *   an unweighted clause.
  */
 function collectMeaningfulStrengths(node: ProofNode, evidence: EvidenceStore, out: number[]): void {
+  // A builtin check (`dif`, `ge`) is computed, not cited: like ontology it
+  // asserts nothing a ruling could rest on, and unlike a missing record it is
+  // not an authoring gap.
+  if (isBuiltinClauseId(node.clauseId)) return;
   const record = evidence.get(node.clauseId);
   if (record === undefined) {
     out.push(0);

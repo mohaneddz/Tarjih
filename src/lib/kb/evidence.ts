@@ -8,6 +8,8 @@
  * thumb on the scale.
  */
 
+import { BUILTINS, builtinClauseId, isBuiltinClauseId } from "../engine/builtins";
+
 // ---------------------------------------------------------------------------
 // Source classification
 // ---------------------------------------------------------------------------
@@ -176,6 +178,7 @@ export class EvidenceStore {
    * explicitly zero-weight record that shows up as such in the UI.
    */
   getOrUnknown(clauseId: string): Evidence {
+    if (isBuiltinClauseId(clauseId)) return builtinEvidence(clauseId);
     return (
       this.byClause.get(clauseId) ?? {
         clauseId,
@@ -197,6 +200,22 @@ export class EvidenceStore {
   all(): Evidence[] {
     return [...this.byClause.values()];
   }
+}
+
+/**
+ * What a builtin step in a proof shows in place of a citation. A computed
+ * check carries no juristic weight, so it is ontology-kind like any other
+ * scaffolding, but it says what was checked rather than "no evidence record",
+ * which would read as an authoring gap.
+ */
+function builtinEvidence(clauseId: string): Evidence {
+  const spec = BUILTINS.find((b) => builtinClauseId(b) === clauseId);
+  return {
+    clauseId,
+    kind: "ontology",
+    reference: "Computed check",
+    notes: spec?.meaning ?? "Decided by the prover, not by a source.",
+  };
 }
 
 // ---------------------------------------------------------------------------
