@@ -173,7 +173,7 @@ to live queries automatically.
 ## Known limitations
 
 - **Coverage is the binding constraint.** The engine and the weighing logic
-  are real and tested; the knowledge base is 176 clauses over fourteen domains. A
+  are real and tested; the knowledge base is 176 clauses over thirteen domains. A
   question outside them says so rather than guessing, which is the intended
   behaviour but is still a gap.
 - **No negation as failure, on purpose.** The engine cannot conclude anything
