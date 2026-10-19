@@ -97,10 +97,11 @@ export const RELATIONS: KbEntry[] = [
       kind: "sunnah",
       reference: "Sahih al-Bukhari 5987, Sahih Muslim 2554",
       text:
-        "Allah said: I am the Most Merciful. I have created the womb-tie and " +
-        "derived its name from My name. Whoever keeps it, I keep ties with him, " +
-        "and whoever severs it, I sever ties with him.",
-      textArabic: "من وصلها وصلته ومن قطعها قطعته",
+        "Allah created the creation, and when He had finished, the womb-tie " +
+        "stood and said: this is the station of one who seeks refuge with You " +
+        "from being severed. He said: yes — would you not be content that I keep " +
+        "ties with whoever keeps you, and sever whoever severs you?",
+      textArabic: "أما ترضين أن أصل من وصلك وأقطع من قطعك",
       grade: "sahih",
       thubut: "qati",
       dalala: "zanni",
@@ -112,7 +113,7 @@ export const RELATIONS: KbEntry[] = [
     },
   },
   {
-    id: "bukhari:5971:mother-obligation-derived",
+    id: "quran:31-14:birr-toward-ascendants",
     clause: "obligation_toward(ego, Relative, birr) :- instance_of(Relative, ascendant_kin).",
     evidence: {
       kind: "quran",

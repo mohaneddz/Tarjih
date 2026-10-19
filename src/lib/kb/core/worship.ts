@@ -281,7 +281,7 @@ export const WORSHIP: KbEntry[] = [
     clause: "impediment(fasting, menstruation).",
     evidence: {
       kind: "sunnah",
-      reference: "Sahih al-Bukhari 304, Sahih Muslim 335",
+      reference: "Sahih al-Bukhari 304, Sahih Muslim 79",
       text:
         "Is it not the case that when a woman menstruates she neither prays " +
         "nor fasts?",
@@ -307,7 +307,7 @@ export const WORSHIP: KbEntry[] = [
     clause: "impediment(obligatory_prayer, menstruation).",
     evidence: {
       kind: "sunnah",
-      reference: "Sahih al-Bukhari 304, Sahih Muslim 335",
+      reference: "Sahih al-Bukhari 304, Sahih Muslim 79",
       text:
         "Is it not the case that when a woman menstruates she neither prays " +
         "nor fasts?",
@@ -317,8 +317,7 @@ export const WORSHIP: KbEntry[] = [
       scope: "khass",
       notes:
         "The same report names the prayer alongside the fast. Unlike the fast, " +
-        "the missed prayers are not made up — a difference this KB does not " +
-        "yet model.",
+        "the missed prayers are not made up (Sahih Muslim 335).",
     },
   },
   {
