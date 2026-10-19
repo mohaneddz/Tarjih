@@ -8,6 +8,7 @@
 
 import type { KbEntry } from "../entry";
 import { loadKbStrict } from "../entry";
+import { FAMILY } from "./family";
 import { FOOD } from "./food";
 import { HAJJ } from "./hajj";
 import { INTOXICANTS } from "./intoxicants";
@@ -30,6 +31,7 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...WORSHIP,
   ...HAJJ,
   ...RELATIONS,
+  ...FAMILY,
 ];
 
 /** Loads the core KB, throwing if it fails validation. */
@@ -37,4 +39,4 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { FOOD, HAJJ, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };
+export { FAMILY, FOOD, HAJJ, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };

@@ -21,6 +21,8 @@ export const ATOM_GLOSSES: Record<string, string> = {
   descendant_kin: "descendant (child or grandchild)",
   collateral_kin: "collateral relative (sibling, aunt, uncle, or their children)",
   affinal_kin: "relative by marriage",
+  cousin_kin: "cousin",
+  milk_kin: "relative through nursing",
   forbidden_food: "forbidden food",
   forbidden_animal: "an animal forbidden to eat",
   fanged_predator: "a predator with fangs",

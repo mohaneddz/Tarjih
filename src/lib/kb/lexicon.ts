@@ -62,6 +62,7 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "make_up", arity: 1, label: "making up (performing later, in place of what was missed)", argumentHint: "an act of worship" },
   { functor: "pay", arity: 1, label: "paying / giving", argumentHint: "a due such as a ransom" },
   { functor: "hunt", arity: 1, label: "hunting", argumentHint: "game" },
+  { functor: "marry", arity: 1, label: "marrying", argumentHint: "a relative or in-law" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -76,6 +77,14 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "aunt_paternal", label: "paternal aunt (al-amma, father's sister)", aliases: ["paternal aunt", "amma"] },
   { atom: "uncle_maternal", label: "maternal uncle (al-khal, mother's brother)", aliases: ["maternal uncle", "khal"] },
   { atom: "uncle_paternal", label: "paternal uncle (al-amm, father's brother)", aliases: ["paternal uncle", "amm"] },
+  { atom: "cousin_paternal", label: "a paternal cousin (child of the father's brother or sister)", aliases: ["cousin on my father's side", "father's brother's daughter"] },
+  { atom: "cousin_maternal", label: "a maternal cousin (child of the mother's brother or sister)", aliases: ["cousin on my mother's side", "mother's sister's daughter"] },
+  { atom: "niece", label: "a niece (brother's or sister's daughter)", aliases: ["my brother's daughter", "my sister's daughter"] },
+  { atom: "mother_in_law", label: "one's wife's mother", aliases: ["mother-in-law", "wife's mother"] },
+  { atom: "wifes_sister", label: "one's wife's sister, while married to her", aliases: ["sister-in-law", "wife's sister"] },
+  { atom: "wifes_aunt", label: "one's wife's paternal or maternal aunt, while married to her", aliases: ["wife's aunt"] },
+  { atom: "milk_mother", label: "a woman who nursed one as an infant", aliases: ["wet nurse", "foster mother by nursing"] },
+  { atom: "milk_sibling", label: "someone nursed by the same woman", aliases: ["milk brother", "milk sister", "foster sibling by nursing"] },
   { atom: "carrion", label: "carrion (an animal dead otherwise than by lawful slaughter)", aliases: ["carcass", "dead animal meat"] },
   { atom: "swine", label: "swine / pork", aliases: ["pork", "pig meat"] },
   { atom: "blood", label: "blood" },
