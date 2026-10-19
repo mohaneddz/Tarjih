@@ -128,7 +128,10 @@ export interface Evidence {
   readonly scope?: Scope;
   readonly restriction?: Restriction;
   readonly abrogation?: Abrogation;
-  /** Clause id of the text this one abrogates, when known. */
+  /**
+   * The other side of the abrogation, as a clause id: for a nasikh text, the
+   * clause it repeals; for a mansukh one, the clause that repealed it.
+   */
   readonly abrogates?: string;
 
   /** Schools holding this position. Absent means agreed upon or not school-specific. */
