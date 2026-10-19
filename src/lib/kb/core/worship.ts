@@ -56,15 +56,53 @@ export const WORSHIP: KbEntry[] = [
     clause: "ruling(perform(fasting), wajib).",
     evidence: {
       kind: "quran",
-      reference: "Qur'an 2:183",
-      text: "O you who have believed, decreed upon you is fasting as it was decreed upon those before you.",
-      textArabic: "يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ",
+      reference: "Qur'an 2:183, Qur'an 2:185",
+      text:
+        "O you who have believed, decreed upon you is fasting as it was decreed " +
+        "upon those before you. … So whoever of you witnesses the month, let him fast it.",
+      textArabic: "يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ … فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ",
       thubut: "qati",
       dalala: "qati",
       scope: "amm",
+      abrogation: "nasikh",
+      abrogates: "quran:2-184:fidya-option",
       notes:
         "The very next verse (2:184) carves out the ill and the traveller, which " +
-        "is why the two are recorded as general and specific respectively.",
+        "is why the two are recorded as general and specific respectively. " +
+        "2:185 is cited with it because it is what made the obligation binding " +
+        "on everyone able to fast, repealing the option 2:184 first gave them " +
+        "of feeding a poor person instead.",
+    },
+  },
+  {
+    id: "quran:2-184:fidya-option",
+    /*
+     * The one abrogated text in the KB, and kept on purpose: an engine that
+     * claims to apply naskh should be seen applying it. Salama ibn al-Akwa'
+     * reports that when this verse came down, whoever wished would break the
+     * fast and pay the ransom, until the verse after it was revealed and
+     * abrogated it.
+     *
+     * A mansukh clause scores zero, so it never wins on strength; what
+     * settles it is the abrogation rule, which sees 2:185 recorded as its
+     * nasikh in the chain of the obligation. With the link removed, it would
+     * fall to the later rules — and lose there only by luck.
+     */
+    clause: "ruling(omit(fasting), mubah).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:184; abrogated per Sahih al-Bukhari 4507, Sahih Muslim 1145",
+      text: "And upon those who are able to fast is a ransom: the feeding of a poor person.",
+      textArabic: "وَعَلَى الَّذِينَ يُطِيقُونَهُ فِدْيَةٌ طَعَامُ مِسْكِينٍ",
+      thubut: "qati",
+      dalala: "qati",
+      abrogation: "mansukh",
+      abrogates: "quran:2-183:fasting-obligatory",
+      notes:
+        "Ibn 'Abbas read the verse as never abrogated, but as addressing the " +
+        "elderly who cannot fast (Sahih al-Bukhari 4505). The two readings " +
+        "agree on the outcome, and that reading is recorded separately below " +
+        "as a concession for the person it describes.",
     },
   },
   {
