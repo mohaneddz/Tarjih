@@ -159,6 +159,27 @@ export const TRANSACTIONS: KbEntry[] = [
     },
   },
   {
+    id: "quran:5-90:maysir",
+    /*
+     * The verse names gambling outright. Without this clause the only route
+     * to its prohibition ran through gharar and Muslim 1513, whose indication
+     * is probable — so the engine presented the ruling on gambling as weaker
+     * than the ruling on wine, though both stand in the same sentence.
+     */
+    clause: "ruling(play(maysir), haram).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 5:90",
+      text:
+        "O you who believe, intoxicants, gambling, idols and divining arrows are " +
+        "but defilement from the work of Satan, so avoid it, that you may succeed.",
+      textArabic: "إِنَّمَا الْخَمْرُ وَالْمَيْسِرُ وَالْأَنصَابُ وَالْأَزْلَامُ رِجْسٌ مِّنْ عَمَلِ الشَّيْطَانِ فَاجْتَنِبُوهُ",
+      thubut: "qati",
+      dalala: "qati",
+      notes: "'rijs' and the command to avoid it carry the same certainty here as they do for khamr.",
+    },
+  },
+  {
     id: "gharar:maysir",
     clause: "causes(play(maysir), gharar).",
     evidence: {

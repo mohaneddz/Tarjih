@@ -48,6 +48,12 @@ describe("gharar", () => {
   it("covers gambling through the same defect", () => {
     expect(verdicts("ruling(play(maysir), H)")).toEqual(["haram"]);
   });
+
+  it("forbids gambling on the verse that names it, not only through gharar", () => {
+    const roots = prove(parseQuery("ruling(play(maysir), H)"), core.kb, { maxSolutions: 200 })
+      .solutions.map((s) => s.proofs[0].clauseId);
+    expect(roots).toContain("quran:5-90:maysir");
+  });
 });
 
 describe("the two ruling axes", () => {
