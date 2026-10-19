@@ -63,6 +63,7 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "pay", arity: 1, label: "paying / giving", argumentHint: "a due such as a ransom" },
   { functor: "hunt", arity: 1, label: "hunting", argumentHint: "game" },
   { functor: "marry", arity: 1, label: "marrying", argumentHint: "a relative or in-law" },
+  { functor: "give_zakat_to", arity: 1, label: "giving one's zakat to", argumentHint: "a recipient or relative" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -134,6 +135,12 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "tayammum", label: "tayammum (dry ablution with clean earth)", aliases: ["dry ablution", "wiping with earth instead of washing"] },
   { atom: "fidya", label: "fidya — the ransom of feeding a poor person for each fast missed", aliases: ["ransom for missed fasts", "feeding a poor person instead of fasting"] },
   { atom: "hajj", label: "hajj, the pilgrimage to Mecca", aliases: ["pilgrimage", "the hajj"] },
+  { atom: "zakat", label: "zakat, the obligatory alms", aliases: ["zakah", "alms", "obligatory charity"] },
+  { atom: "the_poor", label: "the poor", aliases: ["a poor person", "someone in poverty"] },
+  { atom: "the_needy", label: "the needy (al-masakin)", aliases: ["a needy person"] },
+  { atom: "debtor", label: "a debtor unable to repay", aliases: ["someone in debt"] },
+  { atom: "wayfarer", label: "a stranded traveller", aliases: ["ibn al-sabil", "a traveller cut off from their money"] },
+  { atom: "wealthy_person", label: "someone already wealthy", aliases: ["a rich person"] },
   { atom: "additional_hajj", label: "a further hajj after the first", aliases: ["a second hajj", "hajj again", "another hajj"] },
   { atom: "tawaf", label: "tawaf — circling the Ka'ba", aliases: ["circumambulation", "circling the Kaaba"] },
   { atom: "land_game", label: "land game — wild animals hunted on land", aliases: ["deer", "game birds", "hunting animals"] },
@@ -192,6 +199,12 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "able to perform hajj — with the health, means and safe passage for it",
     cue: "the asker says they can afford hajj and are able to make the journey",
     aliases: ["can afford hajj", "able to go on pilgrimage"],
+  },
+  {
+    atom: "nisab_held_for_year",
+    label: "holding wealth at or above the nisab for a full lunar year",
+    cue: "the asker says their savings or trade goods have reached the nisab and been held a year",
+    aliases: ["my savings are above nisab", "I have had this money a year"],
   },
   {
     atom: "ihram",

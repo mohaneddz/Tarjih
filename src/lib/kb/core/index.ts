@@ -19,6 +19,7 @@ import { TAXONOMY } from "./taxonomy";
 import { TRANSACTIONS } from "./transactions";
 import { USUL } from "./usul";
 import { WORSHIP } from "./worship";
+import { ZAKAT } from "./zakat";
 
 export const CORE_ENTRIES: readonly KbEntry[] = [
   ...TAXONOMY,
@@ -30,6 +31,7 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...TRANSACTIONS,
   ...WORSHIP,
   ...HAJJ,
+  ...ZAKAT,
   ...RELATIONS,
   ...FAMILY,
 ];
@@ -39,4 +41,4 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { FAMILY, FOOD, HAJJ, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };
+export { FAMILY, FOOD, HAJJ, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP, ZAKAT };

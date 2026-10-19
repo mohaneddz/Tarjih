@@ -64,6 +64,8 @@ export const ATOM_GLOSSES: Record<string, string> = {
   fasting: "fasting",
   tayammum: "tayammum (dry ablution)",
   hajj: "hajj",
+  zakat: "zakat",
+  zakat_recipient: "one of the eight recipients of zakat",
   tawaf: "tawaf",
   fidya: "the ransom of feeding a poor person",
 
@@ -77,6 +79,7 @@ export const ATOM_GLOSSES: Record<string, string> = {
   no_intention: "having no intention for the act",
   able_to_perform_hajj: "being able to perform hajj",
   ihram: "being in ihram",
+  nisab_held_for_year: "holding the nisab for a full year",
   ritual_impurity: "ritual impurity",
   mutada: "hardship an act ordinarily carries",
   ghayr_mutada: "hardship beyond what the act ordinarily carries",
