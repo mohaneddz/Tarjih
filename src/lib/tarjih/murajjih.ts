@@ -75,6 +75,18 @@ function referenceOf(e: Evidence): string {
   return e.reference;
 }
 
+/**
+ * Whether a derivation can carry a reconciliation at all. Jam' works on two
+ * texts that are both proofs (hujja); a da'if or fabricated report is not one
+ * for a ruling, so it cannot carve a case out of anything — however specific
+ * its wording. This matters because jam' runs before certainty is weighed:
+ * without it, a weak report marked khass would beat a certain general verse
+ * on specificity before its weakness ever came up.
+ */
+function admissible(chain: readonly Evidence[]): boolean {
+  return !chain.some((e) => e.grade === "daif" || e.grade === "mawdu");
+}
+
 // ---------------------------------------------------------------------------
 // Rules, in application order
 // ---------------------------------------------------------------------------
@@ -140,8 +152,8 @@ const specificity: MurajjihRule = {
   id: "specificity",
   label: "Specific over general (khass over amm)",
   compare(a, b) {
-    const aKhass = hasScope(a.chain, "khass");
-    const bKhass = hasScope(b.chain, "khass");
+    const aKhass = admissible(a.chain) && hasScope(a.chain, "khass");
+    const bKhass = admissible(b.chain) && hasScope(b.chain, "khass");
     if (aKhass && !bKhass) return "a";
     if (bKhass && !aKhass) return "b";
     return "tie";
@@ -161,8 +173,8 @@ const restriction: MurajjihRule = {
   id: "restriction",
   label: "Restricted over unrestricted (muqayyad over mutlaq)",
   compare(a, b) {
-    const aMuqayyad = hasRestriction(a.chain, "muqayyad");
-    const bMuqayyad = hasRestriction(b.chain, "muqayyad");
+    const aMuqayyad = admissible(a.chain) && hasRestriction(a.chain, "muqayyad");
+    const bMuqayyad = admissible(b.chain) && hasRestriction(b.chain, "muqayyad");
     if (aMuqayyad && !bMuqayyad) return "a";
     if (bMuqayyad && !aMuqayyad) return "b";
     return "tie";

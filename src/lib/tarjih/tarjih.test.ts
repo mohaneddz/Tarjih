@@ -189,6 +189,34 @@ describe("murajjihat", () => {
     expect(result?.resolution[0].rule).toBe("specificity");
   });
 
+  it("does not let a da'if report qualify anything, however specific", () => {
+    /*
+     * Reconciliation now runs before certainty is weighed, so a weak report
+     * marked khass would otherwise carve its case out of a certain verse
+     * before its weakness came up. It is not a proof for a ruling at all, so
+     * the question goes to the rules that weigh the texts instead.
+     */
+    const kb = new KnowledgeBase(
+      parseProgram("ruling(act, haram) :- r1. ruling(act, mubah) :- r2. r1. r2.", { sourceName: "t" })
+    );
+    const evidence = new EvidenceStore([
+      { clauseId: "t:0", kind: "quran", reference: "general verse", thubut: "qati", dalala: "qati", scope: "amm" },
+      {
+        clauseId: "t:1",
+        kind: "sunnah",
+        reference: "weak specific report",
+        grade: "daif",
+        thubut: "zanni",
+        scope: "khass",
+      },
+      { clauseId: "t:2", kind: "ontology", reference: "x" },
+      { clauseId: "t:3", kind: "ontology", reference: "x" },
+    ]);
+    const result = weighRuling(prove(parseQuery("ruling(act, H)"), kb), evidence);
+    expect(result?.verdict).toBe("haram");
+    expect(result?.resolution[0].rule).not.toBe("specificity");
+  });
+
   it("prefers qati thubut over zanni thubut before considering source rank", () => {
     const kb = new KnowledgeBase(
       parseProgram("ruling(act, haram) :- r1. ruling(act, mubah) :- r2. r1. r2.", {
