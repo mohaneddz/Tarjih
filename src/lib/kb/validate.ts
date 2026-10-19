@@ -9,6 +9,7 @@
  * over every batch of generated clauses.
  */
 
+import { lookupBuiltin } from "../engine/builtins";
 import type { KnowledgeBase } from "../engine/kb";
 import { collectLiteralVars, literalToString } from "../logic/term";
 import type { Clause } from "../logic/types";
@@ -75,7 +76,19 @@ export function validateClause(clause: Clause): KbIssue[] {
     });
   }
 
+  if (lookupBuiltin(clause.head)) {
+    issues.push({
+      severity: "error",
+      clauseId: clause.id,
+      code: "defines-builtin",
+      message:
+        `${literalToString(clause.head)} defines ${headKey}, which is a builtin the prover ` +
+        `decides itself. A clause for it would never be consulted.`,
+    });
+  }
+
   for (const literal of literals) {
+    if (literal !== clause.head && lookupBuiltin(literal)) continue;
     const spec = lookupPredicate(literal.predicate, literal.args.length);
     if (!spec) {
       // Distinguish a wrong arity from an unknown name: the two have very
@@ -134,6 +147,45 @@ export function validateClause(clause: Clause): KbIssue[] {
     }
   }
 
+  issues.push(...unsafeBuiltins(clause));
+
+  return issues;
+}
+
+/**
+ * A builtin must come after the goals that bind its variables.
+ *
+ * Builtins fail closed on an unbound argument (see `engine/builtins.ts`), so a
+ * check placed too early does not error — it just quietly never succeeds, and
+ * the rule it guards never fires. That is exactly the silent failure this
+ * module exists to surface, and unlike most of them it is decidable from the
+ * clause text alone.
+ *
+ * Head variables are not counted as bound: a query may leave them open, and a
+ * rule that only works when called with a ground argument is a trap for the
+ * next query that does not.
+ */
+function unsafeBuiltins(clause: Clause): KbIssue[] {
+  const issues: KbIssue[] = [];
+  const bound = new Set<string>();
+  for (const goal of clause.body) {
+    if (lookupBuiltin(goal)) {
+      const unbound = [...collectLiteralVars(goal)].filter((name) => !bound.has(name));
+      if (unbound.length > 0) {
+        issues.push({
+          severity: "error",
+          clauseId: clause.id,
+          code: "unsafe-builtin",
+          message:
+            `${literalToString(goal)} checks ${unbound.join(", ")} before any earlier body goal ` +
+            `binds ${unbound.length === 1 ? "it" : "them"}, so it can never be decided and the ` +
+            `rule will never fire. Move it after the goal that binds ${unbound.length === 1 ? "it" : "them"}.`,
+        });
+      }
+      continue;
+    }
+    collectLiteralVars(goal, bound);
+  }
   return issues;
 }
 
