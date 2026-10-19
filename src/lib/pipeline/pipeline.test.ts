@@ -491,3 +491,53 @@ describe("resolveQuestion end to end (LLM mocked)", () => {
     }
   });
 });
+
+describe("resolveQuestion: baseline, what-if and stalled goals", () => {
+  const narration = JSON.stringify({ summary: "s", analysis: "a", notes: "n" });
+
+  it("shows the ruling without the asker's circumstance alongside the concession", async () => {
+    const llm = new FakeLlm(["ruling(consume(carrion), H), circumstance(starvation)", narration]);
+    const result = await resolveQuestion({ question: "starving", llm, kb: core });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.view.verdict).toBe("mubah");
+      expect(result.view.baseline?.verdict).toBe("haram");
+    }
+  });
+
+  it("has no baseline when nothing was stated about the asker", async () => {
+    const llm = new FakeLlm(["ruling(consume(carrion), H)", narration]);
+    const result = await resolveQuestion({ question: "plain", llm, kb: core });
+    expect(result.ok && result.view.baseline).toBeUndefined();
+  });
+
+  it("offers the situation that would change the answer, computed rather than guessed", async () => {
+    const llm = new FakeLlm(["ruling(consume(swine), H)", narration]);
+    const result = await resolveQuestion({ question: "pork?", llm, kb: core });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.view.verdict).toBe("haram");
+      const starvation = result.view.whatIf.find((s) => s.situation === "starvation");
+      expect(starvation?.verdict).toBe("mubah");
+      expect(starvation?.unlockedBy.length).toBeGreaterThan(0);
+      expect(result.view.stats.derivations).toBeGreaterThan(0);
+    }
+  });
+
+  it("does not offer a situation the asker already stated", async () => {
+    const llm = new FakeLlm(["ruling(consume(swine), H), circumstance(starvation)", narration]);
+    const result = await resolveQuestion({ question: "starving", llm, kb: core });
+    expect(result.ok && result.view.whatIf.map((s) => s.situation)).not.toContain("starvation");
+  });
+
+  it("explains a question with no derivation by what it was waiting on", async () => {
+    const llm = new FakeLlm(["ruling(perform(tayammum), H)"]);
+    const result = await resolveQuestion({ question: "tayammum?", llm, kb: core });
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.error.stage === "no-derivation") {
+      const situations = result.error.whatIf.map((s) => s.situation);
+      expect(situations).toContain("water_unavailable");
+      expect(situations).toContain("illness");
+    }
+  });
+});

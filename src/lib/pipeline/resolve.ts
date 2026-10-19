@@ -11,7 +11,10 @@
  * pipeline asked an LLM to invent both the reasoning and the answer.
  */
 
+import { explainFailure } from "../engine/explain";
+import type { FailureExplanation } from "../engine/explain";
 import { prove } from "../engine/prover";
+import type { ProveResult } from "../engine/prover";
 import type { LoadedKb } from "../kb/entry";
 import { withPremises } from "../kb/premises";
 import { groundGoal } from "./goal";
@@ -24,7 +27,10 @@ import { VALIDITY_AXIS, weighRuling } from "../tarjih/weigh";
 import { literalToString, v } from "../logic/term";
 import type { Literal, Term } from "../logic/types";
 import { findCircumstance } from "../kb/lexicon";
-import { VALIDITY_LABELS } from "../kb/ontology";
+import { QUERY_SUPPLIED_PREDICATES, VALIDITY_LABELS } from "../kb/ontology";
+import type { Hukm } from "../kb/ontology";
+import type { TarjihResult } from "../tarjih/weigh";
+import { humanizeLiteral } from "./humanize";
 
 export interface Narration {
   readonly summary: string;
@@ -79,7 +85,58 @@ export interface ResolutionView {
    */
   readonly declaratory?: DeclaratoryView;
 
+  /**
+   * The ruling with none of the asker's stated circumstances, present only
+   * when they stated some. Without it, a reader sees "permitted" and cannot
+   * tell whether that is the act's ruling or a concession that holds only
+   * for them — the difference between 'azima and rukhsa.
+   */
+  readonly baseline?: BaselineView;
+  /** Unstated situations that would change the verdict. See `ScenarioView`. */
+  readonly whatIf: readonly ScenarioView[];
+  readonly stats: SearchStatsView;
+
   readonly narration: Narration;
+}
+
+/** The same question answered without any of the asker's stated circumstances: the 'azima. */
+export interface BaselineView {
+  readonly verdict?: string;
+  readonly confidence?: number;
+  readonly contested: boolean;
+  readonly unresolved: boolean;
+}
+
+/**
+ * A situation the asker did not state that would change the answer, found
+ * because a rule in the proof search stopped on it. Computed by actually
+ * re-running the engine with the premise added, never guessed.
+ */
+export interface ScenarioView {
+  readonly situation: string;
+  readonly label: string;
+  /** The ruling the engine reaches once the situation is added. */
+  readonly verdict?: string;
+  readonly confidence?: number;
+  /** Citations of the rules that were waiting on it. */
+  readonly unlockedBy: readonly string[];
+}
+
+/** A goal the search stopped on, for explaining a question with no derivation. */
+export interface StalledGoalView {
+  readonly goal: string;
+  readonly goalHuman: string;
+  /** Citations of the rules whose bodies needed it; empty for the question itself. */
+  readonly neededBy: readonly string[];
+}
+
+/** How much work the engine did, for the reader who wants to see it. */
+export interface SearchStatsView {
+  readonly steps: number;
+  readonly derivations: number;
+  readonly loopCuts: number;
+  readonly instantiationFaults: number;
+  readonly elapsedMs: number;
 }
 
 export interface DeclaratoryView {
@@ -96,7 +153,14 @@ export interface DeclaratoryView {
 
 export type ResolveError =
   | { readonly stage: "goal-grounding"; readonly error: GoalError }
-  | { readonly stage: "no-derivation"; readonly goalText: string }
+  | {
+      readonly stage: "no-derivation";
+      readonly goalText: string;
+      /** Where the search stopped, nearest the question first. */
+      readonly stalled: readonly StalledGoalView[];
+      /** Situations that, stated, would produce a ruling after all. */
+      readonly whatIf: readonly ScenarioView[];
+    }
   | { readonly stage: "llm"; readonly message: string };
 
 export type ResolveResult = { readonly ok: true; readonly view: ResolutionView } | { readonly ok: false; readonly error: ResolveError };
@@ -189,6 +253,75 @@ function resolveDeclaratory(
   };
 }
 
+const MAX_TRACE_EVENTS = 20_000;
+
+interface Analysis {
+  readonly scoped: LoadedKb;
+  readonly proved: ProveResult;
+  readonly tarjih?: TarjihResult<Hukm>;
+  readonly explanation: FailureExplanation;
+}
+
+/** Proves and weighs one goal against a query-scoped KB, with the trace kept for explanation. */
+function analyse(goal: Literal, kb: LoadedKb, premises: readonly Literal[], maxSolutions: number): Analysis {
+  const scoped = withPremises(kb, premises);
+  const proved = prove([goal], scoped.kb, { maxSolutions, trace: true, maxTraceEvents: MAX_TRACE_EVENTS });
+  return {
+    scoped,
+    proved,
+    tarjih: weighRuling(proved, scoped.evidence),
+    explanation: explainFailure(proved, {
+      querySupplied: QUERY_SUPPLIED_PREDICATES,
+      maxTraceEvents: MAX_TRACE_EVENTS,
+    }),
+  };
+}
+
+function citationsFor(clauseIds: readonly string[], kb: LoadedKb): string[] {
+  return [...new Set(clauseIds.map((id) => kb.evidence.getOrUnknown(id).reference))];
+}
+
+function verdictConfidence(tarjih: TarjihResult<Hukm> | undefined): number | undefined {
+  if (!tarjih?.verdict) return undefined;
+  return tarjih.groups.find((g) => g.outcome === tarjih.verdict)?.confidence;
+}
+
+/**
+ * Re-runs the question once per unstated situation a rule was waiting on, and
+ * keeps the ones that change the answer.
+ *
+ * Restricted to situations in the lexicon — the same gate the grounding stage
+ * applies — so a scenario can only ever be one the asker could actually have
+ * stated. Bounded by that list, which is short.
+ */
+export function findScenarios(
+  goal: Literal,
+  kb: LoadedKb,
+  premises: readonly Literal[],
+  explanation: FailureExplanation,
+  currentVerdict: string | undefined,
+  maxSolutions: number
+): ScenarioView[] {
+  const out: ScenarioView[] = [];
+  for (const unmet of explanation.unmetPremises) {
+    const arg = unmet.literal.args[0];
+    if (arg?.kind !== "atom") continue;
+    const entry = findCircumstance(arg.name);
+    if (!entry) continue;
+
+    const { tarjih } = analyse(goal, kb, [...premises, unmet.literal], maxSolutions);
+    if (!tarjih || tarjih.verdict === currentVerdict) continue;
+    out.push({
+      situation: entry.atom,
+      label: entry.label,
+      verdict: tarjih.verdict,
+      confidence: verdictConfidence(tarjih),
+      unlockedBy: citationsFor(unmet.neededBy, kb),
+    });
+  }
+  return out;
+}
+
 function describePremises(circumstances: readonly Literal[]): PremiseView[] {
   return circumstances.map((c) => {
     const situation = c.args[0].kind === "atom" ? c.args[0].name : literalToString(c);
@@ -240,23 +373,53 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
   // --- Stage 2: prove ---
   // Against a query-scoped KB: the asker's stated situation is a premise for
   // this question alone and must not outlive it. See `kb/premises.ts`.
-  const scoped = withPremises(kb, grounded.goal.circumstances);
-  const proveResult = prove([grounded.goal.literal], scoped.kb, { maxSolutions });
+  const started = Date.now();
+  const premises = grounded.goal.circumstances;
+  const goal = grounded.goal.literal;
+  const { scoped, proved: proveResult, tarjih, explanation } = analyse(goal, kb, premises, maxSolutions);
 
   // --- Stage 3: weigh ---
-  const tarjih = weighRuling(proveResult, scoped.evidence);
   if (!tarjih) {
-    return { ok: false, error: { stage: "no-derivation", goalText } };
+    return {
+      ok: false,
+      error: {
+        stage: "no-derivation",
+        goalText,
+        stalled: explanation.frontier.map((f) => ({
+          goal: f.goal,
+          goalHuman: humanizeLiteral(f.literal),
+          neededBy: citationsFor(f.neededBy, scoped),
+        })),
+        whatIf: findScenarios(goal, kb, premises, explanation, undefined, maxSolutions),
+      },
+    };
   }
 
   const groups = tarjih.groups.map((g) => presentGroup(g, scoped.evidence));
   const relatedOpinions = tarjih.relatedOpinions.map((g) => presentGroup(g, scoped.evidence));
   const resolution = tarjih.resolution.map(presentStep);
-  const topConfidence = tarjih.verdict
-    ? tarjih.groups.find((g) => g.outcome === tarjih.verdict)?.confidence
-    : undefined;
+  const topConfidence = verdictConfidence(tarjih);
 
   const declaratory = resolveDeclaratory(grounded.goal.act, scoped, maxSolutions);
+
+  let baseline: BaselineView | undefined;
+  if (premises.length > 0) {
+    const plain = analyse(goal, kb, [], maxSolutions).tarjih;
+    baseline = {
+      verdict: plain?.verdict,
+      confidence: verdictConfidence(plain),
+      contested: plain?.contested ?? false,
+      unresolved: plain?.unresolved ?? false,
+    };
+  }
+  const whatIf = findScenarios(goal, kb, premises, explanation, tarjih.verdict, maxSolutions);
+  const stats: SearchStatsView = {
+    steps: proveResult.steps,
+    derivations: proveResult.solutions.length,
+    loopCuts: proveResult.loopCuts,
+    instantiationFaults: proveResult.instantiationFaults,
+    elapsedMs: Date.now() - started,
+  };
 
   // --- Stage 4: narrate ---
   const narrationPrompt = buildNarrationPrompt({
@@ -275,6 +438,7 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       label: declaratory.label,
       gloss: declaratory.gloss,
     },
+    baselineVerdict: baseline?.verdict,
   });
 
   const fallback = computedFallbackNarration(groups, tarjih.verdict);
@@ -303,6 +467,9 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       resolution,
       relatedOpinions,
       declaratory,
+      baseline,
+      whatIf,
+      stats,
       narration,
     },
   };

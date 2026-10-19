@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
               "The knowledge base has no rule covering this question yet. This is a real gap in the KB's " +
               "current coverage, not a failure to understand the question.",
             goal: result.error.goalText,
+            stalled: result.error.stalled,
+            whatIf: result.error.whatIf,
           },
           { status: 404 }
         );
