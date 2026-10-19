@@ -50,6 +50,7 @@ export interface CircumstanceEntry {
 export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "mistreat", arity: 1, label: "mistreating / disrespecting", argumentHint: "a relative" },
   { functor: "consume", arity: 1, label: "eating or drinking", argumentHint: "a foodstuff or drink" },
+  { functor: "consume_beyond_need", arity: 1, label: "eating or drinking more than is needed to survive", argumentHint: "a foodstuff or drink" },
   { functor: "sell", arity: 1, label: "selling / entering into", argumentHint: "a kind of sale contract" },
   { functor: "lend", arity: 1, label: "lending under", argumentHint: "a kind of loan" },
   { functor: "play", arity: 1, label: "taking part in", argumentHint: "a game of chance" },
@@ -154,6 +155,12 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "too old to fast, with no prospect of being able to",
     cue: "the asker says they are elderly and cannot fast, or asks about an elderly person who cannot",
     aliases: ["too old to fast", "elderly and unable to fast"],
+  },
+  {
+    atom: "no_intention",
+    label: "did the act without intending it as that act of worship",
+    cue: "the asker says they did it without intending it, e.g. went without food all day without meaning to fast",
+    aliases: ["without intention", "didn't intend to fast", "no niyya"],
   },
   {
     atom: "certain_prior_purity",

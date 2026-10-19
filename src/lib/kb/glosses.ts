@@ -52,6 +52,8 @@ export const ATOM_GLOSSES: Record<string, string> = {
 
   // Worship
   purity: "ritual purity",
+  intention: "the intention (niyya) to perform it",
+  ibada: "an act of worship",
   obligatory_prayer: "an obligatory prayer",
   fasting: "fasting",
   tayammum: "tayammum (dry ablution)",
@@ -64,6 +66,7 @@ export const ATOM_GLOSSES: Record<string, string> = {
   water_unavailable: "the absence of water",
   menstruation: "menstruation",
   too_old_to_fast: "being too old to fast",
+  no_intention: "having no intention for the act",
   ritual_impurity: "ritual impurity",
   mutada: "hardship an act ordinarily carries",
   ghayr_mutada: "hardship beyond what the act ordinarily carries",
