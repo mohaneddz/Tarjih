@@ -37,6 +37,21 @@ describe("riba", () => {
   it("voids the contract as a separate claim from forbidding the act", () => {
     expect(statusOf("lend(interest_loan)")).toBe("batil");
   });
+
+  it("reports the Hanafi fasid beside the majority's batil for a ribawi sale", () => {
+    const proved = prove(parseQuery("validity(sell(unequal_gold_exchange), V)"), core.kb, {
+      maxSolutions: 200,
+    });
+    const result = weighRuling(proved, core.evidence, VALIDITY_AXIS);
+    expect(result?.groups.map((g) => g.outcome).sort()).toEqual(["batil", "fasid"]);
+    // One step apart: a disagreement about whether the defect is curable,
+    // not about whether the sale is sound.
+    expect(result?.contested).toBe(false);
+  });
+
+  it("does not put the fasid reading on a riba loan, which the Hanafis treat differently", () => {
+    expect(verdicts("validity(lend(interest_loan), V)", "V")).toEqual(["batil"]);
+  });
 });
 
 describe("gharar", () => {

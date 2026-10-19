@@ -42,18 +42,47 @@ export const TRANSACTIONS: KbEntry[] = [
   },
   {
     id: "quran:2-275:validity",
+    /*
+     * Was recorded as consensus. It is not: the consensus is on the
+     * prohibition and on the excess being returned. Whether the contract
+     * itself is void or only defective is the standing disagreement between
+     * the majority and the Hanafis, who are the ones that draw the
+     * fasid/batil line at all.
+     */
     clause: "validity(Deal, batil) :- causes(Deal, riba).",
     evidence: {
-      kind: "ijma",
-      reference: "Consensus on the effect of riba on a contract",
+      kind: "usul",
+      reference: "The majority on the effect of riba on a contract",
       thubut: "qati",
       dalala: "zanni",
+      madhahib: ["maliki", "shafii", "hanbali"],
       notes:
         "The prohibition and its effect on the contract are separate claims. " +
         "That an interest-bearing loan is sinful is in the verse; that the " +
-        "excess is legally without effect and must be returned is the agreed " +
-        "juristic consequence, recorded as its own clause so it can be " +
-        "weighed and disagreed with separately.",
+        "contract is void and conveys nothing is the majority's juristic " +
+        "consequence, recorded as its own clause so it can be weighed and " +
+        "disagreed with separately.",
+    },
+  },
+  {
+    id: "hanafi:riba-fasid",
+    // Sales only. A loan with a stipulated excess is a different case for the
+    // Hanafis — the condition falls away and the loan stands — and saying
+    // fasid of it would put a position in their mouth they do not hold.
+    clause: "validity(sell(Contract), fasid) :- causes(sell(Contract), riba).",
+    evidence: {
+      kind: "usul",
+      reference: "The Hanafi classification of a ribawi contract",
+      thubut: "qati",
+      dalala: "zanni",
+      madhahib: ["hanafi"],
+      notes:
+        "For the Hanafis riba in an exchange is a defect in an attribute of " +
+        "the contract — the excess — not in its essence, so the sale is fasid: " +
+        "it must be rescinded, and it conveys ownership once the goods are " +
+        "taken into possession. fasid against batil is one step apart, so the " +
+        "engine reports a spread rather than a contradiction, which is what " +
+        "this disagreement is.",
     },
   },
   {
