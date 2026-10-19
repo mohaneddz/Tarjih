@@ -8,6 +8,7 @@
 
 import type { KbEntry } from "../entry";
 import { loadKbStrict } from "../entry";
+import { FOOD } from "./food";
 import { INTOXICANTS } from "./intoxicants";
 import { QAWAID } from "./qawaid";
 import { RELATIONS } from "./relations";
@@ -22,6 +23,7 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...USUL,
   ...QAWAID,
   ...SCRIPTURE,
+  ...FOOD,
   ...INTOXICANTS,
   ...TRANSACTIONS,
   ...WORSHIP,
@@ -33,4 +35,4 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };
+export { FOOD, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP };

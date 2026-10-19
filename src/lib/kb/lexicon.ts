@@ -79,6 +79,16 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "swine", label: "swine / pork", aliases: ["pork", "pig meat"] },
   { atom: "blood", label: "blood" },
 
+  // Food beyond the four named in Qur'an 5:3
+  { atom: "dead_fish", label: "a fish that died in the water rather than being caught", aliases: ["dead fish", "fish found dead", "seafood that died on its own"] },
+  { atom: "floating_dead_fish", label: "a fish that died of itself and floated to the surface", aliases: ["floating fish", "fish floating dead"] },
+  { atom: "locust", label: "locusts", aliases: ["grasshoppers", "locust"] },
+  { atom: "residual_blood", label: "the blood left in meat after lawful slaughter", aliases: ["blood in the meat", "blood left in the veins", "pink juice in steak"] },
+  { atom: "lion", label: "a lion" },
+  { atom: "wolf", label: "a wolf" },
+  { atom: "domestic_donkey", label: "the meat of a domestic donkey", aliases: ["donkey meat"] },
+  { atom: "horse_meat", label: "horse meat", aliases: ["horse"] },
+
   // Intoxicants
   { atom: "khamr", label: "khamr (grape wine)", aliases: ["wine", "alcohol"] },
   { atom: "nabidh", label: "nabidh (fermented date or raisin infusion)", aliases: ["date wine"] },

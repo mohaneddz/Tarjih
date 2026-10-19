@@ -22,6 +22,10 @@ export const ATOM_GLOSSES: Record<string, string> = {
   collateral_kin: "collateral relative (sibling, aunt, uncle, or their children)",
   affinal_kin: "relative by marriage",
   forbidden_food: "forbidden food",
+  forbidden_animal: "an animal forbidden to eat",
+  fanged_predator: "a predator with fangs",
+  sea_carrion: "something of the sea that died of itself",
+  blood_of_any_kind: "blood, in any form",
 
   // Substances and their attributes
   muskir: "intoxicating",
