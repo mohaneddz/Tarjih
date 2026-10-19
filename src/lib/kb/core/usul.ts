@@ -26,13 +26,20 @@ export const USUL: KbEntry[] = [
      *   to a particular person or occasion cannot found an analogy, and with
      *   no negation-as-failure this guard fails closed: silence forbids the
      *   analogy rather than permitting it.
-     * - New must differ from Asl. Not written as a condition because the
-     *   prover's variant loop check already handles it — deriving
-     *   ruling(X, H) from ruling(X, H) is a variant of its own parent goal.
-     *   That also rules out circular chains of analogy at any length.
+     * - `dif(New, Asl)`: a case is not an analogy to itself. This used to be
+     *   left to the prover's variant loop check, which does cut
+     *   ruling(X, H) from ruling(X, H) — but only when the act was already
+     *   bound. Asked with the act open, `ruling(A, H)` is not a variant of
+     *   `ruling(consume(khamr), H)`, so the rule happily derived "khamr is
+     *   forbidden because khamr is forbidden" and the corroboration count
+     *   rose on a derivation that adds nothing. Even when the loop check did
+     *   catch it, every such cut was reported as possibly-unexplored search.
+     *   Stating the condition makes it hold for every query shape and keeps
+     *   the loop-cut count meaningful. Circular chains of length two or more
+     *   are still cut by the loop check, which is the job it is suited to.
      */
     clause:
-      "ruling(New, H) :- illah(New, Illa), illah(Asl, Illa), generalisable(Asl), ruling(Asl, H).",
+      "ruling(New, H) :- illah(New, Illa), illah(Asl, Illa), dif(New, Asl), generalisable(Asl), ruling(Asl, H).",
     evidence: {
       kind: "qiyas",
       reference: "Qiyas (analogical extension)",
