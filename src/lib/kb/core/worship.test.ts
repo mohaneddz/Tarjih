@@ -4,8 +4,9 @@ import { prove } from "../../engine/prover";
 import { parseQuery } from "../../logic/parse";
 import { termToString } from "../../logic/term";
 import { weighRuling } from "../../tarjih/weigh";
+import { loadKbStrict } from "../entry";
 import { withPremises } from "../premises";
-import { loadCoreKb } from "./index";
+import { CORE_ENTRIES, loadCoreKb } from "./index";
 
 const core = loadCoreKb();
 
@@ -54,6 +55,26 @@ describe("concessions are for the person, not the act", () => {
     expect(weighed("ruling(omit(fasting), H)", ["travel"])).toBe("mubah");
     // With no excuse stated, omitting the fast is what it always was.
     expect(weighed("ruling(omit(fasting), H)")).toBe("haram");
+  });
+
+  it("excuses the fast through the hardship maxim alone, the specific verse qualifying 2:183", () => {
+    /*
+     * Without the clauses keyed on 2:184 directly, the concession rests on a
+     * maxim of probable indication against a certain general obligation. The
+     * khass verse in its chain qualifies that obligation (jam') before the
+     * two are weighed on certainty, so the traveller is still excused.
+     */
+    const direct = new Set(["quran:2-184:travel-excuses-fast", "quran:2-184:illness-excuses-fast"]);
+    const viaMaxim = loadKbStrict(CORE_ENTRIES.filter((e) => !direct.has(e.id)));
+    for (const situation of ["travel", "illness"]) {
+      const kb = withPremises(viaMaxim, parseQuery(`circumstance(${situation})`));
+      const result = weighRuling(
+        prove(parseQuery("ruling(omit(fasting), H)"), kb.kb, { maxSolutions: 200 }),
+        kb.evidence
+      );
+      expect(result?.verdict).toBe("mubah");
+      expect(result?.resolution.map((s) => s.rule)).toContain("specificity");
+    }
   });
 });
 

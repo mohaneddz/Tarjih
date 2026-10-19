@@ -165,11 +165,12 @@ export const WORSHIP: KbEntry[] = [
     id: "quran:2-184:travel-excuses-fast",
     /*
      * The verse names the traveller itself, so the concession is keyed on it
-     * directly — the same reasoning as tayammum below. Routed only through
-     * the mashaqqa maxim, the concession carried that maxim's probable
-     * indication, lost to the certain obligation in 2:183 on dalala before
-     * specificity was ever consulted, and told a traveller that breaking the
-     * fast is forbidden. The maxim route stays as corroboration.
+     * directly — the same reasoning as tayammum below: the jurists cite the
+     * verse for it, not the maxim. The maxim route stays as corroboration,
+     * and now holds on its own too: it once carried the maxim's probable
+     * indication into a contest with 2:183 on dalala before specificity was
+     * consulted, until reconciliation (jam') was ordered ahead of certainty
+     * in murajjih.ts.
      */
     clause: "ruling(omit(fasting), mubah) :- circumstance(travel).",
     evidence: {
