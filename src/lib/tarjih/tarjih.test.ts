@@ -392,3 +392,40 @@ describe("murajjih rule set shape", () => {
     expect(overallStrength.compare(a, b)).toBe("b");
   });
 });
+
+describe("independent corroboration", () => {
+  it("counts two routes to the same root clause as one line of argument", () => {
+    // The same verse reached through two paths in the class hierarchy.
+    const kb = new KnowledgeBase(
+      parseProgram(
+        "ruling(eat(X), haram) :- forbidden(X). forbidden(X) :- a(X). forbidden(X) :- b(X). a(p). b(p).",
+        { sourceName: "t" }
+      )
+    );
+    const evidence = new EvidenceStore([
+      { clauseId: "t:0", kind: "quran", reference: "verse", thubut: "qati", dalala: "qati" },
+      { clauseId: "t:1", kind: "ontology", reference: "def" },
+      { clauseId: "t:2", kind: "ontology", reference: "def" },
+      { clauseId: "t:3", kind: "ontology", reference: "def" },
+      { clauseId: "t:4", kind: "ontology", reference: "def" },
+    ]);
+    const [group] = groupByOutcome(prove(parseQuery("ruling(eat(p), H)"), kb), evidence);
+    expect(group.derivations).toHaveLength(2);
+    expect(group.independentLines).toBe(1);
+    expect(group.confidence).toBe(group.best.strength);
+  });
+
+  it("still rewards genuinely separate arguments", () => {
+    const kb = new KnowledgeBase(
+      parseProgram("ruling(eat(p), haram). ruling(eat(X), haram) :- harmful(X). harmful(p).", { sourceName: "t" })
+    );
+    const evidence = new EvidenceStore([
+      { clauseId: "t:0", kind: "quran", reference: "verse", thubut: "qati", dalala: "qati" },
+      { clauseId: "t:1", kind: "qaida", reference: "maxim", grade: "hasan" },
+      { clauseId: "t:2", kind: "ontology", reference: "def" },
+    ]);
+    const [group] = groupByOutcome(prove(parseQuery("ruling(eat(p), H)"), kb), evidence);
+    expect(group.independentLines).toBe(2);
+    expect(group.confidence).toBeGreaterThan(group.best.strength);
+  });
+});

@@ -76,6 +76,8 @@ export interface OutcomeGroupView {
   readonly outcome: string;
   readonly confidence: number;
   readonly derivationCount: number;
+  /** Distinct arguments among those derivations; what the corroboration bonus counts. */
+  readonly independentLines: number;
   /** Proof tree of the group's single strongest derivation. */
   readonly proof: ProofView;
 }
@@ -94,6 +96,7 @@ export function presentGroup<T extends string>(
     outcome: group.outcome,
     confidence: group.confidence,
     derivationCount: group.derivations.length,
+    independentLines: group.independentLines,
     proof: presentProof(group.best.solution.proofs[0], evidence),
   };
 }

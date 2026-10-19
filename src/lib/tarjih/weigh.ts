@@ -66,6 +66,11 @@ export interface OutcomeGroup<T extends string = Hukm> {
   readonly best: Derivation<T>;
   /** Computed from `best.strength` plus a capped bump for independent corroboration. */
   readonly confidence: number;
+  /**
+   * Distinct lines of argument among the derivations: derivations sharing a
+   * root clause count once. See `independentStrengths`.
+   */
+  readonly independentLines: number;
 }
 
 export interface TarjihStep<T extends string = Hukm> {
@@ -133,11 +138,32 @@ export function groupByOutcome<T extends string = Hukm>(
   const groups: OutcomeGroup<T>[] = [];
   for (const [outcome, derivations] of byOutcome) {
     const best = derivations.reduce((a, b) => (b.strength > a.strength ? b : a));
-    const confidence = combinedConfidence(derivations.map((d) => d.strength));
-    groups.push({ outcome, derivations, best, confidence });
+    const lines = independentStrengths(derivations);
+    const confidence = combinedConfidence(lines);
+    groups.push({ outcome, derivations, best, confidence, independentLines: lines.length });
   }
 
   return groups.sort((a, b) => b.confidence - a.confidence);
+}
+
+/**
+ * One strength per independent line of argument: the best derivation for each
+ * distinct root clause.
+ *
+ * Corroboration is meant to reward a conclusion that several *separate*
+ * arguments reach. Counting raw derivations instead rewarded rerouting: the
+ * same analogy reached once through each text that establishes its source
+ * case, or the same verse reached through two paths in the class hierarchy,
+ * counted as two confirmations of one argument. The root clause is the rule
+ * that actually concludes the ruling — a verse, a hadith, qiyas, a maxim — so
+ * keying on it counts arguments, not routes through the KB.
+ */
+function independentStrengths<T extends string>(derivations: readonly Derivation<T>[]): number[] {
+  const bestByRoot = new Map<string, number>();
+  for (const d of derivations) {
+    bestByRoot.set(d.rootClauseId, Math.max(bestByRoot.get(d.rootClauseId) ?? 0, d.strength));
+  }
+  return [...bestByRoot.values()];
 }
 
 /**
