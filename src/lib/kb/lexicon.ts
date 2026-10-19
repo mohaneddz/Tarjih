@@ -61,6 +61,7 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "document", arity: 1, label: "writing down / recording", argumentHint: "a debt or agreement" },
   { functor: "make_up", arity: 1, label: "making up (performing later, in place of what was missed)", argumentHint: "an act of worship" },
   { functor: "pay", arity: 1, label: "paying / giving", argumentHint: "a due such as a ransom" },
+  { functor: "hunt", arity: 1, label: "hunting", argumentHint: "game" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -123,6 +124,11 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "fasting", label: "fasting in Ramadan", aliases: ["the fast", "fasting", "Ramadan"] },
   { atom: "tayammum", label: "tayammum (dry ablution with clean earth)", aliases: ["dry ablution", "wiping with earth instead of washing"] },
   { atom: "fidya", label: "fidya — the ransom of feeding a poor person for each fast missed", aliases: ["ransom for missed fasts", "feeding a poor person instead of fasting"] },
+  { atom: "hajj", label: "hajj, the pilgrimage to Mecca", aliases: ["pilgrimage", "the hajj"] },
+  { atom: "additional_hajj", label: "a further hajj after the first", aliases: ["a second hajj", "hajj again", "another hajj"] },
+  { atom: "tawaf", label: "tawaf — circling the Ka'ba", aliases: ["circumambulation", "circling the Kaaba"] },
+  { atom: "land_game", label: "land game — wild animals hunted on land", aliases: ["deer", "game birds", "hunting animals"] },
+  { atom: "sea_game", label: "sea game — fish and other creatures of the sea", aliases: ["fishing", "fish"] },
 
   // Other
   { atom: "debt", label: "a debt owed for a fixed term", aliases: ["a loan between people", "money owed"] },
@@ -171,6 +177,18 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "did the act without intending it as that act of worship",
     cue: "the asker says they did it without intending it, e.g. went without food all day without meaning to fast",
     aliases: ["without intention", "didn't intend to fast", "no niyya"],
+  },
+  {
+    atom: "able_to_perform_hajj",
+    label: "able to perform hajj — with the health, means and safe passage for it",
+    cue: "the asker says they can afford hajj and are able to make the journey",
+    aliases: ["can afford hajj", "able to go on pilgrimage"],
+  },
+  {
+    atom: "ihram",
+    label: "in ihram, the consecrated state of hajj or 'umra",
+    cue: "the asker says they are in ihram, or on hajj or 'umra having entered ihram",
+    aliases: ["in ihram", "on pilgrimage in ihram"],
   },
   {
     atom: "certain_prior_purity",

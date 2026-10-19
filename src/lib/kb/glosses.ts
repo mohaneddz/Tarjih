@@ -61,6 +61,8 @@ export const ATOM_GLOSSES: Record<string, string> = {
   obligatory_prayer: "an obligatory prayer",
   fasting: "fasting",
   tayammum: "tayammum (dry ablution)",
+  hajj: "hajj",
+  tawaf: "tawaf",
   fidya: "the ransom of feeding a poor person",
 
   // Circumstances
@@ -71,6 +73,8 @@ export const ATOM_GLOSSES: Record<string, string> = {
   menstruation: "menstruation",
   too_old_to_fast: "being too old to fast",
   no_intention: "having no intention for the act",
+  able_to_perform_hajj: "being able to perform hajj",
+  ihram: "being in ihram",
   ritual_impurity: "ritual impurity",
   mutada: "hardship an act ordinarily carries",
   ghayr_mutada: "hardship beyond what the act ordinarily carries",
