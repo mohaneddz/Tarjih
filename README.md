@@ -74,7 +74,7 @@ base speaks to both, both are reported.
 
 ## The knowledge base
 
-101 hand-authored clauses (63 facts, 38 rules) over a fixed vocabulary of 25
+176 hand-authored clauses (107 facts, 69 rules) over a fixed vocabulary of 25
 predicates, plus five builtins. Each clause is a Horn clause in a small
 Prolog-like syntax —
 
@@ -105,6 +105,11 @@ abrogated).
 | `transactions.ts` | Riba, gharar, gambling, and the sales that are sound |
 | `worship.ts` | Prayer, fasting, purification, and the concessions attached to each |
 | `relations.ts` | Kinship standing, blocking the means, custom, presumption of continuity |
+| `food.ts` | Sea carrion and locusts, the blood 6:145 qualifies, predators, donkeys and horse meat |
+| `hajj.ts` | The obligation on the able, tawaf during menstruation, hunting in ihram |
+| `zakat.ts` | Who owes zakat, and which payments discharge it |
+| `family.ts` | Who may be married: mahram by blood, nursing and marriage; cousins; unlawful combinations |
+| `conduct.ts` | Backbiting and lying and their exceptions; gold and silk |
 
 Two ways clauses get added:
 
@@ -146,7 +151,7 @@ src/scripts/         CLI scripts: scrape hadiths, run them through formalization
 ```bash
 pnpm install          # also generates the Prisma client and creates prisma/dev.db
 pnpm dev              # http://localhost:1919
-pnpm test             # 398 tests
+pnpm test             # 448 tests
 pnpm lint
 ```
 
@@ -168,7 +173,7 @@ to live queries automatically.
 ## Known limitations
 
 - **Coverage is the binding constraint.** The engine and the weighing logic
-  are real and tested; the knowledge base is 101 clauses over eight domains. A
+  are real and tested; the knowledge base is 176 clauses over fourteen domains. A
   question outside them says so rather than guessing, which is the intended
   behaviour but is still a gap.
 - **No negation as failure, on purpose.** The engine cannot conclude anything
@@ -177,19 +182,30 @@ to live queries automatically.
   since under negation-as-failure "nothing in the corpus forbids this" would
   silently become "this is permitted" — the KB's own gaps served as rulings.
   Every rule fails closed instead.
-- **Madhhab-neutral.** Inter-school variation isn't modelled. The madhhab and
-  strictness controls on `/study` are recorded with the question and change
-  nothing the engine derives; the answer says so. Every applicable concession
-  is applied, with the original ruling shown beside it.
+- **Madhhab-aware only as a spread.** Where the schools differ by one step —
+  the Hanafi *fasid* beside the majority's *batil* for a ribawi sale, the
+  Maliki *makruh* on predators — both positions are in the KB, tagged with
+  their schools, and the answer shows the other beside the verdict. Nothing
+  lets you pick a school: the madhhab and strictness controls on `/study` are
+  recorded with the question and change nothing the engine derives; the
+  answer says so. Every applicable concession is applied, with the original
+  ruling shown beside it.
 - **Reconciliation follows the majority.** A specific text qualifying a
   general one (*jam'*) is applied after abrogation and before any preference
   between them (*tarjih*), so a probable specific text can qualify a certain
   general one. The Hanafi view, that a certain general text can only be
   specified by something as certain, isn't modelled.
-- **Concessions are modelled as applying, not as extending.** The engine
-  decides whether a concession is available. How far it reaches — *al-darura
-  tuqaddar bi-qadariha* — is not modelled, and neither are the classical
-  thresholds of travel distance or duration — the numeric builtins exist for
-  that, but the grounding stage does not yet extract distances.
+- **Concessions are modelled as applying, barely as extending.** The engine
+  decides whether a concession is available and what it leaves owed (the
+  fast is made up, the elderly ransom it). How far it reaches is modelled in
+  one place only — eating forbidden food past the need stays forbidden to the
+  starving — and the classical thresholds of travel distance, the nisab, and
+  the amount of nursing that makes kin are not: the numeric builtins exist
+  for them, but the grounding stage does not extract quantities.
+- **Sub-goals are not weighed.** Only the ruling a query asks for goes
+  through the murajjihat. A class-level claim that a later text overrides
+  would keep firing for every rule chaining on that class, so overrides are
+  written to meet at the ruling — which is why sea carrion is not classed as
+  forbidden food and then excepted.
 - **Not a mufti.** It answers what the clauses in it entail. That is a
   different thing from what you should do.
