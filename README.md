@@ -43,6 +43,27 @@ premise the concession rests on is shown above the verdict — it is the one
 part of the result a reader can only check against their own situation rather
 than against a text.
 
+### Concessions are shown beside what they relax
+
+When a verdict rests on something you said about yourself, the result also
+shows the ruling *without* it — the original ruling (*'azima*) next to the
+concession (*rukhsa*). "Permitted" for a traveller breaking the fast and
+"permitted" as the general ruling on an act look identical otherwise.
+
+### Why it failed, and what would change it
+
+The prover records which goals it stalled on: not every failed branch, only
+the *leaves* where no clause head matched at all, together with the rule that
+needed them. That gives two things a bare "no derivation" cannot:
+
+- **Where the reasoning stopped** — e.g. qiyas was tried but no *'illa* is
+  recorded for this act.
+- **What would change the answer** — a rule waiting on an unstated
+  circumstance (`circumstance(travel)`) becomes "if you were travelling, the
+  ruling would be *permitted*, via Qur'an 2:184". The engine confirms each one
+  by re-running the question with that premise added, so a what-if is computed,
+  never guessed.
+
 ### Two ruling axes
 
 Some questions have two answers. "May I enter this contract" (al-hukm
@@ -53,13 +74,20 @@ base speaks to both, both are reported.
 
 ## The knowledge base
 
-94 hand-authored clauses (60 facts, 34 rules) over a fixed vocabulary of 25
-predicates. Each clause is a Horn clause in a small Prolog-like syntax —
+101 hand-authored clauses (63 facts, 38 rules) over a fixed vocabulary of 25
+predicates, plus five builtins. Each clause is a Horn clause in a small
+Prolog-like syntax —
 
 ```prolog
 ruling(mistreat(Relative), haram) :- instance_of(Relative, rahim).
 ruling(Act, mubah) :- excepted(Act, R), necessity(R), circumstance(R).
+ruling(New, H) :- illah(New, Illa), illah(Asl, Illa), dif(New, Asl), generalisable(Asl), ruling(Asl, H).
 ```
+
+The builtins — `dif/2` and the numeric comparisons `gt/2`, `ge/2`, `lt/2`,
+`le/2` — are **fail-closed**: a call the engine can't decide yet (an argument
+still unbound) fails and is counted rather than guessed at, and the KB linter
+rejects a rule that checks a variable before binding it.
 
 — paired with the evidence that backs it: its source (Qur'an, hadith,
 consensus, analogy, legal maxim, custom), authenticity grade, and the
@@ -96,6 +124,7 @@ Two ways clauses get added:
 |---|---|
 | `/study` | The main interface. Ask a question, see the verdict, the proof tree, the premises taken from your question, the cited sources, and — if the evidence conflicted — exactly how it was resolved. |
 | `/database` | Browse the knowledge base: every hand-authored clause and its evidence, plus a review queue for approving or rejecting LLM-formalized hadith clauses. |
+| `/console` | A Prolog console. Type a raw goal, optionally assume circumstances, and get every solution with its proof tree, a filterable step-by-step search trace, and where a failed query stalled. No LLM involved, so it works without an API key. |
 | `/cases` | A ledger of past resolved questions. |
 | `/saved` | Cases bookmarked on this device (no accounts — kept in localStorage). |
 | `/` | Landing page explaining the proof-of-concept and how the engine reasons. |
@@ -104,10 +133,10 @@ Two ways clauses get added:
 
 ```
 src/lib/logic/       terms, unification, the clause parser
-src/lib/engine/      the backward-chaining prover
+src/lib/engine/      the backward-chaining prover, builtins, failure explanation
 src/lib/kb/          predicate vocabulary, evidence model, the knowledge base itself
 src/lib/tarjih/      conflict detection + evidence weighing
-src/lib/pipeline/    question → goal → prove → weigh → narrate
+src/lib/pipeline/    question → goal → prove → weigh → narrate, and the console
 src/lib/scrape/      the sunnah.com scraper
 src/scripts/         CLI scripts: scrape hadiths, run them through formalization
 ```
@@ -117,14 +146,14 @@ src/scripts/         CLI scripts: scrape hadiths, run them through formalization
 ```bash
 pnpm install          # also generates the Prisma client and creates prisma/dev.db
 pnpm dev              # http://localhost:1919
-pnpm test             # 351 tests
+pnpm test             # 398 tests
 pnpm lint
 ```
 
-You'll need a `GROQ_API_KEY` in `.env` for the question-answering pipeline to
-work — it's the only external call the engine depends on, and only for
+You'll need a `GROQ_API_KEY` in `.env` for the question-answering pipeline on
+`/study` — it's the only external call the engine depends on, and only for
 translating the question in and narrating the answer out. The reasoning itself
-never leaves the machine.
+never leaves the machine, and `/console` runs it without any key at all.
 
 To grow the knowledge base:
 
@@ -139,7 +168,7 @@ to live queries automatically.
 ## Known limitations
 
 - **Coverage is the binding constraint.** The engine and the weighing logic
-  are real and tested; the knowledge base is 94 clauses over eight domains. A
+  are real and tested; the knowledge base is 101 clauses over eight domains. A
   question outside them says so rather than guessing, which is the intended
   behaviour but is still a gap.
 - **No negation as failure, on purpose.** The engine cannot conclude anything
@@ -150,10 +179,18 @@ to live queries automatically.
   Every rule fails closed instead.
 - **Madhhab-neutral.** Inter-school variation isn't modelled. The madhhab and
   strictness controls on `/study` are recorded with the question and change
-  nothing the engine derives; the answer says so.
+  nothing the engine derives; the answer says so. Every applicable concession
+  is applied, with the original ruling shown beside it.
+- **Reconciliation is not yet its own step.** Classically, a specific text
+  qualifying a general one (*jam'*) is applied before any preference between
+  them (*tarjih*). Here specificity is one murajjih among others, ordered after
+  certainty of transmission and indication — so a concession has to be keyed
+  on the text that names it, not only on a probable maxim, or a certain general
+  text can outrank it.
 - **Concessions are modelled as applying, not as extending.** The engine
   decides whether a concession is available. How far it reaches — *al-darura
   tuqaddar bi-qadariha* — is not modelled, and neither are the classical
-  thresholds of travel distance or duration.
+  thresholds of travel distance or duration — the numeric builtins exist for
+  that, but the grounding stage does not yet extract distances.
 - **Not a mufti.** It answers what the clauses in it entail. That is a
   different thing from what you should do.
