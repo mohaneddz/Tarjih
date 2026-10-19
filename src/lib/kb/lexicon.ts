@@ -58,6 +58,8 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "perform", arity: 1, label: "performing", argumentHint: "an act of worship" },
   { functor: "maintain", arity: 1, label: "keeping ties with / staying in touch with", argumentHint: "a relative" },
   { functor: "document", arity: 1, label: "writing down / recording", argumentHint: "a debt or agreement" },
+  { functor: "make_up", arity: 1, label: "making up (performing later, in place of what was missed)", argumentHint: "an act of worship" },
+  { functor: "pay", arity: 1, label: "paying / giving", argumentHint: "a due such as a ransom" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -109,6 +111,7 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "obligatory_prayer", label: "an obligatory prayer", aliases: ["salah", "the prayer", "prayers"] },
   { atom: "fasting", label: "fasting in Ramadan", aliases: ["the fast", "fasting", "Ramadan"] },
   { atom: "tayammum", label: "tayammum (dry ablution with clean earth)", aliases: ["dry ablution", "wiping with earth instead of washing"] },
+  { atom: "fidya", label: "fidya — the ransom of feeding a poor person for each fast missed", aliases: ["ransom for missed fasts", "feeding a poor person instead of fasting"] },
 
   // Other
   { atom: "debt", label: "a debt owed for a fixed term", aliases: ["a loan between people", "money owed"] },
@@ -145,6 +148,12 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "menstruating",
     cue: "the asker says they are on their period or menstruating",
     aliases: ["on my period", "menstruating"],
+  },
+  {
+    atom: "too_old_to_fast",
+    label: "too old to fast, with no prospect of being able to",
+    cue: "the asker says they are elderly and cannot fast, or asks about an elderly person who cannot",
+    aliases: ["too old to fast", "elderly and unable to fast"],
   },
   {
     atom: "certain_prior_purity",

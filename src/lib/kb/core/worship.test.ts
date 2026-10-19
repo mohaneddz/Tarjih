@@ -171,3 +171,57 @@ describe("obligations and what qualifies them", () => {
     expect(weighed("ruling(omit(obligatory_prayer), H)", ["travel"])).toBe("haram");
   });
 });
+
+describe("abrogation: the ransom option in 2:184", () => {
+  it("keeps omitting the fast forbidden although an abrogated verse once permitted it", () => {
+    const kb = core;
+    const result = weighRuling(
+      prove(parseQuery("ruling(omit(fasting), H)"), kb.kb, { maxSolutions: 200 }),
+      kb.evidence
+    );
+    expect(result?.groups.map((g) => g.outcome)).toContain("mubah");
+    expect(result?.verdict).toBe("haram");
+    // Decided by naskh itself, not by the abrogated text happening to score zero.
+    expect(result?.resolution[0]?.rule).toBe("abrogation");
+  });
+
+  it("does not let the abrogated text decide anything once a live concession applies", () => {
+    for (const situation of ["travel", "illness", "too_old_to_fast"]) {
+      expect(weighed("ruling(omit(fasting), H)", [situation])).toBe("mubah");
+    }
+    expect(weighed("ruling(omit(fasting), H)", ["menstruation"])).toBe("wajib");
+  });
+});
+
+describe("what the concessions leave owed", () => {
+  it("owes the days back after travel, illness and menstruation", () => {
+    for (const situation of ["travel", "illness", "menstruation"]) {
+      expect(verdicts("ruling(make_up(fasting), H)", [situation])).toEqual(["wajib"]);
+    }
+  });
+
+  it("owes nothing when nothing excused the fast", () => {
+    expect(prove(parseQuery("ruling(make_up(fasting), H)"), core.kb).solutions).toHaveLength(0);
+  });
+
+  it("derives no make-up for prayers missed during menstruation", () => {
+    expect(
+      prove(parseQuery("ruling(make_up(obligatory_prayer), H)"), kbFor(["menstruation"])).solutions
+    ).toHaveLength(0);
+  });
+
+  it("ransoms the elderly's days rather than owing them back", () => {
+    expect(
+      prove(parseQuery("ruling(make_up(fasting), H)"), kbFor(["too_old_to_fast"])).solutions
+    ).toHaveLength(0);
+    const result = weighRuling(
+      prove(parseQuery("ruling(pay(fidya), H)"), withPremises(core, parseQuery("circumstance(too_old_to_fast)")).kb, {
+        maxSolutions: 200,
+      }),
+      withPremises(core, parseQuery("circumstance(too_old_to_fast)")).evidence
+    );
+    // The majority's wajib, with the Maliki mandub reported beside it.
+    expect(result?.verdict).toBe("wajib");
+    expect(result?.relatedOpinions.map((g) => g.outcome)).toEqual(["mandub"]);
+  });
+});

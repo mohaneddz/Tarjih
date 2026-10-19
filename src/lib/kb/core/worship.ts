@@ -243,6 +243,105 @@ export const WORSHIP: KbEntry[] = [
   },
 
   // -------------------------------------------------------------------------
+  // What the concessions leave owed
+  // -------------------------------------------------------------------------
+  {
+    id: "quran:2-184:make-up-owed",
+    /*
+     * Keyed on the same `excepted` pairing the concession uses, so every
+     * excuse the KB learns for the fast carries its make-up with it. The
+     * elderly below are deliberately not an `excepted` pairing: they ransom
+     * the days rather than repaying them, and routing them through here would
+     * tell someone who will never be able to fast that they owe the days.
+     */
+    clause: "ruling(make_up(fasting), wajib) :- excepted(omit(fasting), Excuse), circumstance(Excuse).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:184",
+      text: "So whoever among you is ill or on a journey, then an equal number of other days.",
+      textArabic: "فَعِدَّةٌ مِّنْ أَيَّامٍ أُخَرَ",
+      thubut: "qati",
+      dalala: "qati",
+      notes: "The concession is a deferral, not a cancellation: the verse names the debt in the same breath.",
+    },
+  },
+  {
+    id: "muslim:335:make-up-fast-not-prayer",
+    clause: "ruling(make_up(fasting), wajib) :- impediment(fasting, Mani), circumstance(Mani).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sahih Muslim 335, Sahih al-Bukhari 321",
+      text:
+        "That used to happen to us, and we were commanded to make up the fast, " +
+        "and we were not commanded to make up the prayer.",
+      textArabic: "كان يصيبنا ذلك فنؤمر بقضاء الصوم ولا نؤمر بقضاء الصلاة",
+      grade: "sahih",
+      thubut: "qati",
+      dalala: "qati",
+      notes:
+        "'A'isha's answer, and the reason this clause names the fast and not " +
+        "every impediment: the same report says the prayers are not made up. " +
+        "Nothing here derives a make-up for the prayer, which is the correct " +
+        "silence — the engine cannot state the absence of an obligation, only " +
+        "decline to invent one.",
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // The elderly: a ransom in place of the fast
+  // -------------------------------------------------------------------------
+  {
+    id: "bukhari:4505:elderly-excused",
+    clause: "ruling(omit(fasting), mubah) :- circumstance(too_old_to_fast).",
+    evidence: {
+      kind: "ijma",
+      reference: "Qur'an 2:184 as read by Ibn 'Abbas, Sahih al-Bukhari 4505",
+      text:
+        "It is not abrogated: it is the old man and the old woman who cannot " +
+        "fast, so they feed a poor person in place of each day.",
+      textArabic: "ليست بمنسوخة هو الشيخ الكبير والمرأة الكبيرة لا يستطيعان أن يصوما",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "khass",
+      notes:
+        "That the elderly who cannot fast are excused is agreed; what is " +
+        "disputed is only whether they owe the ransom. Specific to them, so it " +
+        "qualifies the general obligation in 2:183 rather than contradicting it.",
+    },
+  },
+  {
+    id: "bukhari:4505:fidya-owed",
+    clause: "ruling(pay(fidya), wajib) :- circumstance(too_old_to_fast).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:184, Sahih al-Bukhari 4505",
+      text: "And upon those who can only fast with great difficulty is a ransom: the feeding of a poor person.",
+      thubut: "qati",
+      dalala: "zanni",
+      madhahib: ["hanafi", "shafii", "hanbali"],
+      notes:
+        "Ibn 'Abbas's reading of the verse, taken by the majority: a poor " +
+        "person fed for each day missed. Probable in indication because it " +
+        "rests on reading yutiqunahu as 'can barely manage it'.",
+    },
+  },
+  {
+    id: "maliki:fidya-recommended",
+    clause: "ruling(pay(fidya), mandub) :- circumstance(too_old_to_fast).",
+    evidence: {
+      kind: "usul",
+      reference: "The Maliki position on the ransom of the elderly",
+      dalala: "zanni",
+      madhahib: ["maliki"],
+      notes:
+        "For the Malikis the ransom verse is abrogated in full, and someone who " +
+        "was never able to fast was never addressed by the obligation, so " +
+        "nothing is owed in its place; feeding the poor is recommended. One " +
+        "step from the majority's wajib, so it is reported beside it.",
+    },
+  },
+
+  // -------------------------------------------------------------------------
   // Purification
   // -------------------------------------------------------------------------
   {
