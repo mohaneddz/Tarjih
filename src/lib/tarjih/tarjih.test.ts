@@ -155,6 +155,40 @@ describe("murajjihat", () => {
     expect(result?.resolution[0].rule).toBe("specificity");
   });
 
+  it("lets a khass concession resting only on a zanni maxim qualify a qati 'amm obligation", () => {
+    /*
+     * The shape of the travel concession on the fast before it was keyed on
+     * 2:184 directly: the obligation is a certain, general verse, and the
+     * concession's only route is a maxim whose indication is probable. Weighed
+     * on certainty first, the general verse won on dalala and the traveller
+     * was told breaking the fast is forbidden. Reconciliation comes first: the
+     * specific text carves its case out of the general one, and certainty only
+     * decides between texts that cannot both be honoured.
+     */
+    const kb = new KnowledgeBase(
+      parseProgram(
+        `
+        ruling(omit(act), haram) :- obligation.
+        ruling(omit(act), mubah) :- hardship_eases.
+        obligation.
+        hardship_eases.
+        `,
+        { sourceName: "t" }
+      )
+    );
+    const evidence = new EvidenceStore([
+      { clauseId: "t:0", kind: "quran", reference: "general verse", thubut: "qati", dalala: "qati", scope: "amm" },
+      { clauseId: "t:1", kind: "qaida", reference: "hardship maxim", dalala: "zanni", scope: "khass" },
+      { clauseId: "t:2", kind: "ontology", reference: "x" },
+      { clauseId: "t:3", kind: "ontology", reference: "x" },
+    ]);
+    const result = weighRuling(prove(parseQuery("ruling(omit(act), H)"), kb), evidence);
+    expect(result?.verdict).toBe("mubah");
+    expect(result?.unresolved).toBe(false);
+    expect(result?.resolution).toHaveLength(1);
+    expect(result?.resolution[0].rule).toBe("specificity");
+  });
+
   it("prefers qati thubut over zanni thubut before considering source rank", () => {
     const kb = new KnowledgeBase(
       parseProgram("ruling(act, haram) :- r1. ruling(act, mubah) :- r2. r1. r2.", {
@@ -362,6 +396,15 @@ describe("murajjih rule set shape", () => {
     const ids = MURAJJIH_RULES.map((r) => r.id);
     expect(ids.indexOf("specificity")).toBeLessThan(ids.indexOf("directness"));
     expect(ids.indexOf("thubut")).toBeLessThan(ids.indexOf("directness"));
+  });
+
+  it("runs abrogation, then reconciliation (jam'), then preference (tarjih)", () => {
+    const ids = MURAJJIH_RULES.map((r) => r.id);
+    expect(ids[0]).toBe("abrogation");
+    for (const jam of ["specificity", "restriction"]) {
+      expect(ids.indexOf(jam)).toBeLessThan(ids.indexOf("thubut"));
+      expect(ids.indexOf(jam)).toBeLessThan(ids.indexOf("dalala"));
+    }
   });
 
   it("does not include the overall-strength fallback in the main list", () => {

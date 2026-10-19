@@ -6,12 +6,18 @@
  * "tie" if it has nothing to say. Rules are tried in order; the first
  * non-tie decides. That order is itself a substantive claim about usul
  * al-fiqh and is the main thing worth reviewing in this file — see the
- * comment on ordering below.
+ * comment on `MURAJJIH_RULES` below.
+ *
+ * Strictly, not all of them are murajjihat. The list runs in three stages,
+ * the way the jurists take up two texts that seem to collide: abrogation
+ * (naskh) first, then reconciliation (jam') — specificity and restriction,
+ * where neither text is set aside — and only then preference (tarjih) proper,
+ * where one text is.
  *
  * A rule reasons over two different scopes, and mixing them up would produce
  * wrong answers:
  *
- * - "Chain-wide" rules (abrogation, thubut, dalala, specificity, restriction)
+ * - "Chain-wide" rules (abrogation, specificity, restriction, thubut, dalala)
  *   ask whether *any* text feeding the derivation carries the attribute.
  *   These describe properties of the sources, which hold regardless of how
  *   deep in the proof they sit.
@@ -143,7 +149,7 @@ const specificity: MurajjihRule = {
   explain(a, b, winner) {
     const [side, other] = winner === "a" ? [a, b] : [b, a];
     const specific = side.chain.find((e) => e.scope === "khass");
-    return `${referenceOf(specific ?? side.root)} addresses this case specifically (khass), which qualifies the general ruling in ${referenceOf(other.root)} rather than being overridden by it.`;
+    return `${referenceOf(specific ?? side.root)} addresses this case specifically (khass), so it is reconciled with the general ruling in ${referenceOf(other.root)} (jam') by qualifying it, not weighed against it.`;
   },
 };
 
@@ -164,7 +170,7 @@ const restriction: MurajjihRule = {
   explain(a, b, winner) {
     const [side, other] = winner === "a" ? [a, b] : [b, a];
     const restricted = side.chain.find((e) => e.restriction === "muqayyad");
-    return `${referenceOf(restricted ?? side.root)} carries an explicit qualification (muqayyad) that ${referenceOf(other.root)} lacks.`;
+    return `${referenceOf(restricted ?? side.root)} carries an explicit qualification (muqayyad), so the unqualified text in ${referenceOf(other.root)} is read in its light (jam') rather than weighed against it.`;
   },
 };
 
@@ -225,18 +231,57 @@ const overallStrength: MurajjihRule = {
 };
 
 /**
- * Applied in this order. See the module comment for why chain-wide rules
- * (properties of the texts) precede mechanism rules (how the ruling was
- * derived): specificity overrides generality regardless of how authoritative
- * the general text's source is, so it must be checked before directness or
- * kind rank ever get a say.
+ * Applied in this order: abrogation, then reconciliation, then preference.
+ *
+ * Reconciliation before preference. The jurists' rule is that honouring both
+ * texts is better than discarding one (i'mal al-dalilayn awla min ihmal
+ * ahadihima), and a specific text does not contradict a general one — it
+ * marks out where the general one does not reach. Certainty of transmission
+ * and of indication are grounds for *choosing* between texts that cannot
+ * both stand; asking them first treats every khass/'amm pair as a collision
+ * and lets the more certain text win a contest that was never there. That
+ * is what happened with the travel and illness concessions on the fast:
+ * routed through the hardship maxim, whose indication is only probable, the
+ * concession lost to the certain obligation in 2:183 on dalala before
+ * specificity was consulted, and a traveller was told that breaking the fast
+ * is forbidden.
+ *
+ * This follows the majority, who let a probable specific text — a solitary
+ * report, an analogy — qualify a certain general one. The Hanafis hold that
+ * a general text is certain in its indication and can only be specified by
+ * something as certain, unless it has already been specified once; under
+ * that view thubut and dalala would come first. It is a recorded choice, not
+ * an oversight. Restriction (muqayyad over mutlaq) is the same kind of
+ * reconciliation — reading the unqualified text in light of the qualified
+ * one — and moves with it.
+ *
+ * Abrogation before reconciliation. Naskh here is never inferred; it is
+ * recorded against a named clause, so a mansukh text is known to be out of
+ * force, and there is nothing left of it to reconcile with. Where the
+ * classical order puts jam' first, it is so that naskh is not *claimed*
+ * while the texts can still be read together — a judgement the KB author has
+ * already made by marking it.
+ *
+ * Why an ordering and not a separate jam' pass in `weighRuling` ahead of the
+ * tournament: reconciliation between outcome groups is still a comparison
+ * of two sides, which is what the tournament already runs, and a pass of its
+ * own would have to re-check abrogation itself to keep naskh above it, and
+ * would leave a second trail of reasoning for the UI to merge. Placing the
+ * jam' rules after abrogation and ahead of the tarjih rules gives the same
+ * precedence with one comparison and one trail.
+ *
+ * Chain-wide rules (properties of the texts) still all precede mechanism
+ * rules (how the ruling was derived), for the reason in the module comment:
+ * specificity overrides generality regardless of how authoritative the
+ * general text's source is, so it must be checked before directness or kind
+ * rank ever get a say.
  */
 export const MURAJJIH_RULES: readonly MurajjihRule[] = [
   abrogation,
-  thubut,
-  dalala,
   specificity,
   restriction,
+  thubut,
+  dalala,
   directness,
   transmissionGrade,
 ];
