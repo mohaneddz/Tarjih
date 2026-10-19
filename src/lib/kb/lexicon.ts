@@ -64,6 +64,8 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "hunt", arity: 1, label: "hunting", argumentHint: "game" },
   { functor: "marry", arity: 1, label: "marrying", argumentHint: "a relative or in-law" },
   { functor: "give_zakat_to", arity: 1, label: "giving one's zakat to", argumentHint: "a recipient or relative" },
+  { functor: "speak", arity: 1, label: "saying / engaging in", argumentHint: "a kind of speech" },
+  { functor: "wear", arity: 1, label: "wearing", argumentHint: "a material or adornment" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -141,6 +143,12 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "debtor", label: "a debtor unable to repay", aliases: ["someone in debt"] },
   { atom: "wayfarer", label: "a stranded traveller", aliases: ["ibn al-sabil", "a traveller cut off from their money"] },
   { atom: "wealthy_person", label: "someone already wealthy", aliases: ["a rich person"] },
+
+  // Speech and dress
+  { atom: "backbiting", label: "backbiting — mentioning someone absent with what they would dislike", aliases: ["gossip", "ghiba", "talking behind someone's back"] },
+  { atom: "lie", label: "a lie", aliases: ["lying", "telling a lie", "saying something untrue"] },
+  { atom: "gold", label: "gold jewellery or adornment", aliases: ["a gold ring", "gold chain"] },
+  { atom: "silk", label: "pure silk clothing", aliases: ["silk", "a silk shirt"] },
   { atom: "additional_hajj", label: "a further hajj after the first", aliases: ["a second hajj", "hajj again", "another hajj"] },
   { atom: "tawaf", label: "tawaf — circling the Ka'ba", aliases: ["circumambulation", "circling the Kaaba"] },
   { atom: "land_game", label: "land game — wild animals hunted on land", aliases: ["deer", "game birds", "hunting animals"] },
@@ -205,6 +213,36 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     label: "holding wealth at or above the nisab for a full lunar year",
     cue: "the asker says their savings or trade goods have reached the nisab and been held a year",
     aliases: ["my savings are above nisab", "I have had this money a year"],
+  },
+  {
+    atom: "male",
+    label: "male",
+    cue: "the asker says they are a man or boy, or asks what is permitted to men",
+    aliases: ["a man", "for men", "I'm a guy"],
+  },
+  {
+    atom: "female",
+    label: "female",
+    cue: "the asker says they are a woman or girl, or asks what is permitted to women",
+    aliases: ["a woman", "for women", "I'm a girl"],
+  },
+  {
+    atom: "skin_ailment",
+    label: "suffering a skin condition such as itching that the material relieves",
+    cue: "the asker says they have an itch, rash or skin condition that other fabrics aggravate",
+    aliases: ["itchy skin", "eczema", "a rash"],
+  },
+  {
+    atom: "complaining_of_wrong",
+    label: "describing a wrong done to them, to someone able to remedy it",
+    cue: "the asker says they were wronged and want to tell a judge, authority or someone who can help",
+    aliases: ["reporting someone who wronged me", "complaining to a judge"],
+  },
+  {
+    atom: "reconciling_people",
+    label: "trying to reconcile two people who have fallen out",
+    cue: "the asker says they are trying to make peace between people",
+    aliases: ["making peace between friends", "reconciling a quarrel"],
   },
   {
     atom: "ihram",
