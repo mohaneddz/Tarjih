@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { loadCoreKb } from "../kb/core";
 import { QUERY_SUPPLIED_PREDICATES } from "../kb/ontology";
 import { parseProgram, parseQuery } from "../logic/parse";
-import { explainFailure, explanationToString } from "./explain";
+import { displayGoal, explainFailure, explanationToString } from "./explain";
 import { KnowledgeBase } from "./kb";
 import { prove } from "./prover";
 
@@ -71,5 +71,19 @@ describe("explainFailure on the core KB", () => {
     const result = prove(parseQuery("ruling(shorten(obligatory_prayer), H)"), core.kb, { trace: true });
     const { unmetPremises } = explainFailure(result, options);
     expect(unmetPremises.map((p) => p.goal)).toContain("circumstance(travel)");
+  });
+});
+
+describe("displayGoal", () => {
+  it("strips the prover's renaming suffix from clause variables", () => {
+    expect(displayGoal("illah(perform(tayammum), _Illa#96)")).toBe("illah(perform(tayammum), _Illa)");
+  });
+
+  it("merges the same open goal reached through two renamings", () => {
+    const kb = kbFrom("p(X) :- q(X, Y). p(X) :- q(X, Z). q(b, c).");
+    const { frontier } = explainFailure(prove(parseQuery("p(a)"), kb, { trace: true }));
+    expect(frontier).toHaveLength(2);
+    expect(new Set(frontier.map((f) => f.goal)).size).toBe(2);
+    expect(frontier.every((f) => !f.goal.includes("#"))).toBe(true);
   });
 });

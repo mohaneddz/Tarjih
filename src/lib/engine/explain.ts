@@ -48,6 +48,16 @@ export interface FailureExplanation {
   readonly partial: boolean;
 }
 
+/**
+ * Strips the renaming suffix the prover gives clause variables, so that
+ * `illah(perform(x), _Illa#96)` and `illah(perform(x), _Illa#241)` — the same
+ * open goal reached twice — read and group as one, and a reader is not shown
+ * internal bookkeeping.
+ */
+export function displayGoal(rendered: string): string {
+  return rendered.replace(/_+([A-Za-z]\w*)#\d+/g, "_$1");
+}
+
 export interface ExplainOptions {
   /** Predicate keys whose facts come from the question, e.g. `circumstance/1`. */
   readonly querySupplied?: ReadonlySet<string>;
@@ -71,12 +81,13 @@ export function explainFailure(result: ProveResult, options: ExplainOptions = {}
   const byGoal = new Map<string, { literal: Literal; neededBy: Set<string>; depth: number }>();
   for (const event of result.trace) {
     if (event.type !== "fail" || !event.leaf || !event.literal) continue;
-    const entry = byGoal.get(event.goal);
+    const goal = displayGoal(event.goal);
+    const entry = byGoal.get(goal);
     if (entry) {
       if (event.clauseId) entry.neededBy.add(event.clauseId);
       entry.depth = Math.min(entry.depth, event.depth);
     } else {
-      byGoal.set(event.goal, {
+      byGoal.set(goal, {
         literal: event.literal,
         neededBy: new Set(event.clauseId ? [event.clauseId] : []),
         depth: event.depth,

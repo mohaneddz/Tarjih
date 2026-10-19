@@ -28,7 +28,9 @@ function shortLabel(label: string): string {
 export function humanizeTerm(term: Term): string {
   switch (term.kind) {
     case "var":
-      return term.name;
+      // An unbound variable in a stalled goal means "anything would have
+      // done"; its renamed form (`_Illa#96`) is engine bookkeeping.
+      return term.name.includes("#") ? "something" : term.name;
     case "lit":
       return String(term.value);
     case "atom": {
