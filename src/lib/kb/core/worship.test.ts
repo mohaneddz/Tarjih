@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { prove } from "../../engine/prover";
 import { parseQuery } from "../../logic/parse";
 import { termToString } from "../../logic/term";
+import { weighRuling } from "../../tarjih/weigh";
 import { withPremises } from "../premises";
 import { loadCoreKb } from "./index";
 
@@ -16,6 +17,14 @@ function kbFor(situations: readonly string[]) {
 function verdicts(query: string, situations: readonly string[] = [], variable = "H"): string[] {
   const result = prove(parseQuery(query), kbFor(situations), { maxSolutions: 200 });
   return [...new Set(result.solutions.map((s) => termToString(s.bindings[variable])))].sort();
+}
+
+/** The prevailing ruling after tarjih, the way /study reports it. */
+function weighed(query: string, situations: readonly string[] = []): string | undefined {
+  const kb = situations.length
+    ? withPremises(core, parseQuery(situations.map((s) => `circumstance(${s})`).join(", ")))
+    : core;
+  return weighRuling(prove(parseQuery(query), kb.kb, { maxSolutions: 200 }), kb.evidence)?.verdict;
 }
 
 function clausesFor(query: string, situations: readonly string[] = []): string[] {
@@ -41,9 +50,10 @@ describe("concessions are for the person, not the act", () => {
   });
 
   it("excuses the fast for illness and for travel, on the same verse", () => {
-    expect(verdicts("ruling(omit(fasting), H)", ["illness"])).toEqual(["mubah"]);
-    expect(verdicts("ruling(omit(fasting), H)", ["travel"])).toEqual(["mubah"]);
-    expect(prove(parseQuery("ruling(omit(fasting), H)"), core.kb).solutions).toHaveLength(0);
+    expect(weighed("ruling(omit(fasting), H)", ["illness"])).toBe("mubah");
+    expect(weighed("ruling(omit(fasting), H)", ["travel"])).toBe("mubah");
+    // With no excuse stated, omitting the fast is what it always was.
+    expect(weighed("ruling(omit(fasting), H)")).toBe("haram");
   });
 });
 
@@ -119,5 +129,24 @@ describe("tayammum", () => {
     const clauses = clausesFor("ruling(perform(tayammum), H)", ["water_unavailable"]);
     expect(clauses).toContain("quran:4-43:tayammum-no-water");
     expect(clauses).not.toContain("usul:mashaqqa-brings-facility");
+  });
+});
+
+describe("obligations and what qualifies them", () => {
+  it("states the obligations the concessions relax", () => {
+    expect(weighed("ruling(perform(obligatory_prayer), H)")).toBe("wajib");
+    expect(weighed("ruling(perform(fasting), H)")).toBe("wajib");
+    expect(weighed("ruling(omit(obligatory_prayer), H)")).toBe("haram");
+  });
+
+  it("lets the specific impediment qualify the general obligation, for the fast and the prayer", () => {
+    expect(weighed("ruling(omit(fasting), H)", ["menstruation"])).toBe("wajib");
+    expect(weighed("ruling(perform(fasting), H)", ["menstruation"])).toBe("haram");
+    expect(weighed("ruling(omit(obligatory_prayer), H)", ["menstruation"])).toBe("wajib");
+    expect(weighed("ruling(perform(obligatory_prayer), H)", ["menstruation"])).toBe("haram");
+  });
+
+  it("does not let travel touch the prayer obligation itself", () => {
+    expect(weighed("ruling(omit(obligatory_prayer), H)", ["travel"])).toBe("haram");
   });
 });

@@ -26,6 +26,70 @@ import type { KbEntry } from "../entry";
 
 export const WORSHIP: KbEntry[] = [
   // -------------------------------------------------------------------------
+  // The obligations the concessions below relax
+  //
+  // Without these the concessions had nothing to be concessions *from*. "May
+  // I skip the fast while travelling?" came back "permitted" with no record
+  // that skipping it is otherwise forbidden, so the answer read as the
+  // ruling on the act rather than as a rukhsa — and the engine could not
+  // answer "must I pray?" at all.
+  // -------------------------------------------------------------------------
+  {
+    id: "quran:4-103:prayer-obligatory",
+    clause: "ruling(perform(obligatory_prayer), wajib).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 4:103, Qur'an 2:43",
+      text: "Indeed, prayer has been decreed upon the believers a decree of specified times.",
+      textArabic: "إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "amm",
+      notes:
+        "Known of the religion by necessity (ma'lum min al-din bi'l-darura). " +
+        "General in its subject: it addresses the believers at large, which is " +
+        "what lets a text about a particular situation qualify it.",
+    },
+  },
+  {
+    id: "quran:2-183:fasting-obligatory",
+    clause: "ruling(perform(fasting), wajib).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:183",
+      text: "O you who have believed, decreed upon you is fasting as it was decreed upon those before you.",
+      textArabic: "يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "amm",
+      notes:
+        "The very next verse (2:184) carves out the ill and the traveller, which " +
+        "is why the two are recorded as general and specific respectively.",
+    },
+  },
+  {
+    id: "usul:omitting-wajib-is-haram",
+    /*
+     * The opposite of an obligation is forbidden: leaving what is wajib is
+     * sinful, which is what makes it wajib rather than mandub (see the gloss
+     * on `wajib` in ontology.ts). Stated as a rule rather than as a fact per
+     * obligation so that every obligation the KB learns gets its omission
+     * covered, and so that a concession or impediment on the omission meets
+     * this general prohibition head-on — where the murajjihat, not clause
+     * order, decide between them.
+     */
+    clause: "ruling(omit(Act), haram) :- ruling(perform(Act), wajib).",
+    evidence: {
+      kind: "usul",
+      reference: "al-amr bi'l-shay' nahy 'an diddih",
+      dalala: "qati",
+      notes:
+        "A command to do something entails forbidding its omission. Certain in " +
+        "indication because it follows from what wajib means.",
+    },
+  },
+
+  // -------------------------------------------------------------------------
   // Travel: the shortened prayer
   // -------------------------------------------------------------------------
   {
@@ -88,6 +152,38 @@ export const WORSHIP: KbEntry[] = [
   {
     id: "quran:2-184:break-fast-illness",
     clause: "excepted(omit(fasting), illness).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:184",
+      text: "So whoever among you is ill or on a journey, then an equal number of other days.",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "khass",
+    },
+  },
+  {
+    id: "quran:2-184:travel-excuses-fast",
+    /*
+     * The verse names the traveller itself, so the concession is keyed on it
+     * directly — the same reasoning as tayammum below. Routed only through
+     * the mashaqqa maxim, the concession carried that maxim's probable
+     * indication, lost to the certain obligation in 2:183 on dalala before
+     * specificity was ever consulted, and told a traveller that breaking the
+     * fast is forbidden. The maxim route stays as corroboration.
+     */
+    clause: "ruling(omit(fasting), mubah) :- circumstance(travel).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 2:184",
+      text: "So whoever among you is ill or on a journey, then an equal number of other days.",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "khass",
+    },
+  },
+  {
+    id: "quran:2-184:illness-excuses-fast",
+    clause: "ruling(omit(fasting), mubah) :- circumstance(illness).",
     evidence: {
       kind: "quran",
       reference: "Qur'an 2:184",
@@ -191,11 +287,50 @@ export const WORSHIP: KbEntry[] = [
       grade: "sahih",
       thubut: "qati",
       dalala: "qati",
+      /*
+       * Specific to the menstruating woman. Marked so because it has to
+       * qualify the general obligation in 2:183: unmarked, the specificity
+       * rule tied and directness handed the question to the verse, telling
+       * a menstruating woman she must fast.
+       */
+      scope: "khass",
       notes:
         "A mani', not a rukhsa. The distinction is the point of modelling it " +
         "separately: a concession permits the lighter option, an impediment " +
         "removes the heavier one altogether, so the ruling is not that she may " +
         "omit the fast but that she must.",
+    },
+  },
+  {
+    id: "bukhari:304:prayer-impediment",
+    clause: "impediment(obligatory_prayer, menstruation).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sahih al-Bukhari 304, Sahih Muslim 335",
+      text:
+        "Is it not the case that when a woman menstruates she neither prays " +
+        "nor fasts?",
+      grade: "sahih",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "khass",
+      notes:
+        "The same report names the prayer alongside the fast. Unlike the fast, " +
+        "the missed prayers are not made up — a difference this KB does not " +
+        "yet model.",
+    },
+  },
+  {
+    id: "usul:impediment-forbids-performance",
+    clause: "ruling(perform(Obligation), haram) :- impediment(Obligation, Mani), circumstance(Mani).",
+    evidence: {
+      kind: "usul",
+      reference: "An impediment makes the blocked act unlawful to perform",
+      dalala: "qati",
+      notes:
+        "The other half of what a mani' does. Omitting is required, so " +
+        "performing is forbidden — and it meets the general obligation as a " +
+        "specific text qualifying it, not as a contradiction left open.",
     },
   },
   {
