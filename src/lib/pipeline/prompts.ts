@@ -109,13 +109,15 @@ export interface NarrationInput {
   readonly truncated: boolean;
   /** Declaratory status of the transaction, when there is one. */
   readonly declaratory?: { readonly status: string; readonly label: string; readonly gloss: string };
+  /** The verdict with none of the asker's stated circumstances, when they stated any. */
+  readonly baselineVerdict?: string;
 }
 
 function renderGroups(groups: readonly OutcomeGroupView[]): string {
   return groups
     .map((g) => {
       const label = HUKM_LABELS[g.outcome as keyof typeof HUKM_LABELS]?.en ?? g.outcome;
-      return `- ${g.outcome} (${label}): ${g.confidence}% confidence, ${g.derivationCount} independent derivation(s).\n${indent(proofSummary(g))}`;
+      return `- ${g.outcome} (${label}): ${g.confidence}% confidence, ${g.independentLines} independent line(s) of argument across ${g.derivationCount} derivation(s).\n${indent(proofSummary(g))}`;
     })
     .join("\n");
 }
@@ -152,7 +154,7 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
    */
   const strictnessCaveat =
     input.strictnessRequested && input.strictnessRequested !== "Moderate"
-      ? `\nNote: the user selected "${input.strictnessRequested}". The engine does not yet model the choice between taking a concession (rukhsa) and holding to the original ruling ('azima) — every applicable concession in the knowledge base was applied regardless of this setting. Say so plainly rather than presenting the answer as tuned to it.`
+      ? `\nNote: the user selected "${input.strictnessRequested}". The engine does not yet model the choice between taking a concession (rukhsa) and holding to the original ruling ('azima) — every applicable concession in the knowledge base was applied regardless of this setting, and the original ruling is shown beside it for comparison. Say so plainly rather than presenting the answer as tuned to it.`
       : "";
 
   const truncationCaveat = input.truncated
@@ -163,6 +165,12 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
     ? `\nThe engine also determined the transaction's declaratory status (al-hukm al-wad'i): ${input.declaratory.status} — ${input.declaratory.label}. ${input.declaratory.gloss} This answers a different question from the ruling above: whether the act is permitted is one thing, whether the contract legally takes effect is another, and the two can diverge. Report both, and do not merge them into a single verdict.`
     : "";
 
+  const baselineLine =
+    input.baselineVerdict && input.baselineVerdict !== input.verdict
+      ? `
+This verdict rests on the situation the asker stated about themselves. Without it the engine's ruling is ${input.baselineVerdict}. Make clear that the answer is a concession (rukhsa) tied to their situation, not the ruling on the act in general, and that it holds only while that situation actually holds.`
+      : "";
+
   const verdictLine = input.unresolved
     ? "The engine found genuinely conflicting rulings that its weighing rules could not separate. Do NOT pick a side yourself — present both positions as an open, unresolved tension."
     : `The engine has already determined the verdict: ${input.verdict}. This is FINAL. Do not propose a different verdict, hedge it away, or suggest the engine might be wrong about which ruling applies — your job is only to explain, in accessible language, why the evidence below leads here.`;
@@ -172,7 +180,7 @@ export function buildNarrationPrompt(input: NarrationInput): LlmMessages {
 A deterministic prover has already found every applicable derivation and a
 weighing algorithm has already resolved any conflict between them using the
 classical murajjihat (rules for preferring between conflicting evidences).
-${verdictLine}${declaratoryLine}
+${verdictLine}${declaratoryLine}${baselineLine}
 
 Write for an educated layperson, not a scholar audience. Reference the actual
 citations given below rather than generic phrases like "textual evidence
