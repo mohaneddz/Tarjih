@@ -73,11 +73,11 @@ export const TRANSACTIONS: KbEntry[] = [
     },
   },
   {
-    id: "bukhari:2178:riba-exchange",
+    id: "bukhari:2177:riba-exchange",
     clause: "causes(sell(unequal_gold_exchange), riba).",
     evidence: {
       kind: "sunnah",
-      reference: "Sahih al-Bukhari 2178, Sahih Muslim 1584",
+      reference: "Sahih al-Bukhari 2177, Sahih Muslim 1584",
       text:
         "Do not sell gold for gold except like for like, and do not give one " +
         "more than the other; and do not sell silver for silver except like for " +

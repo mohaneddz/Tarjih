@@ -99,7 +99,7 @@ export const SCRIPTURE: KbEntry[] = [
       scope: "amm",
       notes:
         "General ('amm) in its subject: it names no particular relative. Its " +
-        "indication is probable because the verse condemns severance, and " +
+        "indication is probable because the report condemns severance, and " +
         "treating mistreatment as a form of severance is a juristic reading.",
     },
   },

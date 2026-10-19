@@ -24,7 +24,7 @@ export const QAWAID: KbEntry[] = [
     clause: "ruling(Act, haram) :- causes(Act, darar).",
     evidence: {
       kind: "qaida",
-      reference: "la darar wa la dirar — Sunan Ibn Majah 2341, al-Muwatta 31:31",
+      reference: "la darar wa la dirar — Sunan Ibn Majah 2341, al-Muwatta 36:31",
       text: "There shall be no harm inflicted, nor harm reciprocated.",
       textArabic: "لا ضرر ولا ضرار",
       grade: "hasan",

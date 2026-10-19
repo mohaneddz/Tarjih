@@ -30,7 +30,7 @@ describe("riba", () => {
     expect(verdicts("ruling(sell(unequal_gold_exchange), H)")).toEqual(["haram"]);
     // riba al-fadl and the riba of a loan rest on different texts and must not
     // be collapsed into one clause.
-    expect(clauses).toContain("bukhari:2178:riba-exchange");
+    expect(clauses).toContain("bukhari:2177:riba-exchange");
     expect(clauses).not.toContain("muslim:1598:riba-loan");
   });
 
