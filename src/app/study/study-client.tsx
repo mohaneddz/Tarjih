@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/utils/cn";
 import { ProofTree, ProofTreeLegend } from "@/components/ui/proof-tree";
-import type { ResolutionView } from "@/lib/pipeline/resolve";
+import type { ResolutionView, ScenarioView, StalledGoalView } from "@/lib/pipeline/resolve";
 import type { EvidenceView, OutcomeGroupView } from "@/lib/pipeline/present";
 import { HUKM_LABELS } from "@/lib/kb/ontology";
 import type { Hukm } from "@/lib/kb/ontology";
@@ -29,6 +30,9 @@ interface ApiErrorBody {
   readonly error: string;
   readonly message: string;
   readonly detail?: { readonly term?: string; readonly kind?: string };
+  readonly goal?: string;
+  readonly stalled?: readonly StalledGoalView[];
+  readonly whatIf?: readonly ScenarioView[];
 }
 
 interface ErrorInfo {
@@ -42,6 +46,10 @@ interface ErrorInfo {
    * it also shows the right shape.
    */
   readonly isFormatIssue: boolean;
+  /** For a question with no derivation: the goal that was tried, and why it failed. */
+  readonly goal?: string;
+  readonly stalled?: readonly StalledGoalView[];
+  readonly whatIf?: readonly ScenarioView[];
 }
 
 /** Goal-grounding failures caused by how the question was asked, not by a real KB coverage gap. */
@@ -63,6 +71,39 @@ const LOADING_STEPS = [
 
 function hukmLabel(h: string): string {
   return HUKM_LABELS[h as Hukm]?.en ?? h;
+}
+
+/**
+ * Deep link into the Prolog console for a grounded goal. The goal text joins
+ * the asker's circumstances onto the ruling goal; the console takes those as
+ * assumptions instead, since `circumstance/1` is never defined in the KB.
+ */
+function consoleHref(goalText: string, situations: readonly string[] = []): string {
+  const goal = goalText.split(", circumstance(")[0];
+  const params = new URLSearchParams({ q: goal });
+  if (situations.length) params.set("c", situations.join(","));
+  return `/console?${params.toString()}`;
+}
+
+function ScenarioList({ scenarios, goalText, stated }: { scenarios: readonly ScenarioView[]; goalText: string; stated: readonly string[] }) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {scenarios.map((s) => (
+        <li key={s.situation} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-text-primary">If you were {s.label}:</span>
+          <span className="font-serif font-bold text-brand-green">{s.verdict ? hukmLabel(s.verdict) : "contested"}</span>
+          {s.confidence !== undefined && <span className="text-text-secondary">({s.confidence}%)</span>}
+          {s.unlockedBy.length > 0 && <span className="text-text-secondary/80 text-[13px]">— via {s.unlockedBy.join("; ")}</span>}
+          <Link
+            href={consoleHref(goalText, [...stated, s.situation])}
+            className="text-[12px] font-semibold text-brand-red hover:underline"
+          >
+            Inspect
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /** Certainty label from the raw dalala/thubut field, e.g. "qati" -> "Certain". */
@@ -231,6 +272,21 @@ export function StudyClient() {
     return () => clearInterval(interval);
   }, [isSubmitting]);
 
+  // "/" jumps to the question box from anywhere on the page, the way search
+  // fields usually behave, unless the user is already typing somewhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      e.preventDefault();
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const filteredHistory = useMemo(() => {
     if (!searchQuery.trim()) return history;
     const q = searchQuery.toLowerCase();
@@ -296,6 +352,9 @@ export function StudyClient() {
       return {
         message: "The knowledge base has no rule covering this yet — that's a real gap in its current coverage, not a failure to understand the question.",
         isFormatIssue: false,
+        goal: body.goal,
+        stalled: body.stalled,
+        whatIf: body.whatIf,
       };
     }
     if (body.error === "grounding_failed") {
@@ -497,7 +556,7 @@ export function StudyClient() {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Ask a question the knowledge base can ground and weigh..."
+              placeholder="Ask a question the knowledge base can ground and weigh…  (press / to focus)"
               value={inputVal}
               onChange={(e) => {
                 setInputVal(e.target.value);
@@ -554,7 +613,8 @@ export function StudyClient() {
               <span className="text-[12px] text-text-secondary/80 basis-full">
                 Recorded with the question, but not yet used in the reasoning — the knowledge
                 base is madhhab-neutral, and every applicable concession is applied regardless of
-                strictness. The answer will say so.
+                strictness. Where a concession applies, the original ruling (&apos;azima) is shown
+                beside it so you can choose for yourself.
               </span>
             </div>
           )}
@@ -619,6 +679,13 @@ export function StudyClient() {
                 <span className="text-sm text-text-secondary">({view.declaratory.confidence}%)</span>
               </div>
             )}
+            <Link
+              href={consoleHref(view.goalText, view.premises.map((p) => p.situation))}
+              className="ml-auto text-sm font-semibold text-text-secondary hover:text-brand-red shrink-0"
+              title="Open this goal in the Prolog console"
+            >
+              Open in console
+            </Link>
             <button
               type="button"
               onClick={() => setActiveTab("interpretation")}
@@ -690,8 +757,45 @@ export function StudyClient() {
             )}
 
             {errorInfo && !errorInfo.isFormatIssue && (
-              <div className="max-w-2xl mx-auto bg-card-warm border border-border-warm rounded-2xl p-6 text-sm text-text-primary m-6 lg:m-8">
-                {errorInfo.message}
+              <div className="max-w-2xl mx-auto m-6 lg:m-8 flex flex-col gap-4 text-sm">
+                <div className="bg-card-warm border border-border-warm rounded-2xl p-6 text-text-primary flex flex-col gap-2">
+                  <span>{errorInfo.message}</span>
+                  {errorInfo.goal && (
+                    <span className="text-text-secondary">
+                      Tried <code className="font-mono text-text-primary">{errorInfo.goal}</code>.{" "}
+                      <Link href={consoleHref(errorInfo.goal)} className="font-semibold text-brand-red hover:underline">
+                        Open in console
+                      </Link>
+                    </span>
+                  )}
+                </div>
+                {errorInfo.whatIf && errorInfo.whatIf.length > 0 && errorInfo.goal && (
+                  <div className="bg-brand-green-light/40 border border-brand-green/30 rounded-2xl p-5 flex flex-col gap-2">
+                    <span className="text-[12px] font-bold text-brand-green uppercase tracking-widest">It would have an answer if</span>
+                    <ScenarioList scenarios={errorInfo.whatIf} goalText={errorInfo.goal} stated={[]} />
+                    <span className="text-text-secondary/80">
+                      These rules were waiting on a situation your question didn&apos;t mention. If one is true of you, ask again saying so.
+                    </span>
+                  </div>
+                )}
+                {errorInfo.stalled && errorInfo.stalled.length > 0 && (
+                  <details className="bg-card-warm border border-border-warm rounded-2xl p-5">
+                    <summary className="cursor-pointer text-[12px] font-bold text-text-secondary uppercase tracking-widest">
+                      Where the reasoning stopped ({errorInfo.stalled.length})
+                    </summary>
+                    <ul className="mt-3 flex flex-col gap-2">
+                      {errorInfo.stalled.map((g) => (
+                        <li key={g.goal} className="flex flex-col">
+                          <span className="text-text-primary">{g.goalHuman}</span>
+                          <span className="text-text-secondary text-[13px]">
+                            <code className="font-mono">{g.goal}</code>
+                            {g.neededBy.length > 0 ? ` — needed by ${g.neededBy.join("; ")}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </div>
             )}
 
@@ -725,6 +829,42 @@ export function StudyClient() {
                     </span>
                   </div>
                 )}
+                {view.baseline && view.baseline.verdict !== view.verdict && (
+                  /*
+                   * The 'azima beside the rukhsa. Without this a concession
+                   * reads exactly like the act's general ruling.
+                   */
+                  <div className="mb-6 text-sm bg-background border border-border-warm rounded-xl px-4 py-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest basis-full">
+                      Original ruling (&apos;azima)
+                    </span>
+                    <span className="text-text-secondary">Without the situation above, the ruling is</span>
+                    <span className="font-serif font-bold text-text-primary">
+                      {view.baseline.verdict ? hukmLabel(view.baseline.verdict) : "unresolved"}
+                    </span>
+                    {view.baseline.confidence !== undefined && (
+                      <span className="text-text-secondary">({view.baseline.confidence}%)</span>
+                    )}
+                    <span className="text-text-secondary/80 basis-full">
+                      {view.verdict ? hukmLabel(view.verdict) : "The answer above"} is a concession (rukhsa) that lasts only as long as
+                      your situation does.
+                    </span>
+                  </div>
+                )}
+                {(view.whatIf ?? []).length > 0 && (
+                  <details className="mb-6 text-sm bg-background border border-border-warm rounded-xl px-4 py-3">
+                    <summary className="cursor-pointer text-[12px] font-bold text-text-secondary uppercase tracking-widest">
+                      Would change if… ({view.whatIf.length})
+                    </summary>
+                    <div className="mt-2">
+                      <ScenarioList
+                        scenarios={view.whatIf}
+                        goalText={view.goalText}
+                        stated={view.premises.map((p) => p.situation)}
+                      />
+                    </div>
+                  </details>
+                )}
                 {view.unresolved && (
                   <div className="mb-6 text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300 rounded-xl px-4 py-3">
                     The engine found genuinely conflicting rulings that its weighing rules could not separate. No single
@@ -747,7 +887,8 @@ export function StudyClient() {
                                 : "bg-transparent border-border-warm text-text-secondary hover:border-brand-red/40"
                             )}
                           >
-                            {hukmLabel(g.outcome)} · {g.confidence}% · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}
+                            {hukmLabel(g.outcome)} · {g.confidence}% · {g.independentLines ?? g.derivationCount} line
+                            {(g.independentLines ?? g.derivationCount) === 1 ? "" : "s"} of argument
                           </button>
                         ))}
                       </div>
