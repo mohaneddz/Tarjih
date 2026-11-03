@@ -45,9 +45,14 @@ export function describeLlmFailure(kind: LlmErrorKind | undefined): string {
 /** Generous for a reasoning model, short enough that nobody stares at a spinner forever. */
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-/** Two short waits cover a per-minute burst limit without leaving someone at a spinner. */
+/**
+ * Groq's free tier allows 8,000 tokens a minute, and one question costs most
+ * of that, so a second question inside the minute is told to wait 10-25 s.
+ * Waiting that out (the spinner keeps turning) beats failing the question;
+ * past this cap the user is told to try again instead.
+ */
 const MAX_RATE_LIMIT_RETRIES = 2;
-const MAX_RETRY_WAIT_MS = 5_000;
+const MAX_RETRY_WAIT_MS = 25_000;
 
 export interface LlmClient {
   complete(system: string, user: string, options?: { json?: boolean; temperature?: number }): Promise<string>;
@@ -121,8 +126,11 @@ export class GroqClient implements LlmClient {
         response.status === 429 ? "rate_limit" : response.status === 401 || response.status === 403 ? "auth" : "upstream";
       const error = new LlmError(`Groq request failed (${response.status}): ${detail ?? response.statusText}`, kind);
       if (kind === "rate_limit") {
-        const seconds = Number(response.headers.get("retry-after"));
-        error.retryAfterMs = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, MAX_RETRY_WAIT_MS) : undefined;
+        // Groq gives the wait in the Retry-After header and, more precisely, in the message.
+        const fromMessage = /try again in ([\d.]+)s/i.exec(detail ?? "")?.[1];
+        const seconds = Number(fromMessage ?? response.headers.get("retry-after"));
+        error.retryAfterMs =
+          Number.isFinite(seconds) && seconds > 0 ? Math.min(Math.ceil(seconds * 1000) + 250, MAX_RETRY_WAIT_MS) : undefined;
       }
       throw error;
     }

@@ -174,7 +174,8 @@ async function main() {
     } catch (error) {
       console.warn(`[seed-demo] ${collection}:${number} — ${error instanceof Error ? error.message : error}`);
     }
-    await sleep(500);
+    // Each formalisation is ~5k tokens against a free-tier 8k-per-minute limit.
+    await sleep(20_000);
   }
 
   console.log(`[seed-demo] done: ${resolved} demo case(s) resolved, ${queued} hadith clause(s) queued for review.`);
