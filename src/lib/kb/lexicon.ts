@@ -69,6 +69,26 @@ export const KNOWN_ACTS: readonly ActEntry[] = [
   { functor: "give_zakat_to", arity: 1, label: "giving one's zakat to", argumentHint: "a recipient or relative" },
   { functor: "speak", arity: 1, label: "saying / engaging in", argumentHint: "a kind of speech" },
   { functor: "wear", arity: 1, label: "wearing", argumentHint: "a material or adornment" },
+  { functor: "touch", arity: 1, label: "touching", argumentHint: "an object such as the mushaf" },
+  { functor: "kiss", arity: 1, label: "kissing", argumentHint: "a person such as one's spouse" },
+  { functor: "divorce", arity: 1, label: "divorcing", argumentHint: "one's wife, in a given state" },
+  { functor: "use", arity: 1, label: "using", argumentHint: "an object or practice such as contraception" },
+  { functor: "care_for", arity: 1, label: "caring for / sponsoring", argumentHint: "a person such as an orphan" },
+  { functor: "give_surname_to", arity: 1, label: "giving one's own surname / lineage to", argumentHint: "an adopted child" },
+  { functor: "commit", arity: 1, label: "committing", argumentHint: "a grave act such as theft" },
+  { functor: "practise", arity: 1, label: "practising", argumentHint: "a practice such as magic" },
+  { functor: "consult", arity: 1, label: "consulting / going to", argumentHint: "a person such as a fortune-teller" },
+  { functor: "spy_on", arity: 1, label: "spying on", argumentHint: "another person" },
+  { functor: "mock", arity: 1, label: "mocking / ridiculing", argumentHint: "another person" },
+  { functor: "return", arity: 1, label: "returning / replying to", argumentHint: "a greeting" },
+  { functor: "get", arity: 1, label: "getting / having done", argumentHint: "a body modification such as a tattoo" },
+  { functor: "fulfil", arity: 1, label: "fulfilling / honouring", argumentHint: "a contract" },
+  { functor: "hoard", arity: 1, label: "hoarding", argumentHint: "a commodity people need" },
+  { functor: "obey", arity: 1, label: "obeying", argumentHint: "a person such as one's parents" },
+  { functor: "imitate", arity: 1, label: "imitating", argumentHint: "the opposite sex, in dress or manner" },
+  { functor: "eat_with", arity: 1, label: "eating or drinking with", argumentHint: "a hand" },
+  { functor: "visit", arity: 1, label: "visiting", argumentHint: "a person such as someone sick" },
+  { functor: "keep", arity: 1, label: "keeping (as a pet)", argumentHint: "an animal" },
 ];
 
 export const KNOWN_ATOMS: readonly AtomEntry[] = [
@@ -114,7 +134,7 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   { atom: "narcotic", label: "a narcotic or recreational drug", aliases: ["drugs", "cannabis", "hashish", "cocaine"] },
 
   // Contracts and dealings
-  { atom: "interest_loan", label: "a loan repaid with stipulated interest", aliases: ["interest", "usury", "a bank loan with interest"] },
+  { atom: "interest_loan", label: "a loan repaid with stipulated interest", aliases: ["interest", "usury", "a bank loan with interest", "a conventional mortgage", "a credit card balance with interest", "earning interest on savings"] },
   { atom: "unequal_gold_exchange", label: "exchanging gold for gold in unequal amounts", aliases: ["gold for gold", "currency exchange at unequal weight"] },
   { atom: "unborn_calf", label: "an animal not yet born, or not yet conceived", aliases: ["unborn animal", "an unborn calf", "next year's offspring"] },
   {
@@ -161,6 +181,86 @@ export const KNOWN_ATOMS: readonly AtomEntry[] = [
   // Other
   { atom: "debt", label: "a debt owed for a fixed term", aliases: ["a loan between people", "money owed"] },
   { atom: "instalment_sale", label: "an instalment sale — a higher price for deferred payment, fixed at contract", aliases: ["buying in instalments", "paying monthly", "hire purchase"] },
+  // Prayer
+  { atom: "friday_prayer", label: "the Friday prayer (jumu'a)", aliases: ["jumuah", "jummah", "Friday prayer"] },
+  { atom: "sitting_prayer", label: "praying an obligatory prayer sitting down", aliases: ["praying sitting", "praying on a chair"] },
+  { atom: "combined_prayers", label: "combining two prayers in one time (dhuhr with asr, maghrib with isha)", aliases: ["combining prayers", "jam'"] },
+  { atom: "witr", label: "the witr prayer", aliases: ["witr"] },
+  { atom: "night_prayer", label: "voluntary night prayer (tahajjud / qiyam al-layl)", aliases: ["tahajjud", "qiyam", "praying at night"] },
+  { atom: "wiping_over_khuffs", label: "wiping over leather socks (khuffs) in wudu", aliases: ["wiping over socks", "masah on socks"] },
+  { atom: "mushaf", label: "a physical copy of the Qur'an (mushaf)", aliases: ["the Quran", "a Quran copy"] },
+  // Fasting
+  { atom: "eid_fast", label: "fasting on the day of Eid (al-Fitr or al-Adha)", aliases: ["fasting on Eid"] },
+  { atom: "arafah_fast", label: "fasting on the day of 'Arafa (9 Dhu al-Hijja)", aliases: ["fasting Arafah", "day of Arafat fast"] },
+  { atom: "ashura_fast", label: "fasting on the day of 'Ashura (10 Muharram)", aliases: ["fasting Ashura"] },
+  { atom: "friday_only_fast", label: "fasting on Friday alone, without the day before or after", aliases: ["fasting only on Friday"] },
+  { atom: "spouse", label: "one's spouse", aliases: ["my wife", "my husband"] },
+  // Marriage
+  { atom: "christian_or_jewish_woman", label: "a Christian or Jewish woman (of the People of the Book)", aliases: ["a Christian woman", "a Jewish woman", "a kitabiyya"] },
+  { atom: "non_muslim_man", label: "a non-Muslim man (asked about a Muslim woman marrying him)", aliases: ["a Christian man", "a non-Muslim husband"] },
+  { atom: "polytheist_woman", label: "a polytheist (idol-worshipping) woman", aliases: ["a mushrik woman", "a Hindu woman"] },
+  { atom: "fifth_wife", label: "a fifth wife, while already married to four", aliases: ["more than four wives"] },
+  { atom: "woman_in_iddah", label: "a woman still in her waiting period ('idda) after divorce or widowhood", aliases: ["a woman in iddah", "a recently divorced woman before her iddah ends"] },
+  { atom: "wife", label: "one's wife", aliases: ["my wife"] },
+  { atom: "wife_during_menstruation", label: "one's wife while she is menstruating", aliases: ["my wife during her period"] },
+  { atom: "contraception", label: "contraception (withdrawal or reversible birth control)", aliases: ["birth control", "the pill", "condoms", "'azl"] },
+  { atom: "orphan", label: "an orphan", aliases: ["an orphan child"] },
+  { atom: "adopted_child", label: "an adopted child (as to their name and lineage)", aliases: ["my adopted son", "my adopted daughter"] },
+  // Ethics
+  { atom: "suicide", label: "suicide", aliases: ["killing oneself"] },
+  { atom: "murder", label: "killing someone unlawfully", aliases: ["killing", "murder"] },
+  { atom: "theft", label: "theft", aliases: ["stealing"] },
+  { atom: "magic", label: "magic / sorcery (sihr)", aliases: ["sorcery", "witchcraft", "black magic"] },
+  { atom: "fortune_teller", label: "a fortune-teller or astrologer", aliases: ["a psychic", "horoscopes", "tarot reader"] },
+  { atom: "someone", label: "another person", aliases: ["people", "others", "my spouse's phone"] },
+  { atom: "greeting_of_peace", label: "the greeting of peace (salam)", aliases: ["salam", "assalamu alaykum"] },
+  { atom: "tattoo", label: "a permanent tattoo", aliases: ["tattoos", "getting inked"] },
+  { atom: "contract", label: "a lawful contract or agreement", aliases: ["a contract", "an agreement", "a deal"] },
+  { atom: "oath_expiation", label: "the expiation (kaffara) for a broken oath", aliases: ["kaffara", "expiation for an oath"] },
+  { atom: "gold_or_silver_vessel", label: "a vessel or plate made of gold or silver", aliases: ["gold cups", "silver plates", "gold utensils"] },
+  { atom: "tobacco", label: "tobacco / smoking", aliases: ["smoking", "cigarettes", "vaping", "shisha"] },
+  // Trade
+  { atom: "goods_not_owned", label: "a specific item one does not yet own or possess (not a salam order)", aliases: ["selling something I don't have", "dropshipping before I own the item"] },
+  { atom: "staple_food", label: "staple goods people need, held back to raise their price", aliases: ["hoarding food", "stockpiling to raise prices"] },
+  { atom: "goods_with_concealed_defect", label: "goods with a defect hidden from the buyer", aliases: ["hiding a defect", "cheating the buyer"] },
+  { atom: "offer_undercutting_a_sale", label: "an offer made to break up a sale already agreed between two others", aliases: ["undercutting someone's deal", "selling over another's sale"] },
+  // Animals
+  { atom: "camel", label: "camel meat", aliases: ["camel"] },
+  { atom: "cow", label: "beef / cattle", aliases: ["beef", "cow", "cattle"] },
+  { atom: "sheep", label: "lamb / mutton", aliases: ["lamb", "mutton", "sheep"] },
+  { atom: "goat", label: "goat meat", aliases: ["goat"] },
+  { atom: "chicken", label: "chicken", aliases: ["poultry"] },
+  { atom: "rabbit", label: "rabbit", aliases: ["hare"] },
+  { atom: "dabb_lizard", label: "the dabb (desert monitor lizard)", aliases: ["lizard", "dhabb"] },
+  { atom: "eagle", label: "an eagle" },
+  { atom: "hawk", label: "a hawk" },
+  { atom: "falcon", label: "a falcon" },
+  { atom: "vulture", label: "a vulture" },
+  { atom: "tiger", label: "a tiger" },
+  { atom: "leopard", label: "a leopard" },
+  { atom: "ahl_al_kitab_meat", label: "meat slaughtered by Jews or Christians (People of the Book)", aliases: ["kosher meat", "meat from Christians", "non-halal-labelled meat from Jews or Christians"] },
+  { atom: "shrimp", label: "shrimp / prawns and other shellfish", aliases: ["prawns", "shellfish", "lobster", "crab"] },
+  { atom: "duck", label: "duck" },
+  { atom: "turkey", label: "turkey" },
+  { atom: "pigeon", label: "pigeon" },
+  { atom: "quail", label: "quail" },
+  { atom: "fish", label: "fish, caught or bought", aliases: ["salmon", "tuna", "seafood (fish)"] },
+  // Worship, manners and dress (second batch)
+  { atom: "congregational_prayer", label: "praying in congregation (jama'a)", aliases: ["praying in the mosque", "jamaah"] },
+  { atom: "shawwal_fast", label: "the six voluntary fasts of Shawwal", aliases: ["six days of Shawwal"] },
+  { atom: "monday_thursday_fast", label: "voluntary fasting on Mondays and Thursdays", aliases: ["fasting Mondays and Thursdays"] },
+  { atom: "parents", label: "one's parents", aliases: ["my parents", "my mother and father"] },
+  { atom: "slander", label: "slander — saying something untrue about someone (buhtan)", aliases: ["false accusation", "spreading lies about someone"] },
+  { atom: "hijab", label: "the head-covering (hijab / khimar)", aliases: ["headscarf", "covering the hair"] },
+  { atom: "opposite_sex", label: "the opposite sex, in dress, manner or adornment", aliases: ["cross-dressing", "men dressing like women", "women dressing like men"] },
+  { atom: "left_hand", label: "the left hand", aliases: ["left hand"] },
+  { atom: "sick_person", label: "someone who is ill", aliases: ["the sick", "a sick friend"] },
+  { atom: "cat", label: "a cat", aliases: ["cats", "a kitten"] },
+  { atom: "perfume", label: "perfume or scented products", aliases: ["cologne", "fragrance"] },
+  { atom: "haircut", label: "cutting or shaving the hair", aliases: ["shaving my head", "trimming hair"] },
+  // Charity
+  { atom: "zakat_al_fitr", label: "zakat al-fitr, the alms due at the end of Ramadan", aliases: ["fitrana", "sadaqat al-fitr"] },
+  { atom: "voluntary_charity", label: "voluntary charity (sadaqa)", aliases: ["sadaqa", "charity", "donating"] },
 ];
 
 export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
@@ -272,6 +372,48 @@ export const KNOWN_CIRCUMSTANCES: readonly CircumstanceEntry[] = [
     cue: "the asker says they have not performed wudu or ghusl, or are in a state of janaba",
     aliases: ["without wudu", "not in a state of purity", "junub"],
   },
+  {
+    atom: "ate_forgetfully",
+    label: "ate or drank while fasting, having forgotten they were fasting",
+    cue: "the asker says they ate or drank by mistake or forgot they were fasting",
+    aliases: ["ate by mistake", "forgot I was fasting"],
+  },
+  {
+    atom: "currently_fasting",
+    label: "fasting at the time",
+    cue: "the asker says they are fasting right now, or asks about doing something while fasting",
+    aliases: ["while fasting", "during Ramadan daytime"],
+  },
+  {
+    atom: "pregnant",
+    label: "pregnant",
+    cue: "the asker says they are pregnant",
+    aliases: ["expecting"],
+  },
+  {
+    atom: "nursing",
+    label: "breastfeeding a child",
+    cue: "the asker says they are breastfeeding or nursing a baby",
+    aliases: ["breastfeeding"],
+  },
+  {
+    atom: "missed_prayer",
+    label: "having missed an obligatory prayer",
+    cue: "the asker says they missed, forgot or slept through a prayer",
+    aliases: ["missed fajr", "slept through a prayer"],
+  },
+  {
+    atom: "parents_command_sin",
+    label: "being told by one's parents to do something sinful",
+    cue: "the asker says their parents are telling them to do something forbidden or to abandon an obligation",
+    aliases: ["my parents tell me to do something haram"],
+  },
+  {
+    atom: "broke_oath",
+    label: "having broken a deliberate oath",
+    cue: "the asker says they swore an oath by Allah and then broke it",
+    aliases: ["broke my oath", "broke a promise I swore to Allah"],
+  },
 ];
 
 const ACT_INDEX = new Map<string, ActEntry>(KNOWN_ACTS.map((a) => [`${a.functor}/${a.arity}`, a]));
@@ -306,21 +448,34 @@ export function findCircumstance(name: string): CircumstanceEntry | undefined {
  * outright; not advertising the predicate keeps the model from spending
  * attempts on one.
  */
+/** True when a label says no more than the atom's own name ("eagle" / "an eagle"). */
+function labelIsJustTheName(atom: string, label: string): boolean {
+  const words = (text: string) => text.toLowerCase().replace(/^(a|an|the)\s+/, "").replace(/[^a-z]+/g, " ").trim();
+  return words(label) === words(atom);
+}
+
+/**
+ * The vocabulary as the grounding prompt shows it. Compact on purpose: it is
+ * sent with every question, the provider limits tokens per minute, and the
+ * list grows with the KB — so the boilerplate is said once in the headings
+ * rather than on every line, and a label that only repeats the atom's name is
+ * left out.
+ */
 export function lexiconPromptBlock(includeCircumstances = true): string {
-  const acts = KNOWN_ACTS.map((a) => `  - ${a.functor}(X) — ${a.label}; X must be ${a.argumentHint} from the list below`).join(
-    "\n"
-  );
+  const acts = KNOWN_ACTS.map((a) => `  - ${a.functor}(X): ${a.label} [X: ${a.argumentHint}]`).join("\n");
   const atoms = KNOWN_ATOMS.map((a) => {
-    const aliasText = a.aliases?.length ? ` (aka: ${a.aliases.join(", ")})` : "";
-    return `  - ${a.atom} — ${a.label}${aliasText}`;
+    const label = labelIsJustTheName(a.atom, a.label) ? "" : `: ${a.label}`;
+    const aliasText = a.aliases?.length ? ` | ${a.aliases.join("; ")}` : "";
+    return `  - ${a.atom}${label}${aliasText}`;
   }).join("\n");
   const base =
-    `Known acts:\n${acts}\n\n` +
-    `Known entities (use exactly these atom names, lowercase with underscores):\n${atoms}`;
+    `Known acts (X must be one of the entities below):\n${acts}\n\n` +
+    `Known entities — use exactly these atom names; after "|" are other ways a question may say it:\n${atoms}`;
   if (!includeCircumstances) return base;
 
-  const circumstances = KNOWN_CIRCUMSTANCES.map(
-    (c) => `  - circumstance(${c.atom}) — ${c.label}. Add this only when ${c.cue}.`
-  ).join("\n");
-  return `${base}\n\nKnown circumstances (about the ASKER's own situation, not the act):\n${circumstances}`;
+  const circumstances = KNOWN_CIRCUMSTANCES.map((c) => `  - ${c.atom}: ${c.label}. Only if ${c.cue}.`).join("\n");
+  return (
+    `${base}\n\nKnown circumstances — about the ASKER's own situation, not the act; written as ` +
+    `circumstance(<name>):\n${circumstances}`
+  );
 }

@@ -74,7 +74,7 @@ base speaks to both, both are reported.
 
 ## The knowledge base
 
-176 hand-authored clauses (107 facts, 69 rules) over a fixed vocabulary of 25
+280 hand-authored clauses (187 facts, 93 rules) over a fixed vocabulary of 25
 predicates, plus five builtins. Each clause is a Horn clause in a small
 Prolog-like syntax —
 
@@ -110,6 +110,13 @@ abrogated).
 | `zakat.ts` | Who owes zakat, and which payments discharge it |
 | `family.ts` | Who may be married: mahram by blood, nursing and marriage; cousins; unlawful combinations |
 | `conduct.ts` | Backbiting and lying and their exceptions; gold and silk |
+| `prayer.ts` | Friday prayer (men and women), praying seated when ill, combining on a journey, witr and night prayer, wiping over khuffs, the mushaf and purity, whether a prayer without wudu counts, making up a missed prayer |
+| `fasting.ts` | Eating forgetfully (the fast stands), kissing while fasting, pregnancy and nursing, the Eid fast (forbidden and void), 'Arafa, 'Ashura, Shawwal, Mondays and Thursdays, Friday alone |
+| `marriage.ts` | Women of the Book, a non-Muslim husband, polytheists, a fifth wife, the waiting period — each with its validity; divorce, including during menstruation (forbidden, still effective); contraception; orphans and adoption |
+| `ethics.ts` | Life and property, magic and fortune-telling, spying and mockery, salam, tattoos, contracts and oaths, gold and silver vessels, tobacco through the harm maxim, parents and the limit of obedience, slander, hijab, ihram restrictions |
+| `trade.ts` | Sale of wine, swine and carrion; selling what one does not have (distinct from salam); hoarding, concealed defects, undercutting a sale |
+| `animals.ts` | Livestock, fowl, fish, rabbit and dabb; birds of prey and more predators; the meat of the People of the Book; shellfish as a spread between the schools |
+| `charity.ts` | Zakat al-fitr and voluntary charity |
 
 Two ways clauses get added:
 
@@ -217,7 +224,7 @@ to live queries automatically.
 ## Known limitations
 
 - **Coverage is the binding constraint.** The engine and the weighing logic
-  are real and tested; the knowledge base is 176 clauses over thirteen domains. A
+  are real and tested; the knowledge base is 280 clauses over twenty domains, citing 133 distinct verses and hadith. A
   question outside them says so rather than guessing, which is the intended
   behaviour but is still a gap.
 - **No negation as failure, on purpose.** The engine cannot conclude anything

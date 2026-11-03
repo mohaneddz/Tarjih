@@ -15,5 +15,7 @@ export const DEMO_QUESTIONS: readonly { question: string; goal: string }[] = [
   { question: "Can I marry my paternal cousin?", goal: "ruling(marry(cousin_paternal), H)" },
   { question: "Is drinking beer forbidden?", goal: "ruling(consume(beer), H)" },
   { question: "Can I hunt while in ihram?", goal: "ruling(hunt(land_game), H), circumstance(ihram)" },
+  { question: "Does my fast still count if I ate by mistake?", goal: "ruling(perform(fasting), H), circumstance(ate_forgetfully)" },
+  { question: "Is smoking haram?", goal: "ruling(consume(tobacco), H)" },
 ];
 

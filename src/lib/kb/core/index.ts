@@ -21,6 +21,13 @@ import { TRANSACTIONS } from "./transactions";
 import { USUL } from "./usul";
 import { WORSHIP } from "./worship";
 import { ZAKAT } from "./zakat";
+import { ANIMALS } from "./animals";
+import { CHARITY } from "./charity";
+import { ETHICS } from "./ethics";
+import { FASTING } from "./fasting";
+import { MARRIAGE } from "./marriage";
+import { PRAYER } from "./prayer";
+import { TRADE } from "./trade";
 
 export const CORE_ENTRIES: readonly KbEntry[] = [
   ...TAXONOMY,
@@ -36,6 +43,13 @@ export const CORE_ENTRIES: readonly KbEntry[] = [
   ...RELATIONS,
   ...FAMILY,
   ...CONDUCT,
+  ...PRAYER,
+  ...FASTING,
+  ...MARRIAGE,
+  ...ETHICS,
+  ...TRADE,
+  ...ANIMALS,
+  ...CHARITY,
 ];
 
 /** Loads the core KB, throwing if it fails validation. */
@@ -43,4 +57,25 @@ export function loadCoreKb() {
   return loadKbStrict(CORE_ENTRIES);
 }
 
-export { CONDUCT, FAMILY, FOOD, HAJJ, INTOXICANTS, QAWAID, RELATIONS, SCRIPTURE, TAXONOMY, TRANSACTIONS, USUL, WORSHIP, ZAKAT };
+export {
+  ANIMALS,
+  CHARITY,
+  CONDUCT,
+  ETHICS,
+  FAMILY,
+  FASTING,
+  FOOD,
+  HAJJ,
+  INTOXICANTS,
+  MARRIAGE,
+  PRAYER,
+  QAWAID,
+  RELATIONS,
+  SCRIPTURE,
+  TAXONOMY,
+  TRADE,
+  TRANSACTIONS,
+  USUL,
+  WORSHIP,
+  ZAKAT,
+};
