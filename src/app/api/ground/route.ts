@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { GroqClient } from "@/lib/pipeline/llm";
+import { MAX_QUESTION_LENGTH, rateLimit } from "@/lib/http/guard";
+import { describeLlmFailure, GroqClient } from "@/lib/pipeline/llm";
 import { groundQuestion } from "@/lib/pipeline/resolve";
 
 /**
@@ -17,14 +18,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_json", message: "Request body must be JSON." }, { status: 400 });
   }
 
-  const question = body.question?.trim();
+  const question = typeof body.question === "string" ? body.question.trim() : "";
   if (!question) {
     return NextResponse.json({ error: "question_required", message: "Question is required." }, { status: 400 });
+  }
+  if (question.length > MAX_QUESTION_LENGTH) {
+    return NextResponse.json(
+      { error: "question_too_long", message: `Please keep the question under ${MAX_QUESTION_LENGTH} characters.` },
+      { status: 400 }
+    );
+  }
+
+  const retryAfter = rateLimit(req);
+  if (retryAfter > 0) {
+    return NextResponse.json(
+      { error: "rate_limited", message: `Too many questions in a short time. Please wait ${retryAfter} seconds.` },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
   }
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "api_key_missing", message: "GROQ_API_KEY is not configured." }, { status: 400 });
+    return NextResponse.json(
+      { error: "api_key_missing", message: "The language model isn't configured on this server (GROQ_API_KEY is missing)." },
+      { status: 503 }
+    );
   }
 
   const result = await groundQuestion(question, new GroqClient(apiKey));
@@ -35,7 +53,11 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       );
     }
-    return NextResponse.json({ error: "llm_failed", message: result.error.message }, { status: 502 });
+    console.warn("[Tarjih] grounding LLM call failed:", result.error.message);
+    return NextResponse.json(
+      { error: "llm_failed", kind: result.error.kind, message: describeLlmFailure(result.error.kind) },
+      { status: result.error.kind === "rate_limit" ? 429 : 503 }
+    );
   }
 
   return NextResponse.json({ goalText: result.goalText });

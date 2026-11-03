@@ -20,6 +20,16 @@ interface ActionBody {
  * quietly never took effect.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // On a public deployment anyone could otherwise change what the live KB
+  // answers with. When REVIEW_TOKEN is set, a reviewer has to present it.
+  const requiredToken = process.env.REVIEW_TOKEN;
+  if (requiredToken && req.headers.get("x-review-token") !== requiredToken) {
+    return NextResponse.json(
+      { error: "unauthorized", message: "A reviewer token is required to approve, reject or revoke clauses." },
+      { status: 401 }
+    );
+  }
+
   const { id } = await params;
   let body: ActionBody;
   try {

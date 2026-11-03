@@ -1,3 +1,4 @@
+import { siteUrl as resolveSiteUrl } from "@/config/site";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Lora, EB_Garamond } from "next/font/google";
 import "./globals.css";
@@ -24,7 +25,7 @@ const ebGaramond = EB_Garamond({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tarjih.app";
+const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
