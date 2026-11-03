@@ -87,10 +87,10 @@ describe("groundGoal", () => {
   });
 
   it("rejects an entity that is not in the lexicon, distinctly from an unknown act", () => {
-    const result = groundGoal("ruling(mistreat(camel), H)");
+    const result = groundGoal("ruling(mistreat(spaceship), H)");
     expect(result.ok).toBe(false);
     if (!result.ok && result.error.kind === "unknown-term") {
-      expect(result.error.term).toBe("camel");
+      expect(result.error.term).toBe("spaceship");
     } else {
       throw new Error("expected unknown-term");
     }
