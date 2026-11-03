@@ -1077,13 +1077,23 @@ export function StudyClient() {
                                   </div>
                                 </div>
 
-                                <div>
-                                  <span className="text-text-secondary font-semibold">Strength</span>
-                                  <div className="h-2 w-full bg-border-warm-light rounded-full overflow-hidden mt-1">
-                                    <div className="h-full bg-brand-green rounded-full" style={{ width: `${selectedEvidence.strength}%` }} />
+                                {selectedEvidence.weightless ? (
+                                  <div>
+                                    <span className="text-text-secondary font-semibold">Strength</span>
+                                    <p className="text-text-secondary leading-relaxed mt-1">
+                                      Adds no weight of its own: this step connects the sources beneath it, so the
+                                      line is exactly as strong as they are.
+                                    </p>
                                   </div>
-                                  <p className="text-right text-text-secondary mt-0.5">{selectedEvidence.strength}/100</p>
-                                </div>
+                                ) : (
+                                  <div>
+                                    <span className="text-text-secondary font-semibold">Strength</span>
+                                    <div className="h-2 w-full bg-border-warm-light rounded-full overflow-hidden mt-1">
+                                      <div className="h-full bg-brand-green rounded-full" style={{ width: `${selectedEvidence.strength}%` }} />
+                                    </div>
+                                    <p className="text-right text-text-secondary mt-0.5">{selectedEvidence.strength}/100</p>
+                                  </div>
+                                )}
 
                                 {selectedEvidence.notes && (
                                   <div className="pt-2 border-t border-border-warm-light">

@@ -33,6 +33,13 @@ export interface EvidenceView {
   readonly notes?: string;
   /** 0-100, this piece of evidence alone. See `baseStrength`. */
   readonly strength: number;
+  /**
+   * True when the clause carries no weight of its own — a definition, a fact
+   * the asker stated, or a rule of inference — so its derivation is exactly as
+   * strong as what it connects. The inspector says so instead of showing a
+   * 0 or a usul rank that the line's strength never used.
+   */
+  readonly weightless?: boolean;
 }
 
 export interface ProofView {
@@ -59,6 +66,7 @@ function presentEvidence(record: Evidence): EvidenceView {
     unreviewed: record.unreviewed ?? false,
     notes: record.notes,
     strength: baseStrength(record),
+    weightless: record.kind === "ontology" || record.inference === true,
   };
 }
 
