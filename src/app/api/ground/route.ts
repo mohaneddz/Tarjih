@@ -10,6 +10,13 @@ import { groundQuestion } from "@/lib/pipeline/resolve";
  * transparency into what the question will actually be evaluated as, not a
  * separate guess from a different code path (see `groundQuestion`).
  */
+/**
+ * Model calls can wait out a rate limit (see GroqClient), so give the
+ * function room rather than letting the platform cut a question off at its
+ * default limit.
+ */
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   let body: { question?: string };
   try {

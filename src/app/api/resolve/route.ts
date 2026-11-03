@@ -21,6 +21,13 @@ interface ResolveRequestBody {
  * `resolveQuestion` — this handler only translates HTTP in and out and
  * best-effort persists the result.
  */
+/**
+ * Model calls can wait out a rate limit (see GroqClient), so give the
+ * function room rather than letting the platform cut a question off at its
+ * default limit.
+ */
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   let body: ResolveRequestBody;
   try {

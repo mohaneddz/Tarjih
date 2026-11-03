@@ -41,3 +41,19 @@ describe("GroqClient", () => {
     expect(error.kind).toBe("auth");
   });
 });
+
+describe("GroqClient rate-limit wait", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("reads the wait Groq names in its message", async () => {
+    const limited = new Response(
+      JSON.stringify({ error: { message: "Rate limit reached ... Please try again in 0.02s. Need more tokens?" } }),
+      { status: 429 }
+    );
+    const fetchMock = vi.fn().mockResolvedValueOnce(limited).mockResolvedValueOnce(ok("x"));
+    vi.stubGlobal("fetch", fetchMock);
+    const started = Date.now();
+    await expect(new GroqClient("k").complete("s", "u")).resolves.toBe("x");
+    expect(Date.now() - started).toBeLessThan(2_000);
+  });
+});
