@@ -26,11 +26,21 @@ import path from "path";
 
 import { DEMO_QUESTIONS } from "../lib/demo";
 
-/** Hadiths to put in the review queue: the opening of Tirmidhi's chapter on purification. */
-const DEMO_HADITHS: readonly { collection: string; number: number }[] = [1, 2, 3, 4, 5, 6].map((number) => ({
-  collection: "tirmidhi",
-  number,
-}));
+/**
+ * Hadiths to put in the review queue. Fetched live from sunnah.com when it
+ * answers; it refuses some hosting providers' build machines (403), so each
+ * also has a saved copy of its sunnah.com page — the ones the scraper's tests
+ * parse — to fall back on. Same page, same parser, same grade.
+ */
+const DEMO_HADITHS: readonly { collection: string; number: number; savedPage?: string }[] = [
+  { collection: "tirmidhi", number: 1, savedPage: "tirmidhi-1-sahih.html" },
+  { collection: "tirmidhi", number: 1005, savedPage: "tirmidhi-1005-hasan.html" },
+  { collection: "abudawud", number: 1, savedPage: "abudawud-1-hasan-sahih.html" },
+  { collection: "tirmidhi", number: 2 },
+  { collection: "tirmidhi", number: 3 },
+];
+
+const SAVED_PAGES_DIR = path.resolve(process.cwd(), "src/lib/scrape/fixtures");
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -58,7 +68,20 @@ async function main() {
   const { GroqClient } = await import("../lib/pipeline/llm");
   const { resolveQuestion } = await import("../lib/pipeline/resolve");
   const { formalizeHadith } = await import("../lib/pipeline/formalize");
-  const { fetchHadith } = await import("../lib/scrape/sunnah");
+  const { fetchHadith, parseHadithHtml } = await import("../lib/scrape/sunnah");
+
+  /** sunnah.com first; the saved copy of the same page when it refuses. */
+  async function loadHadith(collection: string, number: number, savedPage?: string) {
+    try {
+      const live = await fetchHadith(collection, number);
+      if (live) return live;
+    } catch (error) {
+      if (!savedPage) throw error;
+      console.log(`[seed-demo] ${collection}:${number} — sunnah.com unavailable, using the saved page`);
+    }
+    if (!savedPage) return null;
+    return parseHadithHtml(fs.readFileSync(path.join(SAVED_PAGES_DIR, savedPage), "utf8"), collection, number);
+  }
 
   const llm = new GroqClient(apiKey);
   const kb = loadCoreKb();
@@ -70,7 +93,8 @@ async function main() {
       if (await prisma.resolution.findFirst({ where: { question } })) continue;
       const result = await resolveQuestion({ question, llm, kb, confirmedGoal: goal, requireNarration: true });
       if (!result.ok) {
-        console.warn(`[seed-demo] ${question} — not resolved (${result.error.stage})`);
+        const detail = result.error.stage === "llm" ? `: ${result.error.message}` : "";
+        console.warn(`[seed-demo] ${question} — not resolved (${result.error.stage}${detail})`);
         continue;
       }
       await saveResolution(result.view);
@@ -79,17 +103,19 @@ async function main() {
     } catch (error) {
       console.warn(`[seed-demo] ${question} — ${error instanceof Error ? error.message : error}`);
     }
-    await sleep(300);
+    // Spaced out: the free tier limits requests per minute, and a seed that
+    // trips it loses the last few cases.
+    await sleep(1_500);
   }
 
   // --- 2. hadiths into the review queue ---
   let queued = 0;
-  for (const { collection, number } of DEMO_HADITHS) {
+  for (const { collection, number, savedPage } of DEMO_HADITHS) {
     try {
       const key = { kind: "sunnah", collection, number };
       let source = await prisma.sourceText.findUnique({ where: { kind_collection_number: key } });
       if (!source) {
-        const parsed = await fetchHadith(collection, number);
+        const parsed = await loadHadith(collection, number, savedPage);
         if (!parsed) continue;
         source = await prisma.sourceText.create({
           data: {

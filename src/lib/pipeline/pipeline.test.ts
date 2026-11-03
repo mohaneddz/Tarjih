@@ -605,3 +605,16 @@ describe("demo seed questions", () => {
     }
   });
 });
+
+describe("grounding prompt covers the whole vocabulary", () => {
+  it("does not restrict the model to the two acts the KB started with", () => {
+    // Regression: the prompt once said the only known acts were mistreat/1 and
+    // consume/1 and told the model to answer NONE for anything else, which
+    // refused fasting, zakat, marriage, trade and dress questions outright.
+    const { system } = buildGoalPrompt("Can I give my zakat to my mother?");
+    expect(system).not.toMatch(/only acts you know are mistreat/);
+    expect(system).not.toMatch(/mistreating a known\s+relative or\s+consuming a known foodstuff/);
+    expect(system).toContain("give_zakat_to(X)");
+    expect(system).toContain("wear(X)");
+  });
+});

@@ -8,7 +8,7 @@ import { parseProgram, parseQuery } from "../logic/parse";
 import { withPremises } from "../kb/premises";
 import { buildRuleInput, MURAJJIH_RULES, overallStrength } from "./murajjih";
 import { chainStrength, combinedConfidence } from "./strength";
-import { groupByOutcome, weighRuling } from "./weigh";
+import { groupByOutcome, VALIDITY_AXIS, weighRuling } from "./weigh";
 
 const core = loadCoreKb();
 
@@ -440,15 +440,29 @@ describe("murajjih rule set shape", () => {
     expect(MURAJJIH_RULES.map((r) => r.id)).not.toContain("overall-strength");
   });
 
-  it("buildRuleInput resolves the root to the derivation's own mechanism, not a nested premise", () => {
+  it("buildRuleInput looks through a rule of inference to the text it carries", () => {
     const result = proveRuling("ruling(consume(carrion), H)", starving);
     const mubah = result.solutions.find((s) => s.bindings.H && "name" in s.bindings.H && s.bindings.H.name === "mubah");
     const input = buildRuleInput(mubah!, core.evidence);
-    // The root is the usul rule that concludes the ruling directly; the
-    // necessity verse (2:173) is a body premise one level deeper, and is
-    // picked up by the chain-wide scan instead, not the root-only one.
-    expect(input.root.reference).toBe("al-darurat tubih al-mahzurat");
-    expect(input.chain.some((e) => e.reference.includes("2:173"))).toBe(true);
+    // The darura rule is only the mechanism of 2:173's exception (it is
+    // marked `inference`), so the derivation is credited to the verse.
+    expect(input.root.reference).toBe("Qur'an 2:173");
+    expect(input.chain.some((e) => e.reference === "al-darurat tubih al-mahzurat")).toBe(true);
+  });
+
+  it("buildRuleInput still credits an analogy as an analogy, not to the text of its source case", () => {
+    const result = proveRuling("ruling(consume(narcotic), H)");
+    const input = buildRuleInput(result.solutions[0], core.evidence);
+    expect(input.root.kind).toBe("qiyas");
+  });
+
+  it("the case chain leaves out the source case of an analogy", () => {
+    // mistreat(aunt_maternal) by qiyas from 17:23, which is khass to *parents*.
+    const result = proveRuling("ruling(mistreat(aunt_maternal), H)");
+    const viaParents = result.solutions.find((s) => s.clauseIds.includes("quran:17-23:parents"));
+    const input = buildRuleInput(viaParents!, core.evidence);
+    expect(input.chain.some((e) => e.clauseId === "quran:17-23:parents")).toBe(true);
+    expect(input.caseChain.some((e) => e.clauseId === "quran:17-23:parents")).toBe(false);
   });
 
   it("overallStrength ties within the margin", () => {
@@ -499,5 +513,62 @@ describe("independent corroboration", () => {
     const [group] = groupByOutcome(prove(parseQuery("ruling(eat(p), H)"), kb), evidence);
     expect(group.independentLines).toBe(2);
     expect(group.confidence).toBeGreaterThan(group.best.strength);
+  });
+});
+
+describe("weighing: right answer for the right reason", () => {
+  const weigh = (query: string, kb = core) => weighRuling(proveRuling(query, kb), kb.evidence);
+
+  it("does not let a rule of inference cap a certain obligation", () => {
+    // "Omitting what is wajib is haram" restates what wajib means; skipping a
+    // prayer is forbidden on the strength of 4:103 itself.
+    const result = weigh("ruling(omit(obligatory_prayer), H)");
+    expect(result?.verdict).toBe("haram");
+    expect(result?.groups[0].confidence).toBe(100);
+  });
+
+  it("rests the starving person's concession on the texts that grant it", () => {
+    const result = weigh("ruling(consume(carrion), H)", starving);
+    expect(result?.verdict).toBe("mubah");
+    expect(result?.groups.find((g) => g.outcome === "mubah")?.confidence).toBe(100);
+    expect(result?.resolution.map((s) => s.rule)).toEqual(["specificity"]);
+  });
+
+  it("decides two specific texts by their soundness, not by calling one 'specific'", () => {
+    // Both reports are about dead fish; the one forbidding floating fish is
+    // weak, so the sound report prevails on grade.
+    const result = weigh("ruling(consume(floating_dead_fish), H)");
+    expect(result?.verdict).toBe("mubah");
+    expect(result?.resolution.map((s) => s.rule)).toEqual(["transmission-grade"]);
+  });
+
+  it("names the majority position first between compatible readings, and says so", () => {
+    const result = weighRuling(
+      proveRuling("validity(sell(unequal_gold_exchange), V)"),
+      core.evidence,
+      VALIDITY_AXIS
+    );
+    expect(result?.verdict).toBe("batil");
+    expect(result?.resolution.map((s) => s.rule)).toEqual(["majority"]);
+    expect(result?.relatedOpinions.map((g) => g.outcome)).toEqual(["fasid"]);
+  });
+
+  it("never settles contradictory rulings by a headcount", () => {
+    // Two contradictory rulings tied on every text-based rule stay unresolved,
+    // however the schools divide.
+    const evidence = new EvidenceStore([
+      { clauseId: "a", kind: "sunnah", reference: "A", grade: "sahih", madhahib: ["hanafi", "maliki", "shafii"] },
+      { clauseId: "b", kind: "sunnah", reference: "B", grade: "sahih", madhahib: ["hanbali"] },
+    ]);
+    const kb = new KnowledgeBase(parseProgram("ruling(x, haram). ruling(x, mubah).", { sourceName: "t" }));
+    // Ids from parseProgram are positional; map them onto the records above.
+    const ids = kb.clausesFor(parseQuery("ruling(x, H)")[0]).map((c) => c.id);
+    const store = new EvidenceStore([
+      { ...evidence.get("a")!, clauseId: ids[0] },
+      { ...evidence.get("b")!, clauseId: ids[1] },
+    ]);
+    const result = weighRuling(prove(parseQuery("ruling(x, H)"), kb), store);
+    expect(result?.unresolved).toBe(true);
+    expect(result?.verdict).toBeUndefined();
   });
 });

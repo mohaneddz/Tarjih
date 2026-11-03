@@ -44,14 +44,23 @@ code fences, matching this pattern precisely:
 
   ruling(<act>(<entity>), H)
 
-For example, for "Is mistreating my mother wrong?" you would output exactly:
+For example:
 
-  ruling(mistreat(mother), H)
+  "Is mistreating my mother wrong?"          ->  ruling(mistreat(mother), H)
+  "Is selling an unborn calf allowed?"       ->  ruling(sell(unborn_calf), H)
+  "Can I give my zakat to my mother?"        ->  ruling(give_zakat_to(mother), H)
+  "Can a man wear gold?"                     ->  ruling(wear(gold), H), circumstance(male)
+
+Questions about whether something is valid, counts, or takes effect ("does my
+zakat count if...", "is this sale valid?") are still written as ruling(...) — the
+engine works out the validity side itself.
 
 If — and only if — the question states that the asker is in one of the known
-circumstances above, append it to the same line, comma-separated:
+circumstances above, append it to the same line, comma-separated (more than one
+if more than one is stated):
 
   ruling(consume(carrion), H), circumstance(starvation)
+  ruling(wear(silk), H), circumstance(male), circumstance(skin_ailment)
 
 This is the most consequential judgement you make. A circumstance unlocks a
 legal concession, so adding one the asker did not claim converts a prohibition
@@ -72,14 +81,14 @@ pair is worse than no answer, because nothing downstream can detect it.
 
 The question must genuinely be ABOUT the act and entity you choose — not merely
 built from words that happen to appear in the lists above. "Is it halal to fight
-back against an attacker?" is NOT a question about food, even though the only
-acts you know are mistreat/1 and consume/1; forcing it into
+back against an attacker?" is not about any act listed, even though "consume"
+and "swine" are there to be reached for; forcing it into
 "ruling(consume(swine), H)" would make the engine confidently answer a
 completely different question and mislead whoever asked it. That is far worse
 than admitting the knowledge base doesn't cover this yet.
 
-If the question is not genuinely about mistreating a known relative or
-consuming a known foodstuff, respond with EXACTLY the single word:
+If the question is not genuinely about one of the known acts applied to one of
+the known entities, respond with EXACTLY the single word:
 
   NONE
 
