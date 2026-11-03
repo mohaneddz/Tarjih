@@ -138,6 +138,26 @@ export interface Evidence {
   readonly madhahib?: readonly Madhhab[];
 
   /**
+   * True for a rule of inference: a clause whose whole authority is that of
+   * the texts it connects, adding no claim of its own. "Omitting what is
+   * wajib is haram" follows from what wajib means; "necessity lifts the
+   * prohibition" is the mechanism of Qur'an 2:173, not a second source
+   * beside it.
+   *
+   * Such a clause is transparent to the weighing. It is skipped by the
+   * weakest-link strength, as definitions are — otherwise every omission of
+   * an obligation would be capped at the rank of an usul principle, and a
+   * certain obligation in the Qur'an would read as a 55. And it is looked
+   * through when asking how a ruling was reached: the derivation is credited
+   * to the text beneath it, which is the claim actually being made.
+   *
+   * Reserve it for rules that genuinely add nothing. A maxim with probative
+   * force of its own (la darar, al-mashaqqa tajlib al-taysir) or a
+   * classification someone had to judge is not one.
+   */
+  readonly inference?: boolean;
+
+  /**
    * True when this clause was produced by the LLM formalisation pipeline and
    * no human has checked it. Surfaced in the UI, because an unreviewed
    * machine reading of a scriptural text is not the same kind of claim as a

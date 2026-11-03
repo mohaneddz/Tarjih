@@ -19,14 +19,16 @@ import { baseStrength, EvidenceStore } from "../kb/evidence";
  * Collects the strength of every juristically meaningful clause touched by a
  * proof.
  *
- * Two kinds of node are deliberately excluded from the "meaningful" set even
- * though they still contribute 0 under `baseStrength`:
+ * Three kinds of node are deliberately excluded from the "meaningful" set:
  *
  * - Deliberate `ontology` evidence: definitional scaffolding ("an aunt is
  *   kin") that lets a real argument connect but asserts nothing on its own.
  *   Nearly every proof touches several of these, so including them in a
  *   weakest-link computation would floor every derivation in the KB at 0 and
  *   the whole exercise would be pointless.
+ * - Rules of inference (`Evidence.inference`): a clause that only restates
+ *   what its premises already establish. Its children are still collected,
+ *   so the chain is exactly as strong as the texts it rests on.
  * - Nothing else. A clause id with *no* evidence record at all is not treated
  *   as scaffolding — that is a real authoring gap (the KB linter should have
  *   caught it, but this is the query-time backstop) — so it is included and
@@ -41,7 +43,10 @@ function collectMeaningfulStrengths(node: ProofNode, evidence: EvidenceStore, ou
   const record = evidence.get(node.clauseId);
   if (record === undefined) {
     out.push(0);
-  } else if (record.kind !== "ontology") {
+  } else if (record.kind !== "ontology" && !record.inference) {
+    // A rule of inference carries the strength of what it connects, which
+    // its children contribute; counting it too would cap a certain text at
+    // the rank of the rule that merely restates it. See `Evidence.inference`.
     out.push(baseStrength(record));
   }
   for (const child of node.children) collectMeaningfulStrengths(child, evidence, out);

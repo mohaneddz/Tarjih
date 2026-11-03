@@ -79,6 +79,9 @@ export const USUL: KbEntry[] = [
       kind: "usul",
       reference: "al-darurat tubih al-mahzurat",
       dalala: "qati",
+      // The mechanism of the text that grants the exception (2:173, 5:3), not
+      // a second source beside it: the derivation is as strong as that text.
+      inference: true,
       notes:
         "The concession lasts only while the necessity lasts and reaches only " +
         "as far as it requires (al-darura tuqaddar bi-qadariha). The engine " +

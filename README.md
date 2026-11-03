@@ -190,9 +190,19 @@ Every line of argument carries an evidence strength out of 100: the strength
 of its weakest link, so a definitive Qur'anic text scores higher than a
 probable hadith, a maxim, or an analogy. It is not a probability that the
 verdict is right. The verdict is chosen by the weighing rules, and a specific
-text can rightly prevail over a stronger general one — "eating carrion when
-starving" is Permitted at strength 55 over Forbidden at 100, because 2:173
-specifically qualifies 5:3.
+text can rightly prevail over a stronger general one.
+
+Rules of inference — clauses that only restate what their premises establish,
+such as "omitting what is wajib is haram" or the darura rule that is the
+mechanism of 2:173 — are marked `inference` on their evidence. They are
+skipped by the weakest link and looked through when a derivation is credited
+to its source, so a certain obligation in the Qur'an reads as 100, not as the
+rank of the usul rule that restates it.
+
+When two *compatible* positions (makruh beside mubah, fasid beside batil) tie
+on every rule, the position of the majority of schools is named first and
+recorded as such in the trail; two *contradictory* rulings that tie are
+reported as unresolved, never settled by a headcount.
 
 To grow the knowledge base:
 
@@ -236,6 +246,11 @@ to live queries automatically.
   starving — and the classical thresholds of travel distance, the nisab, and
   the amount of nursing that makes kin are not: the numeric builtins exist
   for them, but the grounding stage does not extract quantities.
+- **Each side is represented by its strongest line.** When two answers are
+  weighed, each is represented by its strongest derivation. A weaker line on
+  the same side that carries a specific text is not consulted on its own.
+  No case in the current KB depends on it, but a group-level comparison
+  would be more faithful.
 - **Sub-goals are not weighed.** Only the ruling a query asks for goes
   through the murajjihat. A class-level claim that a later text overrides
   would keep firing for every rule chaining on that class, so overrides are

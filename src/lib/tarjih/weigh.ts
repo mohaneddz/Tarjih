@@ -12,7 +12,7 @@ import type { ProveResult, Solution } from "../engine/prover";
 import type { EvidenceStore } from "../kb/evidence";
 import { contradicts, isHukm, isValidity, validityContradicts } from "../kb/ontology";
 import type { Hukm, Validity } from "../kb/ontology";
-import { buildRuleInput, MURAJJIH_RULES, overallStrength, rootClauseId } from "./murajjih";
+import { buildRuleInput, majority, MURAJJIH_RULES, overallStrength, rootClauseId } from "./murajjih";
 import { chainStrength, combinedConfidence } from "./strength";
 
 /**
@@ -128,7 +128,7 @@ export function groupByOutcome<T extends string = Hukm>(
       solution,
       outcome,
       strength: chainStrength(solution, evidence),
-      rootClauseId: rootClauseId(solution),
+      rootClauseId: rootClauseId(solution, evidence),
     };
     const bucket = byOutcome.get(outcome);
     if (bucket) bucket.push(derivation);
@@ -173,12 +173,17 @@ function independentStrengths<T extends string>(derivations: readonly Derivation
 function adjudicate<T extends string>(
   a: OutcomeGroup<T>,
   b: OutcomeGroup<T>,
-  evidence: EvidenceStore
+  evidence: EvidenceStore,
+  compatible: boolean
 ): { winner: OutcomeGroup<T>; loser: OutcomeGroup<T>; step?: TarjihStep<T> } {
   const inputA = buildRuleInput(a.best.solution, evidence);
   const inputB = buildRuleInput(b.best.solution, evidence);
 
-  for (const rule of [...MURAJJIH_RULES, overallStrength]) {
+  // The majority-of-schools tie-break only orders compatible readings; two
+  // contradictory rulings the texts cannot separate stay unresolved rather
+  // than being settled by a headcount. See `majority`.
+  const rules = compatible ? [...MURAJJIH_RULES, overallStrength, majority] : [...MURAJJIH_RULES, overallStrength];
+  for (const rule of rules) {
     const result = rule.compare(inputA, inputB);
     if (result === "tie") continue;
     const [winner, loser, side] = result === "a" ? [a, b, "a" as const] : [b, a, "b" as const];
@@ -278,8 +283,9 @@ export function weighRuling<T extends string = Hukm>(
     for (const challenger of groups) {
       if (challenger === current) continue;
 
-      if (axis.contradicts(current.outcome, challenger.outcome)) contested = true;
-      const { winner, step } = adjudicate(current, challenger, evidence);
+      const opposed = axis.contradicts(current.outcome, challenger.outcome);
+      if (opposed) contested = true;
+      const { winner, step } = adjudicate(current, challenger, evidence, !opposed);
       if (!step) continue; // Inseparable; the audit below decides what that means.
 
       // A displacement is always followed by a rematch — the new leader is
@@ -319,7 +325,7 @@ export function weighRuling<T extends string = Hukm>(
     (g) =>
       g !== current &&
       axis.contradicts(current.outcome, g.outcome) &&
-      adjudicate(current, g, evidence).step === undefined
+      adjudicate(current, g, evidence, false).step === undefined
   );
 
   const relatedOpinions = groups.filter(

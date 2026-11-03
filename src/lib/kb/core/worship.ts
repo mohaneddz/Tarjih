@@ -121,6 +121,7 @@ export const WORSHIP: KbEntry[] = [
       kind: "usul",
       reference: "al-amr bi'l-shay' nahy 'an diddih",
       dalala: "qati",
+      inference: true,
       notes:
         "A command to do something entails forbidding its omission. Certain in " +
         "indication because it follows from what wajib means.",
@@ -147,6 +148,33 @@ export const WORSHIP: KbEntry[] = [
         "Addressed to the traveller in particular. Recorded as an exception " +
         "attached to a situation rather than as a ruling on the act, because " +
         "the act is only licensed for someone actually in that situation.",
+    },
+  },
+  {
+    id: "quran:4-101:travel-shortens-prayer",
+    /*
+     * The verse names the traveller, so — as with breaking the fast in 2:184
+     * and tayammum in 4:43 — the concession is keyed on the stated situation
+     * directly, and the hardship maxim stays as corroboration. Without this
+     * line the only route ran through the maxim and its probable indication,
+     * and a concession the Qur'an states outright read as a 47.
+     *
+     * The Hanafis hold shortening obligatory for the traveller ('azima, on
+     * 'A'isha's report that prayer was first prescribed as two rak'as and
+     * kept so in travel); that position is not modelled here.
+     */
+    clause: "ruling(shorten(obligatory_prayer), mubah) :- circumstance(travel).",
+    evidence: {
+      kind: "quran",
+      reference: "Qur'an 4:101",
+      text:
+        "And when you travel throughout the land, there is no blame upon you " +
+        "for shortening the prayer.",
+      textArabic: "وَإِذَا ضَرَبْتُمْ فِي الْأَرْضِ فَلَيْسَ عَلَيْكُمْ جُنَاحٌ أَن تَقْصُرُوا مِنَ الصَّلَاةِ",
+      thubut: "qati",
+      dalala: "qati",
+      scope: "khass",
+      madhahib: ["maliki", "shafii", "hanbali"],
     },
   },
   {
@@ -477,6 +505,7 @@ export const WORSHIP: KbEntry[] = [
       kind: "usul",
       reference: "An impediment removes the obligation it blocks",
       dalala: "qati",
+      inference: true,
       notes:
         "Where a rukhsa would yield mubah — you may take the lighter option — " +
         "a mani' yields wajib: the act is not merely excused but no longer " +

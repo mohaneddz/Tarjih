@@ -13,6 +13,9 @@
 export type LlmErrorKind = "timeout" | "network" | "rate_limit" | "auth" | "upstream" | "empty";
 
 export class LlmError extends Error {
+  /** For a rate limit: how long the provider asked us to wait, when it said. */
+  retryAfterMs?: number;
+
   constructor(
     message: string,
     readonly kind: LlmErrorKind = "upstream",
@@ -42,6 +45,10 @@ export function describeLlmFailure(kind: LlmErrorKind | undefined): string {
 /** Generous for a reasoning model, short enough that nobody stares at a spinner forever. */
 const DEFAULT_TIMEOUT_MS = 30_000;
 
+/** Two short waits cover a per-minute burst limit without leaving someone at a spinner. */
+const MAX_RATE_LIMIT_RETRIES = 2;
+const MAX_RETRY_WAIT_MS = 5_000;
+
 export interface LlmClient {
   complete(system: string, user: string, options?: { json?: boolean; temperature?: number }): Promise<string>;
 }
@@ -53,7 +60,25 @@ export class GroqClient implements LlmClient {
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS
   ) {}
 
+  /**
+   * One completion, retrying a rate-limited call. Groq's free tier limits
+   * requests and tokens per minute, and a burst — a demo audience all asking
+   * at once, or the build-time seed — hits it quickly. A 429 says to wait,
+   * not that anything is wrong, so wait briefly (the provider's Retry-After,
+   * capped) and try again before giving up.
+   */
   async complete(system: string, user: string, options: { json?: boolean; temperature?: number } = {}): Promise<string> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.completeOnce(system, user, options);
+      } catch (e) {
+        if (!(e instanceof LlmError) || e.kind !== "rate_limit" || attempt >= MAX_RATE_LIMIT_RETRIES) throw e;
+        await new Promise((resolve) => setTimeout(resolve, e.retryAfterMs ?? 2_000));
+      }
+    }
+  }
+
+  private async completeOnce(system: string, user: string, options: { json?: boolean; temperature?: number }): Promise<string> {
     let response: Response;
     try {
       response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -94,7 +119,12 @@ export class GroqClient implements LlmClient {
       }
       const kind: LlmErrorKind =
         response.status === 429 ? "rate_limit" : response.status === 401 || response.status === 403 ? "auth" : "upstream";
-      throw new LlmError(`Groq request failed (${response.status}): ${detail ?? response.statusText}`, kind);
+      const error = new LlmError(`Groq request failed (${response.status}): ${detail ?? response.statusText}`, kind);
+      if (kind === "rate_limit") {
+        const seconds = Number(response.headers.get("retry-after"));
+        error.retryAfterMs = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, MAX_RETRY_WAIT_MS) : undefined;
+      }
+      throw error;
     }
 
     const body = await response.json();

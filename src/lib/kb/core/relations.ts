@@ -276,6 +276,28 @@ export const RELATIONS: KbEntry[] = [
     },
   },
   {
+    id: "bukhari:2068:deferred-payment",
+    /*
+     * The text beside the custom. The Prophet bought on deferred payment, so
+     * deferral itself is no defect; that the deferred price may be higher than
+     * the spot price is the majority's reading of the general permission of
+     * trade, which this report shows but does not state — hence probable in
+     * indication. The custom route below stays: it is the KB's example of
+     * 'urf settling what the parties are taken to have agreed.
+     */
+    clause: "attribute(instalment_sale, sound_sale).",
+    evidence: {
+      kind: "sunnah",
+      reference: "Sahih al-Bukhari 2068, Sahih Muslim 1603",
+      text: "The Prophet bought food from a Jew on deferred payment, and pledged his iron armour to him.",
+      textArabic: "أن النبي صلى الله عليه وسلم اشترى طعاما من يهودي إلى أجل ورهنه درعا من حديد",
+      grade: "sahih",
+      thubut: "qati",
+      dalala: "zanni",
+      scope: "khass",
+    },
+  },
+  {
     id: "urf:instalment-sale",
     clause: "custom(traders, instalment_sale).",
     evidence: {

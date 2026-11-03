@@ -30,9 +30,11 @@
  *   claim as the ruling being stated by that verse directly.
  */
 
-import { EVIDENCE_KIND_RANK, GRADE_RANK } from "../kb/evidence";
+import { isBuiltinClauseId } from "../engine/builtins";
+import { EVIDENCE_KIND_RANK, GRADE_RANK, MADHHAB_LABELS } from "../kb/evidence";
 import type { Certainty, Evidence, EvidenceStore, Restriction, Scope } from "../kb/evidence";
-import type { Solution } from "../engine/prover";
+import type { ProofNode, Solution } from "../engine/prover";
+import { termToString } from "../logic/term";
 import { chainStrength } from "./strength";
 
 export type Side = "a" | "b";
@@ -42,6 +44,16 @@ export interface RuleInput {
   readonly solution: Solution;
   /** Evidence for every clause touched anywhere in the derivation. */
   readonly chain: readonly Evidence[];
+  /**
+   * The chain without the source case of any analogy in it. Whether a
+   * derivation "addresses this case specifically" is a question about the
+   * texts that speak to *this* case: a qiyas borrows its ruling from a text
+   * about another case, and that text being specific to *its* case (17:23 is
+   * khass to parents) says nothing about the case the analogy extends it to.
+   * Specificity and restriction read this; certainty still reads the whole
+   * chain, since an analogy is only as certain as the text it rests on.
+   */
+  readonly caseChain: readonly Evidence[];
   /** Evidence for the clause whose head is the ruling literal itself. */
   readonly root: Evidence;
   /** Precomputed weakest-link strength (see `strength.ts`), for the final fallback rule. */
@@ -148,19 +160,34 @@ function hasScope(chain: readonly Evidence[], scope: Scope): boolean {
   return has(chain, (e) => e.scope === scope);
 }
 
+/**
+ * One side reconciles with the other only if it is the *only* one speaking
+ * specifically. When both are specific there is nothing to reconcile — two
+ * specific texts collide, and the weighing rules after this one choose. A
+ * specific text that is not a proof (da'if) cannot carve anything out, but it
+ * is still specific: it makes the pair a collision rather than handing the
+ * other side a reconciliation it did not earn. Before, a sound general report
+ * "beat" a weak report about the very case on specificity, which reached the
+ * right answer and gave the wrong reason.
+ */
+function reconciles(a: RuleInput, b: RuleInput, marked: (chain: readonly Evidence[]) => boolean): Comparison {
+  const aMarked = marked(a.caseChain);
+  const bMarked = marked(b.caseChain);
+  if (aMarked && bMarked) return "tie";
+  if (aMarked && admissible(a.chain)) return "a";
+  if (bMarked && admissible(b.chain)) return "b";
+  return "tie";
+}
+
 const specificity: MurajjihRule = {
   id: "specificity",
   label: "Specific over general (khass over amm)",
   compare(a, b) {
-    const aKhass = admissible(a.chain) && hasScope(a.chain, "khass");
-    const bKhass = admissible(b.chain) && hasScope(b.chain, "khass");
-    if (aKhass && !bKhass) return "a";
-    if (bKhass && !aKhass) return "b";
-    return "tie";
+    return reconciles(a, b, (chain) => hasScope(chain, "khass"));
   },
   explain(a, b, winner) {
     const [side, other] = winner === "a" ? [a, b] : [b, a];
-    const specific = side.chain.find((e) => e.scope === "khass");
+    const specific = side.caseChain.find((e) => e.scope === "khass");
     return `${referenceOf(specific ?? side.root)} addresses this case specifically (khass), so it is reconciled with the general ruling in ${referenceOf(other.root)} (jam') by qualifying it, not weighed against it.`;
   },
 };
@@ -173,15 +200,11 @@ const restriction: MurajjihRule = {
   id: "restriction",
   label: "Restricted over unrestricted (muqayyad over mutlaq)",
   compare(a, b) {
-    const aMuqayyad = admissible(a.chain) && hasRestriction(a.chain, "muqayyad");
-    const bMuqayyad = admissible(b.chain) && hasRestriction(b.chain, "muqayyad");
-    if (aMuqayyad && !bMuqayyad) return "a";
-    if (bMuqayyad && !aMuqayyad) return "b";
-    return "tie";
+    return reconciles(a, b, (chain) => hasRestriction(chain, "muqayyad"));
   },
   explain(a, b, winner) {
     const [side, other] = winner === "a" ? [a, b] : [b, a];
-    const restricted = side.chain.find((e) => e.restriction === "muqayyad");
+    const restricted = side.caseChain.find((e) => e.restriction === "muqayyad");
     return `${referenceOf(restricted ?? side.root)} carries an explicit qualification (muqayyad), so the unqualified text in ${referenceOf(other.root)} is read in its light (jam') rather than weighed against it.`;
   },
 };
@@ -288,6 +311,36 @@ const overallStrength: MurajjihRule = {
  * general text's source is, so it must be checked before directness or kind
  * rank ever get a say.
  */
+/**
+ * Not a murajjih between texts, and not used as one. When two positions are
+ * compatible (one step apart: makruh beside mubah, fasid beside batil) and
+ * every rule above ties, something still has to be named first, and before
+ * this it was whichever clause happened to load first. The position of the
+ * majority of the schools (jumhur) is the conventional headline in that
+ * situation, and the other is shown beside it as a related opinion — so this
+ * decides presentation, never which of two contradictory rulings binds.
+ * Only compares positions both tagged with their schools.
+ */
+const majority: MurajjihRule = {
+  id: "majority",
+  label: "Position of the majority of schools (jumhur)",
+  compare(a, b) {
+    const ma = a.root.madhahib?.length;
+    const mb = b.root.madhahib?.length;
+    if (!ma || !mb || ma === mb) return "tie";
+    return ma > mb ? "a" : "b";
+  },
+  explain(a, b, winner) {
+    const [side, other] = winner === "a" ? [a, b] : [b, a];
+    const schools = (e: Evidence) => (e.madhahib ?? []).map((m) => MADHHAB_LABELS[m].en).join(", ");
+    return (
+      `The texts give no ground to prefer either reading, and the two are close enough to stand together, ` +
+      `so the majority position (${schools(side.root)}) is given first and the ${schools(other.root)} ` +
+      `position is shown beside it.`
+    );
+  },
+};
+
 export const MURAJJIH_RULES: readonly MurajjihRule[] = [
   abrogation,
   specificity,
@@ -298,21 +351,61 @@ export const MURAJJIH_RULES: readonly MurajjihRule[] = [
   transmissionGrade,
 ];
 
-export { overallStrength };
+export { overallStrength, majority };
 
-/** Root clause of a solution: the clause whose head is the queried literal. */
-export function rootClauseId(solution: Solution): string {
-  return solution.proofs[0].clauseId;
+/**
+ * The node a derivation is credited to: the clause whose head is the queried
+ * literal, looking through rules of inference to the first real source
+ * beneath them (see `Evidence.inference`). "Omitting the fast is forbidden"
+ * concludes through "omitting what is wajib is haram", but the claim being
+ * made is Qur'an 2:183's — so that is what directness, transmission grade and
+ * the count of independent lines should see.
+ */
+function effectiveRoot(node: ProofNode, evidence: EvidenceStore): ProofNode {
+  if (!evidence.get(node.clauseId)?.inference) return node;
+  for (const child of node.children) {
+    if (isBuiltinClauseId(child.clauseId)) continue;
+    const record = evidence.get(child.clauseId);
+    if (!record || record.kind === "ontology") continue;
+    return effectiveRoot(child, evidence);
+  }
+  return node;
+}
+
+/** Root clause of a solution (see `effectiveRoot`); without an evidence store, the literal head clause. */
+export function rootClauseId(solution: Solution, evidence?: EvidenceStore): string {
+  const head = solution.proofs[0];
+  return evidence ? effectiveRoot(head, evidence).clauseId : head.clauseId;
+}
+
+/**
+ * Evidence for the clauses that speak to the case being asked about: the whole
+ * proof, except that under an analogy only the branches about the new case
+ * are followed. The branches establishing the source case's ruling and cause
+ * are about the source case. See `RuleInput.caseChain`.
+ */
+function collectCaseChain(node: ProofNode, evidence: EvidenceStore, into: Map<string, Evidence>): void {
+  const record = evidence.get(node.clauseId);
+  if (record) into.set(node.clauseId, record);
+  const isAnalogy = record?.kind === "qiyas";
+  const caseTerm = isAnalogy && node.goal.args[0] ? termToString(node.goal.args[0]) : undefined;
+  for (const child of node.children) {
+    if (caseTerm && !child.goal.args.some((arg) => termToString(arg) === caseTerm)) continue;
+    collectCaseChain(child, evidence, into);
+  }
 }
 
 export function buildRuleInput(solution: Solution, evidence: EvidenceStore): RuleInput {
   const chain = solution.clauseIds
     .map((id) => evidence.get(id))
     .filter((e): e is Evidence => e !== undefined);
+  const caseChain = new Map<string, Evidence>();
+  for (const proof of solution.proofs) collectCaseChain(proof, evidence, caseChain);
   return {
     solution,
     chain,
-    root: evidence.getOrUnknown(rootClauseId(solution)),
+    caseChain: [...caseChain.values()],
+    root: evidence.getOrUnknown(rootClauseId(solution, evidence)),
     strength: chainStrength(solution, evidence),
   };
 }

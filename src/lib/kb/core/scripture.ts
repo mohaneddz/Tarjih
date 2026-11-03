@@ -203,10 +203,16 @@ export const SCRIPTURE: KbEntry[] = [
     id: "fact:starvation-is-necessity",
     clause: "necessity(starvation).",
     evidence: {
-      kind: "usul",
-      reference: "Starvation threatens preservation of life",
+      kind: "quran",
+      reference: "Qur'an 5:3",
+      text: "But whoever is forced by severe hunger, with no inclination to sin — then indeed, Allah is Forgiving and Merciful.",
+      textArabic: "فَمَنِ اضْطُرَّ فِي مَخْمَصَةٍ غَيْرَ مُتَجَانِفٍ لِّإِثْمٍ ۙ فَإِنَّ اللَّهَ غَفُورٌ رَّحِيمٌ",
+      thubut: "qati",
       dalala: "qati",
-      notes: "Threat to life is the paradigm case of darura, agreed among all schools.",
+      notes:
+        "That starvation counts as a necessity is not a judgement the KB makes: 5:3 names it — " +
+        "makhmasa, severe hunger — as the necessity that lifts the prohibition it has just listed. " +
+        "Threat to life is the paradigm case of darura, agreed among all schools.",
     },
   },
 ];

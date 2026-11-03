@@ -90,8 +90,8 @@ export function PipelineExample() {
               of competing with it.
             </p>
             <p className="text-text-secondary/80 leading-relaxed text-[12px]">
-              5:3 is the stronger text on its own (evidence strength 100 vs 55) — the weighing rule, not the bigger
-              number, decides.
+              Both texts are certain (evidence strength 100 each), so strength can&rsquo;t decide — the weighing rule
+              does.
             </p>
           </div>
 
