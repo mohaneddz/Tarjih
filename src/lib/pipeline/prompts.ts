@@ -108,7 +108,13 @@ export interface NarrationInput {
   readonly resolution: readonly TarjihStepView[];
   readonly truncated: boolean;
   /** Declaratory status of the transaction, when there is one. */
-  readonly declaratory?: { readonly status: string; readonly label: string; readonly gloss: string };
+  readonly declaratory?: {
+    readonly status: string;
+    readonly label: string;
+    readonly gloss: string;
+    /** The derivations behind the declaratory status, so the narration can cite them. */
+    readonly groups?: readonly OutcomeGroupView[];
+  };
   /** The verdict with none of the asker's stated circumstances, when they stated any. */
   readonly baselineVerdict?: string;
 }
@@ -117,7 +123,7 @@ function renderGroups(groups: readonly OutcomeGroupView[]): string {
   return groups
     .map((g) => {
       const label = HUKM_LABELS[g.outcome as keyof typeof HUKM_LABELS]?.en ?? g.outcome;
-      return `- ${g.outcome} (${label}): ${g.confidence}% confidence, ${g.independentLines} independent line(s) of argument across ${g.derivationCount} derivation(s).\n${indent(proofSummary(g))}`;
+      return `- ${g.outcome} (${label}): evidence strength ${g.confidence}/100, ${g.independentLines} independent line(s) of argument across ${g.derivationCount} derivation(s).\n${indent(proofSummary(g))}`;
     })
     .join("\n");
 }
@@ -173,7 +179,9 @@ This verdict rests on the situation the asker stated about themselves. Without i
 
   const verdictLine = input.unresolved
     ? "The engine found genuinely conflicting rulings that its weighing rules could not separate. Do NOT pick a side yourself — present both positions as an open, unresolved tension."
-    : `The engine has already determined the verdict: ${input.verdict}. This is FINAL. Do not propose a different verdict, hedge it away, or suggest the engine might be wrong about which ruling applies — your job is only to explain, in accessible language, why the evidence below leads here.`;
+    : !input.verdict && input.declaratory
+      ? "The knowledge base has no rule on whether this act is permitted or forbidden; it only determines whether it takes legal effect (its declaratory status, below). That status IS the answer. Report it as final, and say plainly that the separate question of whether the act is sinful is not modelled here."
+      : `The engine has already determined the verdict: ${input.verdict}. This is FINAL. Do not propose a different verdict, hedge it away, or suggest the engine might be wrong about which ruling applies — your job is only to explain, in accessible language, why the evidence below leads here.`;
 
   const system = `You are the narration stage of Tarjih, a symbolic Islamic legal reasoning engine.
 
@@ -184,7 +192,12 @@ ${verdictLine}${declaratoryLine}${baselineLine}
 
 Write for an educated layperson, not a scholar audience. Reference the actual
 citations given below rather than generic phrases like "textual evidence
-suggests". Where the reasoning used qiyas (analogy) or a legal maxim rather
+suggests". Each line of argument carries an evidence strength out of 100: the
+strength of its weakest link (a probable hadith or an analogy scores lower than
+a definitive Qur'anic text). It is NOT a probability that the verdict is
+correct, and the verdict is chosen by the weighing rules, not by the higher
+number — a specific text can rightly prevail over a stronger general one. Do
+not call it "confidence" and do not quote it as a percentage. Where the reasoning used qiyas (analogy) or a legal maxim rather
 than a direct text, say so plainly rather than implying certainty it doesn't
 have.${madhhabCaveat}${strictnessCaveat}${truncationCaveat}
 
@@ -200,7 +213,11 @@ Formal goal: ${input.goalText}
 Contested: ${input.contested}
 
 Derivations found:
-${renderGroups(input.groups)}
+${input.groups.length > 0 ? renderGroups(input.groups) : "(none on whether the act is permitted)"}${
+  input.declaratory?.groups?.length
+    ? `\n\nDerivations of the declaratory status:\n${renderGroups(input.declaratory.groups)}`
+    : ""
+}
 ${
   input.resolution.length > 0
     ? `\nTarjih reasoning applied:\n${input.resolution.map((s) => `- [${s.rule}] ${s.winner} preferred over ${s.loser}: ${s.explanation}`).join("\n")}`

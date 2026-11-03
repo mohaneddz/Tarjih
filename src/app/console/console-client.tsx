@@ -120,6 +120,17 @@ export function ConsoleClient({ predicates, circumstances, atoms, acts }: Consol
     setHistory(readHistory());
   }, []);
 
+  // A deep link (from a Study result or a Knowledge Base clause) arrives with
+  // the goal in the URL; run it straight away rather than landing on an empty
+  // result panel that still needs a click.
+  const ranDeepLink = useRef(false);
+  useEffect(() => {
+    if (ranDeepLink.current || !searchParams.get("q")) return;
+    ranDeepLink.current = true;
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const vocabulary = useMemo(() => {
     const names = new Set<string>([...atoms, ...acts, ...circumstances.map((c) => c.atom)]);
     for (const p of predicates) names.add(p.signature.split("(")[0]);
@@ -540,7 +551,7 @@ export function ConsoleClient({ predicates, circumstances, atoms, acts }: Consol
                     <ul className="flex flex-wrap gap-2 text-[12px]">
                       {result.weighing.groups.map((g) => (
                         <li key={g.outcome} className="rounded-lg border border-border-warm px-2 py-1 font-mono">
-                          {g.outcome} · {g.confidence}% · {g.independentLines}/{g.derivationCount} lines
+                          {g.outcome} · strength {g.confidence}/100 · {g.independentLines}/{g.derivationCount} lines
                         </li>
                       ))}
                     </ul>

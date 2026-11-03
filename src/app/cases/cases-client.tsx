@@ -6,28 +6,38 @@ import { Footer } from "@/sections/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { VerdictBadge, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
+import { VerdictBadge, WeighingScale } from "@/components/ui/asset-badge";
+import { HUKM_LABELS } from "@/lib/kb/ontology";
+import type { Hukm } from "@/lib/kb/ontology";
+
+type CaseStatus = "Evidence agrees" | "Evidence weighed" | "Unresolved";
 
 interface CaseRecord {
   id: string;
   title: string;
-  madhhab: string;
   confidence: number | null;
   verdict: string | null;
+  validity: string | null;
   contested: boolean;
-  status: "Resolved" | "Contested" | "Unresolved";
+  status: CaseStatus;
   date: string;
 }
 
 interface ResolutionSummary {
   id: string;
   question: string;
-  madhhab: string | null;
   verdict: string | null;
+  validity?: string | null;
   confidence: number | null;
   contested: boolean;
   createdAt: string;
 }
+
+const STATUS_STYLES: Record<CaseStatus, string> = {
+  "Evidence agrees": "text-brand-green bg-brand-green-light/60 border-brand-green/30",
+  "Evidence weighed": "text-amber-800 dark:text-amber-300 bg-amber-100/60 dark:bg-amber-950/30 border-amber-300/60",
+  Unresolved: "text-brand-red bg-brand-red-light border-brand-red/30",
+};
 
 export function CasesClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,12 +55,12 @@ export function CasesClient() {
         const mapped: CaseRecord[] = data.map((r) => ({
           id: r.id,
           title: r.question,
-          madhhab: r.madhhab ?? "Madhhab-neutral",
           confidence: r.confidence,
           verdict: r.verdict,
+          validity: r.validity ?? null,
           contested: r.contested,
-          status: !r.verdict ? "Unresolved" : r.contested ? "Contested" : "Resolved",
-          date: new Date(r.createdAt).toISOString().split("T")[0],
+          status: !r.verdict && r.contested ? "Unresolved" : r.contested ? "Evidence weighed" : "Evidence agrees",
+          date: new Date(r.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
         }));
 
         setCases(mapped);
@@ -65,9 +75,7 @@ export function CasesClient() {
 
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
-      const matchesSearch =
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.madhhab.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || c.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -82,14 +90,11 @@ export function CasesClient() {
           <div className="flex items-center gap-4">
             <WeighingScale size="sm" />
             <div>
-              <div className="flex items-center gap-2">
-                <RulingRosette size="sm" />
-                <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-                  Resolved Cases Ledger
-                </h1>
-              </div>
+              <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+                Cases Ledger
+              </h1>
               <p className="text-sm text-text-secondary mt-1">
-                A ledger of concluded analyses with traceable evidence.
+                Every question the engine has answered, with the full proof kept so it can be re-opened and re-checked.
               </p>
             </div>
           </div>
@@ -105,7 +110,7 @@ export function CasesClient() {
           <div className="relative w-full md:w-80">
             <input
               type="text"
-              placeholder="Search cases by question or madhhab..."
+              placeholder="Search cases..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-10 pl-10 pr-4 text-sm rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/60 focus:outline-none focus:border-brand-red transition-all"
@@ -121,8 +126,8 @@ export function CasesClient() {
             </svg>
           </div>
 
-          <div className="flex bg-card-warm/80 p-1 rounded-xl text-[12px] font-bold border border-border-warm">
-            {["All", "Resolved", "Contested", "Unresolved"].map((s) => (
+          <div className="flex flex-wrap bg-card-warm/80 p-1 rounded-xl text-[12px] font-bold border border-border-warm">
+            {["All", "Evidence agrees", "Evidence weighed", "Unresolved"].map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -139,74 +144,56 @@ export function CasesClient() {
         </div>
 
         <Card hoverable={false} className="p-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border-warm bg-border-warm-light/60 text-[12px] font-bold text-text-secondary uppercase tracking-wider select-none">
-                  <th className="p-4.5 pl-6">Question</th>
-                  <th className="p-4.5">Madhhab / Usul</th>
-                  <th className="p-4.5 text-center">Ruling</th>
-                  <th className="p-4.5 text-center">Confidence</th>
-                  <th className="p-4.5 text-center">Conflict</th>
-                  <th className="p-4.5 text-center">Date</th>
-                  <th className="p-4.5 pr-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-warm bg-transparent">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-text-secondary">
-                      Loading historical ledger records...
-                    </td>
-                  </tr>
-                ) : filteredCases.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-text-secondary">
-                      No matching case records found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCases.map((c) => (
-                    <tr key={c.id} className="hover:bg-border-warm-light/30 transition-colors">
-                      <td className="p-4.5 pl-6 font-serif font-bold text-text-primary text-sm leading-snug max-w-xs">
-                        {c.title}
-                      </td>
-                      <td className="p-4.5 text-brand-red font-semibold">{c.madhhab}</td>
-                      <td className="p-4.5 text-center">
-                        {c.verdict ? (
-                          <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />
-                        ) : (
-                          <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
-                        )}
-                      </td>
-                      <td className="p-4.5 text-center font-bold text-text-primary">
-                        {c.confidence !== null ? `${c.confidence}%` : "—"}
-                      </td>
-                      <td className="p-4.5 text-center">
-                        {c.contested ? (
-                          <EvidenceBadge grade="disputed" size="sm" showLabel={false} />
-                        ) : (
-                          <EvidenceBadge grade="authentic" size="sm" showLabel={false} />
-                        )}
-                      </td>
-                      <td className="p-4.5 text-center text-text-secondary">{c.date}</td>
-                      <td className="p-4.5 pr-6 text-right">
-                        <Link href={`/study?id=${c.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 px-4 text-[12px] font-bold border-brand-red/30 text-brand-red hover:bg-brand-red-light hover:text-brand-red"
-                          >
-                            Open in Study
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {isLoading ? (
+            <p className="text-center py-12 text-sm text-text-secondary">Loading cases…</p>
+          ) : filteredCases.length === 0 ? (
+            <div className="text-center py-12 px-6 text-sm text-text-secondary flex flex-col items-center gap-3">
+              <p>{cases.length === 0 ? "No questions have been answered yet." : "No cases match this search."}</p>
+              {cases.length === 0 && (
+                <Link href="/study" className="font-semibold text-brand-red hover:underline">
+                  Ask the first one
+                </Link>
+              )}
+            </div>
+          ) : (
+            <ul className="divide-y divide-border-warm">
+              {filteredCases.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    href={`/study?id=${c.id}`}
+                    className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 px-5 md:px-6 py-4 hover:bg-border-warm-light/30 transition-colors"
+                  >
+                    <span className="font-serif font-bold text-text-primary text-[15px] leading-snug flex-1 min-w-0">
+                      {c.title}
+                    </span>
+                    <span className="flex flex-wrap items-center gap-x-4 gap-y-2 shrink-0">
+                      <span className="flex items-center gap-2 md:w-48">
+                        {c.verdict && <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />}
+                        <span className="font-serif font-bold text-text-primary">
+                          {c.verdict
+                            ? HUKM_LABELS[c.verdict as Hukm]?.en ?? c.verdict
+                            : c.validity
+                              ? `Legal effect: ${c.validity}`
+                              : "No single ruling"}
+                        </span>
+                      </span>
+                      <span className="text-sm text-text-secondary md:w-32">
+                        {c.confidence !== null && c.verdict ? `strength ${c.confidence}/100` : ""}
+                      </span>
+                      <span className="md:w-40">
+                        <span
+                          className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[c.status]}`}
+                        >
+                          {c.status}
+                        </span>
+                      </span>
+                      <span className="text-sm text-text-secondary w-28 md:text-right">{c.date}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </main>
 

@@ -7,24 +7,20 @@ import { Comparison } from "@/sections/comparison";
 import { ReasoningSteps } from "@/sections/features";
 import { Footer } from "@/sections/footer";
 import { loadCoreKb } from "@/lib/kb/core";
-import { prisma } from "@/data/db";
+import * as domains from "@/lib/kb/core";
 
-/**
- * Reviewed-clause count is best-effort: the query fails harmlessly to 0 if
- * the table isn't there in a given environment, same pattern as the
- * /api/resolutions route.
- */
-async function countReviewedClauses(): Promise<number> {
-  try {
-    return await prisma.clause.count({ where: { unreviewed: false } });
-  } catch {
-    return 0;
-  }
-}
+/** The named domain modules the core KB is assembled from (taxonomy, food, zakat, ...). */
+const DOMAIN_COUNT = Object.values(domains).filter((v) => Array.isArray(v) && v !== domains.CORE_ENTRIES).length;
 
-export default async function Home() {
+export default function Home() {
   const core = loadCoreKb();
-  const reviewedClauseCount = await countReviewedClauses();
+  // Distinct scriptural citations, not clauses: several clauses often rest on one verse.
+  const scriptureSourceCount = new Set(
+    core.clauses
+      .map((c) => core.evidence.getOrUnknown(c.id))
+      .filter((e) => e.kind === "quran" || e.kind === "sunnah")
+      .map((e) => e.reference)
+  ).size;
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -34,7 +30,11 @@ export default async function Home() {
         <Hero />
         <PipelineExample />
         <Architecture />
-        <ReasoningSteps coreClauseCount={core.clauses.length} reviewedClauseCount={reviewedClauseCount} />
+        <ReasoningSteps
+          coreClauseCount={core.clauses.length}
+          scriptureSourceCount={scriptureSourceCount}
+          domainCount={DOMAIN_COUNT}
+        />
         <Comparison />
       </main>
 

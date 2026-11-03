@@ -131,6 +131,7 @@ Two ways clauses get added:
 | `/database` | Browse the knowledge base: every hand-authored clause and its evidence, plus a review queue for approving or rejecting LLM-formalized hadith clauses. |
 | `/console` | A Prolog console. Type a raw goal, optionally assume circumstances, and get every solution with its proof tree, a filterable step-by-step search trace, and where a failed query stalled. No LLM involved, so it works without an API key. |
 | `/cases` | A ledger of past resolved questions. |
+| `/api/health` | Database, demo content and model configuration at a glance. |
 | `/saved` | Cases bookmarked on this device (no accounts — kept in localStorage). |
 | `/` | Landing page explaining the proof-of-concept and how the engine reasons. |
 
@@ -151,7 +152,7 @@ src/scripts/         CLI scripts: scrape hadiths, run them through formalization
 ```bash
 pnpm install          # also generates the Prisma client and creates prisma/dev.db
 pnpm dev              # http://localhost:1919
-pnpm test             # 448 tests
+pnpm test             # 453 tests
 pnpm lint
 ```
 
@@ -159,6 +160,39 @@ You'll need a `GROQ_API_KEY` in `.env` for the question-answering pipeline on
 `/study` — it's the only external call the engine depends on, and only for
 translating the question in and narrating the answer out. The reasoning itself
 never leaves the machine, and `/console` runs it without any key at all.
+
+### Deploying (Vercel) and demo content
+
+The database is a SQLite file. On Vercel the build creates it, seeds it, and
+ships it with the server functions; at startup each instance copies it to the
+writable `/tmp`. So a deployment always opens with the seeded demo cases, and
+questions asked on the site are kept for as long as that instance lives — not
+across redeploys. A hosted database is the step after this for real
+persistence.
+
+- The seed (`src/scripts/seed-demo.ts`) runs in the build when `VERCEL` is set
+  and `GROQ_API_KEY` is available. It resolves the questions in
+  `src/lib/demo.ts` through the real pipeline and formalizes a few hadiths from
+  sunnah.com into the review queue. It never fails the build; run it locally
+  with `pnpm seed:demo`.
+- `GET /api/health` reports whether the database is there, how many cases and
+  review items it holds, and whether the model is configured. Check it before
+  a demo.
+- Set `REVIEW_TOKEN` to require a reviewer token for approving, rejecting or
+  revoking clauses (the review page asks for it once per tab). Unset, anyone
+  can change the review queue.
+- `/api/ground` and `/api/resolve` cap questions at 500 characters and
+  rate-limit each IP (per server instance).
+
+### Evidence strength
+
+Every line of argument carries an evidence strength out of 100: the strength
+of its weakest link, so a definitive Qur'anic text scores higher than a
+probable hadith, a maxim, or an analogy. It is not a probability that the
+verdict is right. The verdict is chosen by the weighing rules, and a specific
+text can rightly prevail over a stronger general one — "eating carrion when
+starving" is Permitted at strength 55 over Forbidden at 100, because 2:173
+specifically qualifies 5:3.
 
 To grow the knowledge base:
 

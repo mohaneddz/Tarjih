@@ -78,12 +78,32 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return ITEMS;
-    return ITEMS.filter(
+    const pages = ITEMS.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
         item.hint.toLowerCase().includes(q) ||
         item.keywords?.some((k) => k.includes(q))
     );
+    // Anything typed is also a question to ask or a term to look up, so the
+    // palette never dead-ends on "No matches" for "carrion" or "zakat".
+    const raw = query.trim();
+    const actions: PaletteItem[] = [
+      {
+        id: "ask",
+        label: `Ask: “${raw}”`,
+        hint: "Open Study with this as the question",
+        href: `/study?${new URLSearchParams({ q: raw }).toString()}`,
+        icon: <NavIcon d="M8.25 4.5l7.5 7.5-7.5 7.5" />,
+      },
+      {
+        id: "kb",
+        label: `Search the knowledge base for “${raw}”`,
+        hint: "Clauses, references and notes",
+        href: `/database?${new URLSearchParams({ q: raw }).toString()}`,
+        icon: <NavIcon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+      },
+    ];
+    return [...pages, ...actions];
   }, [query]);
 
   // Reset the search and selection whenever the palette opens or the query
@@ -169,7 +189,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Go to a page..."
+            placeholder="Go to a page, ask a question, or search the knowledge base…"
             className="w-full h-14 bg-transparent text-text-primary placeholder-text-secondary/60 focus:outline-none text-sm"
           />
           <kbd className="shrink-0 text-[11px] text-text-secondary border border-border-warm rounded px-1.5 py-0.5">Esc</kbd>

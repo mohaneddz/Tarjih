@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
 import { RulingRosette, VerdictBadge } from "@/components/ui/asset-badge";
+import { HUKM_LABELS } from "@/lib/kb/ontology";
+import type { Hukm } from "@/lib/kb/ontology";
 import { getSavedCases, unsaveCase, type SavedCase } from "@/lib/saved-cases";
 
 export function SavedClient() {
@@ -54,18 +56,29 @@ export function SavedClient() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className={`text-[12px] uppercase tracking-wider font-extrabold ${c.contested ? "text-brand-red" : "text-brand-green"}`}
+                    className={`text-[12px] uppercase tracking-wider font-extrabold ${
+                      c.contested && !c.verdict
+                        ? "text-brand-red"
+                        : c.contested
+                          ? "text-amber-700 dark:text-amber-400"
+                          : "text-brand-green"
+                    }`}
                   >
-                    {c.contested ? "Contested" : "Resolved"}
+                    {c.contested && !c.verdict ? "Unresolved" : c.contested ? "Evidence weighed" : "Evidence agrees"}
                   </span>
                   {c.verdict && <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />}
                 </div>
                 <Link href={`/study?id=${c.id}`} className="font-serif font-bold text-sm text-text-primary leading-snug hover:text-brand-red transition-colors">
                   {c.question}
                 </Link>
-                {c.confidence !== null && (
-                  <span className="text-sm text-text-secondary">{c.confidence}% confidence</span>
-                )}
+                <span className="text-sm text-text-secondary">
+                  {c.verdict ? (
+                    <span className="font-semibold text-text-primary">{HUKM_LABELS[c.verdict as Hukm]?.en ?? c.verdict}</span>
+                  ) : (
+                    "No single ruling"
+                  )}
+                  {c.verdict && c.confidence !== null && ` · strength ${c.confidence}/100`}
+                </span>
                 <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-border-warm-light/50">
                   <span className="text-[12px] text-text-secondary">
                     Saved {new Date(c.savedAt).toLocaleDateString()}

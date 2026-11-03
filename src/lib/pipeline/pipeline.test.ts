@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { loadCoreKb } from "../kb/core";
 import { groundGoal } from "./goal";
+import { LlmError } from "./llm";
 import type { LlmClient } from "./llm";
 import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
 import { presentGroup, presentProof, proofViewToText } from "./present";
@@ -538,6 +539,69 @@ describe("resolveQuestion: baseline, what-if and stalled goals", () => {
       const situations = result.error.whatIf.map((s) => s.situation);
       expect(situations).toContain("water_unavailable");
       expect(situations).toContain("illness");
+    }
+  });
+});
+
+describe("resolveQuestion: demo-critical paths", () => {
+  it("answers with the declaratory status when the KB has no taklifi ruling (zakat to a parent)", async () => {
+    const llm = new FakeLlm(["ruling(give_zakat_to(mother), H)", "{}"]);
+    const result = await resolveQuestion({ question: "Can I give my zakat to my mother?", llm, kb: core });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.view.verdict).toBeUndefined();
+    expect(result.view.groups).toEqual([]);
+    expect(result.view.declaratory?.status).toBe("batil");
+    // The computed fallback names the status in English, not the raw atom.
+    expect(result.view.narration.summary).toContain(result.view.declaratory!.label);
+  });
+
+  it("proves the goal the asker confirmed instead of grounding the question a second time", async () => {
+    const llm = new FakeLlm(["{}"]); // only the narration call is scripted
+    const result = await resolveQuestion({
+      question: "Can I eat carrion if I'm starving?",
+      llm,
+      kb: core,
+      confirmedGoal: "ruling(consume(carrion), H), circumstance(starvation)",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.view.verdict).toBe("mubah");
+    expect(llm.calls).toHaveLength(1);
+  });
+
+  it("validates a confirmed goal exactly as it would the model's output", async () => {
+    const result = await resolveQuestion({
+      question: "q",
+      llm: new FakeLlm([]),
+      kb: core,
+      confirmedGoal: "ruling(consume(pizza), H)",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.stage).toBe("goal-grounding");
+  });
+
+  it("carries the kind of a language-model failure through to the caller", async () => {
+    const llm: LlmClient = {
+      async complete() {
+        throw new LlmError("Groq request timed out after 30000 ms", "timeout");
+      },
+    };
+    const result = await resolveQuestion({ question: "q", llm, kb: core });
+    expect(result).toEqual({
+      ok: false,
+      error: { stage: "llm", message: "Groq request timed out after 30000 ms", kind: "timeout" },
+    });
+  });
+});
+
+describe("demo seed questions", () => {
+  it("every seeded question grounds and resolves to an answer", async () => {
+    const { DEMO_QUESTIONS } = await import("../demo");
+    for (const { question, goal } of DEMO_QUESTIONS) {
+      const result = await resolveQuestion({ question, llm: new FakeLlm(["{}"]), kb: core, confirmedGoal: goal });
+      expect(result.ok, `${question} → ${goal}`).toBe(true);
+      if (result.ok) expect(result.view.verdict ?? result.view.declaratory?.status, question).toBeTruthy();
     }
   });
 });

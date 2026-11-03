@@ -15,7 +15,7 @@
 
 import { findAct, findAtom } from "../kb/lexicon";
 import { glossAtom } from "../kb/glosses";
-import { HUKM_LABELS, isHukm } from "../kb/ontology";
+import { HUKM_LABELS, isHukm, isValidity, VALIDITY_LABELS } from "../kb/ontology";
 import type { Literal, Term } from "../logic/types";
 
 /** The short form of a lexicon label, before any parenthetical gloss — "maternal aunt (al-khala, ...)" -> "maternal aunt". */
@@ -35,6 +35,7 @@ export function humanizeTerm(term: Term): string {
       return String(term.value);
     case "atom": {
       if (isHukm(term.name)) return HUKM_LABELS[term.name].en;
+      if (isValidity(term.name)) return VALIDITY_LABELS[term.name].en;
       const known = findAtom(term.name);
       return known ? shortLabel(known.label) : glossAtom(term.name);
     }
@@ -50,6 +51,11 @@ export function humanizeTerm(term: Term): string {
 }
 
 type Template = (args: readonly Term[]) => string;
+
+/** "a ascendant" -> "an ascendant". By first letter, which is right for every term in the lexicon. */
+function article(noun: string): string {
+  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+}
 
 const h = humanizeTerm;
 
@@ -68,9 +74,9 @@ const TEMPLATES: Record<string, Template> = {
   "hikma/2": ([a, b]) => `The underlying wisdom of ${h(a)} is ${h(b)}`,
   "causes/2": ([a, b]) => `${cap(h(a))} causes ${h(b)}`,
   "prevents/2": ([a, b]) => `${cap(h(a))} prevents ${h(b)}`,
-  "instance/2": ([a, b]) => `${cap(h(a))} is a ${h(b)}`,
-  "instance_of/2": ([a, b]) => `${cap(h(a))} is a ${h(b)}`,
-  "subclass/2": ([a, b]) => `Every ${h(a)} is a ${h(b)}`,
+  "instance/2": ([a, b]) => `${cap(h(a))} is ${article(h(b))}`,
+  "instance_of/2": ([a, b]) => `${cap(h(a))} is ${article(h(b))}`,
+  "subclass/2": ([a, b]) => `Every ${h(a)} is ${article(h(b))}`,
   "subclass_of/2": ([a, b]) => `Every ${h(a)} is ultimately a ${h(b)}`,
   "attribute/2": ([a, b]) => `${cap(h(a))} is ${h(b)}`,
   "kin/2": ([a, b]) => `${cap(h(a))} is a blood relative of ${h(b)}`,

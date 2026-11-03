@@ -7,7 +7,7 @@ import { WeighingScale, VerdictBadge, RulingRosette } from "@/components/ui/asse
  * real worked example rather than invented placeholder content.
  *
  * Every fact below — the grounded goal, the clause references, the
- * weighing rule and its explanation, the verdict and confidence — is
+ * weighing rule and its explanation, the verdict and evidence strengths — is
  * copied from an actual run of the engine against the question "Can I eat
  * carrion if I'm starving?", verified live during this session. It is
  * static (this page does not call the LLM on every visit — that would be
@@ -52,18 +52,23 @@ export function PipelineExample() {
           {/* 2. Formal Goal */}
           <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-2">
             <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Grounded as</span>
-            <code className="font-mono text-sm text-text-primary bg-background rounded-lg px-2 py-2 leading-relaxed">
-              ruling(consume(carrion), H)
+            <code className="font-mono text-sm text-text-primary bg-background rounded-lg px-2 py-2 leading-relaxed break-words">
+              ruling(consume(carrion), H), circumstance(starvation)
             </code>
+            <span className="text-[12px] text-text-secondary leading-snug">
+              &ldquo;I&rsquo;m starving&rdquo; becomes a stated premise, shown back to the asker.
+            </span>
           </div>
 
           {/* 3. Proof Tree (simplified) */}
           <div className="bg-card-warm border border-border-warm rounded-2xl p-4 flex flex-col gap-1.5 text-[13px]">
-            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-1">2 derivations</span>
+            <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest mb-1">2 conflicting derivations</span>
+            <span className="text-[12px] font-bold text-text-primary">Forbidden</span>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-brand-green shrink-0" />
               <span className="text-text-secondary truncate">Qur&apos;an 5:3 — forbidden foods</span>
             </div>
+            <span className="text-[12px] font-bold text-text-primary mt-1">Permitted</span>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-brand-green shrink-0" />
               <span className="text-text-secondary truncate">Qur&apos;an 2:173 — necessity</span>
@@ -80,17 +85,13 @@ export function PipelineExample() {
               <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
               <WeighingScale size="sm" className="opacity-80 scale-75 -mr-2 -mt-1" />
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-brand-red">Permitted</span>
-              <span className="text-text-secondary">55%</span>
-            </div>
-            <div className="flex items-center justify-between opacity-60">
-              <span className="text-text-secondary">Forbidden</span>
-              <span className="text-text-secondary">100%</span>
-            </div>
-            <p className="text-text-secondary leading-relaxed mt-1">
-              2:173 is specific (khass) to the compelled person, qualifying the general prohibition rather than being
-              overridden by it.
+            <p className="text-text-secondary leading-relaxed">
+              2:173 is specific (khass) to the compelled person, so it qualifies the general prohibition in 5:3 instead
+              of competing with it.
+            </p>
+            <p className="text-text-secondary/80 leading-relaxed text-[12px]">
+              5:3 is the stronger text on its own (evidence strength 100 vs 55) — the weighing rule, not the bigger
+              number, decides.
             </p>
           </div>
 
@@ -102,7 +103,9 @@ export function PipelineExample() {
             </div>
             <VerdictBadge verdict="permissible" size="md" showLabel={false} />
             <span className="font-serif text-lg font-bold text-brand-red">Permitted</span>
-            <span className="text-[12px] text-text-secondary">55% confidence</span>
+            <span className="text-[12px] text-text-secondary leading-snug">
+              a concession for the starving; without that premise the ruling is Forbidden
+            </span>
           </div>
         </div>
 

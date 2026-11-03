@@ -45,15 +45,15 @@ const VERDICT_ASSETS: Record<string, { src: string; label: string }> = {
   obligatory: { src: "/assets/tarjih-verdict-obligatory.png", label: "Obligatory (واجب)" },
   mandub: { src: "/assets/tarjih-verdict-recommended.png", label: "Recommended (مندوب)" },
   recommended: { src: "/assets/tarjih-verdict-recommended.png", label: "Recommended (مندوب)" },
-  mubah: { src: "/assets/tarjih-verdict-permissible.png", label: "Permissible (مباح)" },
-  permissible: { src: "/assets/tarjih-verdict-permissible.png", label: "Permissible (مباح)" },
-  permitted: { src: "/assets/tarjih-verdict-permissible.png", label: "Permissible (مباح)" },
-  makruh: { src: "/assets/tarjih-verdict-disliked.png", label: "Disliked (مكروه)" },
-  disliked: { src: "/assets/tarjih-verdict-disliked.png", label: "Disliked (مكروه)" },
-  discouraged: { src: "/assets/tarjih-verdict-disliked.png", label: "Disliked (مكروه)" },
-  haram: { src: "/assets/tarjih-verdict-prohibited.png", label: "Prohibited (حرام)" },
-  prohibited: { src: "/assets/tarjih-verdict-prohibited.png", label: "Prohibited (حرام)" },
-  forbidden: { src: "/assets/tarjih-verdict-prohibited.png", label: "Prohibited (حرام)" },
+  mubah: { src: "/assets/tarjih-verdict-permissible.png", label: "Permitted (مباح)" },
+  permissible: { src: "/assets/tarjih-verdict-permissible.png", label: "Permitted (مباح)" },
+  permitted: { src: "/assets/tarjih-verdict-permissible.png", label: "Permitted (مباح)" },
+  makruh: { src: "/assets/tarjih-verdict-disliked.png", label: "Discouraged (مكروه)" },
+  disliked: { src: "/assets/tarjih-verdict-disliked.png", label: "Discouraged (مكروه)" },
+  discouraged: { src: "/assets/tarjih-verdict-disliked.png", label: "Discouraged (مكروه)" },
+  haram: { src: "/assets/tarjih-verdict-prohibited.png", label: "Forbidden (حرام)" },
+  prohibited: { src: "/assets/tarjih-verdict-prohibited.png", label: "Forbidden (حرام)" },
+  forbidden: { src: "/assets/tarjih-verdict-prohibited.png", label: "Forbidden (حرام)" },
   "non-obligatory": { src: "/assets/tarjih-verdict-non-obligatory.png", label: "Non-obligatory (غير واجب)" },
   ghair_wajib: { src: "/assets/tarjih-verdict-non-obligatory.png", label: "Non-obligatory (غير واجب)" },
 };
@@ -105,7 +105,17 @@ export function VerdictBadge({ verdict, className, size = "md", showLabel = true
 
   return (
     <div className={cn("inline-flex items-center gap-2 select-none shrink-0", className)}>
-      <div className={cn("relative flex items-center justify-center shrink-0 drop-shadow-sm", sizeClasses)}>
+      {/*
+        * The card's interior is transparent, so on a dark page it reads as a
+        * dark box with a faint outline. A paper-coloured backing in dark mode
+        * keeps it looking like the card it is.
+        */}
+      <div
+        className={cn(
+          "relative flex items-center justify-center shrink-0 drop-shadow-sm dark:bg-[#f5f1e8] dark:rounded-[3px]",
+          sizeClasses
+        )}
+      >
         <Image
           src={asset.src}
           alt={asset.label}
@@ -115,9 +125,7 @@ export function VerdictBadge({ verdict, className, size = "md", showLabel = true
         />
       </div>
       {showLabel && (
-        <span className="font-serif font-bold text-text-primary text-sm capitalize drop-shadow-2xs">
-          {verdict}
-        </span>
+        <span className="font-serif font-bold text-text-primary text-sm drop-shadow-2xs">{asset.label}</span>
       )}
     </div>
   );
@@ -161,7 +169,7 @@ export function EvidenceBadge({ grade, className, size = "md", showLabel = true 
       </div>
       {showLabel && (
         <span className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider">
-          {grade || "Unverified"}
+          {asset.label.split(" (")[0]}
         </span>
       )}
     </div>
@@ -250,5 +258,62 @@ export function RulingRosette({ className, size = "md" }: RulingRosetteProps) {
         className="h-full w-full object-contain"
       />
     </div>
+  );
+}
+
+/**
+ * What kind of source a non-hadith clause is, for the places that would
+ * otherwise fall back to an "Unverified" grade badge.
+ *
+ * An authenticity grade is a property of a transmitted report. A legal maxim,
+ * a consensus, an analogy or a definition has no isnad to grade, so labelling
+ * it "unverified" says something false about it — and in a demo it reads as
+ * the app distrusting its own hand-authored rules.
+ */
+const UNGRADED_KIND_LABELS: Record<string, string> = {
+  ijma: "Consensus (إجماع)",
+  qiyas: "Analogy (قياس)",
+  qaida: "Legal maxim (قاعدة)",
+  usul: "Legal principle (أصول)",
+  istihsan: "Juristic preference (استحسان)",
+  urf: "Custom (عرف)",
+  ontology: "Definition",
+};
+
+interface SourceBadgeProps {
+  /** Evidence kind: quran, sunnah, ijma, qiyas, qaida, usul, istihsan, urf, ontology. */
+  kind: string;
+  grade?: string;
+  size?: "sm" | "md" | "lg";
+  showLabel?: boolean;
+  className?: string;
+}
+
+/**
+ * The right badge for any clause: an authenticity grade where one applies
+ * (Qur'an, hadith), and the kind of source where it does not.
+ */
+export function SourceBadge({ kind, grade, size = "sm", showLabel = true, className }: SourceBadgeProps) {
+  if (grade || kind === "quran" || kind === "sunnah") {
+    return (
+      <EvidenceBadge
+        grade={grade || (kind === "quran" ? "mutawatir" : "unverified")}
+        size={size}
+        showLabel={showLabel}
+        className={className}
+      />
+    );
+  }
+  const label = UNGRADED_KIND_LABELS[kind] ?? kind;
+  if (!showLabel) return null;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-text-secondary border border-border-warm rounded-full px-2 py-0.5",
+        className
+      )}
+    >
+      {label}
+    </span>
   );
 }

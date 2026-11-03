@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { Header } from "@/sections/header";
 import { Footer } from "@/sections/footer";
-import { loadCoreKb } from "@/lib/kb/core";
+import { CORE_ENTRIES, loadCoreKb } from "@/lib/kb/core";
+import { literalToString } from "@/lib/logic/term";
 import { kbStatistics } from "@/lib/kb/entry";
 import { DatabaseClient } from "./database-client";
 import type { CoreClauseView } from "./database-client";
@@ -26,10 +27,15 @@ export default function DatabasePage() {
   const core = loadCoreKb();
   const stats = kbStatistics(core);
 
+  // The clause exactly as it was authored, variable names and all.
+  const authored = new Map(CORE_ENTRIES.map((e) => [e.id, e.clause]));
+
   const clauses: CoreClauseView[] = core.clauses.map((clause) => {
     const evidence = core.evidence.getOrUnknown(clause.id);
     return {
       id: clause.id,
+      source: authored.get(clause.id) ?? "",
+      goal: literalToString(clause.head),
       head: `${clause.head.predicate}/${clause.head.args.length}`,
       isFact: clause.body.length === 0,
       kind: evidence.kind,

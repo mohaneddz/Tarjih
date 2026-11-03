@@ -12,6 +12,22 @@ export interface ResolutionSummary {
   readonly contested: boolean;
   readonly truncated: boolean;
   readonly createdAt: string;
+  /**
+   * The declaratory answer ("Void", "Valid") when the case has one. Carried
+   * so a case the KB answers only on that axis — zakat paid to a parent —
+   * doesn't list as having no answer at all.
+   */
+  readonly validity: string | null;
+}
+
+/** Reads just the declaratory label out of a stored result; never throws. */
+function validityOf(result: string): string | null {
+  try {
+    const label = JSON.parse(result)?.declaratory?.label;
+    return typeof label === "string" ? label : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -37,9 +53,14 @@ export async function GET() {
         contested: true,
         truncated: true,
         createdAt: true,
+        result: true,
       },
     });
-    const summaries: ResolutionSummary[] = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+    const summaries: ResolutionSummary[] = rows.map(({ result, ...r }) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+      validity: validityOf(result),
+    }));
     return NextResponse.json(summaries);
   } catch (error) {
     console.warn("[Tarjih] could not list resolutions (returning empty history):", error);

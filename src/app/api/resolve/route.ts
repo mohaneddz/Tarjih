@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getLiveKb } from "@/lib/kb/live-kb";
-import { GroqClient } from "@/lib/pipeline/llm";
+import { MAX_QUESTION_LENGTH, rateLimit } from "@/lib/http/guard";
+import { describeLlmFailure, GroqClient } from "@/lib/pipeline/llm";
 import { resolveQuestion } from "@/lib/pipeline/resolve";
-import { prisma } from "@/data/db";
+import { saveResolution } from "@/lib/resolutions";
 
 interface ResolveRequestBody {
   question: string;
   madhhab?: string;
   strictness?: string;
+  /** The goal the asker confirmed in the grounding preview; proved as-is when present. */
+  goal?: string;
 }
 
 /**
@@ -26,19 +29,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_json", message: "Request body must be JSON." }, { status: 400 });
   }
 
-  const question = body.question?.trim();
+  const question = typeof body.question === "string" ? body.question.trim() : "";
   if (!question) {
     return NextResponse.json({ error: "question_required", message: "Question is required." }, { status: 400 });
+  }
+  if (question.length > MAX_QUESTION_LENGTH) {
+    return NextResponse.json(
+      { error: "question_too_long", message: `Please keep the question under ${MAX_QUESTION_LENGTH} characters.` },
+      { status: 400 }
+    );
+  }
+  const confirmedGoal = typeof body.goal === "string" && body.goal.trim() ? body.goal.trim().slice(0, 1000) : undefined;
+
+  const retryAfter = rateLimit(req);
+  if (retryAfter > 0) {
+    return NextResponse.json(
+      { error: "rate_limited", message: `Too many questions in a short time. Please wait ${retryAfter} seconds.` },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
   }
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      {
-        error: "api_key_missing",
-        message: "GROQ_API_KEY is not configured in the backend environment. Please check your .env file.",
-      },
-      { status: 400 }
+      { error: "api_key_missing", message: "The language model isn't configured on this server (GROQ_API_KEY is missing)." },
+      { status: 503 }
     );
   }
 
@@ -49,6 +64,7 @@ export async function POST(req: NextRequest) {
     strictness: body.strictness,
     llm: new GroqClient(apiKey),
     kb: liveKb.loaded,
+    confirmedGoal,
   });
 
   if (!result.ok) {
@@ -76,7 +92,11 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       case "llm":
-        return NextResponse.json({ error: "llm_failed", message: result.error.message }, { status: 502 });
+        console.warn("[Tarjih] resolve LLM call failed:", result.error.message);
+        return NextResponse.json(
+          { error: "llm_failed", kind: result.error.kind, message: describeLlmFailure(result.error.kind) },
+          { status: result.error.kind === "rate_limit" ? 429 : 503 }
+        );
     }
   }
 
@@ -85,19 +105,7 @@ export async function POST(req: NextRequest) {
   // every environment yet, and a cache write failing is not a reason to
   // discard an answer that has already been fully computed.
   try {
-    await prisma.resolution.create({
-      data: {
-        question: result.view.question,
-        goal: result.view.goalText,
-        madhhab: result.view.madhhab,
-        strictness: result.view.strictness,
-        verdict: result.view.verdict,
-        confidence: result.view.confidence,
-        contested: result.view.contested,
-        truncated: result.view.truncated,
-        result: JSON.stringify(result.view),
-      },
-    });
+    await saveResolution(result.view);
   } catch (persistError) {
     console.warn("[Tarjih] could not persist resolution (continuing without caching):", persistError);
   }

@@ -19,7 +19,8 @@ import type { LoadedKb } from "../kb/entry";
 import { withPremises } from "../kb/premises";
 import { groundGoal } from "./goal";
 import type { GoalError, GroundedGoal } from "./goal";
-import type { LlmClient } from "./llm";
+import { LlmError } from "./llm";
+import type { LlmClient, LlmErrorKind } from "./llm";
 import { presentGroup, presentStep } from "./present";
 import type { OutcomeGroupView, TarjihStepView } from "./present";
 import { buildGoalPrompt, buildNarrationPrompt } from "./prompts";
@@ -27,7 +28,7 @@ import { VALIDITY_AXIS, weighRuling } from "../tarjih/weigh";
 import { literalToString, v } from "../logic/term";
 import type { Literal, Term } from "../logic/types";
 import { findCircumstance } from "../kb/lexicon";
-import { QUERY_SUPPLIED_PREDICATES, VALIDITY_LABELS } from "../kb/ontology";
+import { HUKM_LABELS, QUERY_SUPPLIED_PREDICATES, VALIDITY_LABELS } from "../kb/ontology";
 import type { Hukm } from "../kb/ontology";
 import type { TarjihResult } from "../tarjih/weigh";
 import { humanizeLiteral } from "./humanize";
@@ -161,7 +162,7 @@ export type ResolveError =
       /** Situations that, stated, would produce a ruling after all. */
       readonly whatIf: readonly ScenarioView[];
     }
-  | { readonly stage: "llm"; readonly message: string };
+  | { readonly stage: "llm"; readonly message: string; readonly kind?: LlmErrorKind };
 
 export type ResolveResult = { readonly ok: true; readonly view: ResolutionView } | { readonly ok: false; readonly error: ResolveError };
 
@@ -172,11 +173,25 @@ export interface ResolveOptions {
   readonly llm: LlmClient;
   readonly kb: LoadedKb;
   readonly maxSolutions?: number;
+  /**
+   * The goal the asker already confirmed in the grounding preview, in the
+   * preview's own text form. When present it is validated exactly as the
+   * model's output would be and proved as-is, instead of asking the model to
+   * translate the question a second time — which would cost a call and could
+   * come back different from what the asker just approved.
+   */
+  readonly confirmedGoal?: string;
+  /**
+   * Fail with an `llm` error instead of falling back to the computed summary
+   * when narration fails. For the demo seed, where a stored case without the
+   * model's explanation would be worse than no case.
+   */
+  readonly requireNarration?: boolean;
 }
 
 export type GroundError =
   | { readonly stage: "goal-grounding"; readonly error: GoalError }
-  | { readonly stage: "llm"; readonly message: string };
+  | { readonly stage: "llm"; readonly message: string; readonly kind?: LlmErrorKind };
 
 export type GroundResult =
   | { readonly ok: true; readonly goal: GroundedGoal; readonly goalText: string }
@@ -198,9 +213,21 @@ export async function groundQuestion(question: string, llm: LlmClient): Promise<
   try {
     rawGoal = await llm.complete(goalPrompt.system, goalPrompt.user, { temperature: 0 });
   } catch (e) {
-    return { ok: false, error: { stage: "llm", message: e instanceof Error ? e.message : String(e) } };
+    return {
+      ok: false,
+      error: {
+        stage: "llm",
+        message: e instanceof Error ? e.message : String(e),
+        kind: e instanceof LlmError ? e.kind : "network",
+      },
+    };
   }
 
+  return groundRaw(rawGoal);
+}
+
+/** Validates a goal text — from the model, or one the asker already confirmed — into a grounded goal. */
+function groundRaw(rawGoal: string): GroundResult {
   const grounded = groundGoal(rawGoal);
   if (!grounded.ok) {
     return { ok: false, error: { stage: "goal-grounding", error: grounded.error } };
@@ -349,22 +376,35 @@ function parseNarration(raw: string, fallback: Narration): Narration {
  * because the prose-writing step had a bad day — the substantive answer is
  * already fully computed by this point.
  */
-function computedFallbackNarration(groups: readonly OutcomeGroupView[], verdict: string | undefined): Narration {
-  const top = groups[0];
+function computedFallbackNarration(
+  groups: readonly OutcomeGroupView[],
+  verdict: string | undefined,
+  declaratory?: DeclaratoryView
+): Narration {
+  const label = (h: string) => HUKM_LABELS[h as Hukm]?.en ?? h;
   const summary = verdict
-    ? `The engine's ruling is ${verdict}${top ? ` (${top.confidence}% confidence)` : ""}.`
-    : "The engine could not determine a single verdict for this question.";
+    ? `The engine's ruling is: ${label(verdict)}.`
+    : declaratory
+      ? `The knowledge base answers whether this takes legal effect: ${declaratory.label}. ${declaratory.gloss}`
+      : "The engine could not determine a single verdict for this question.";
   const analysis = groups
-    .map((g) => `${g.outcome}: supported by ${g.derivationCount} derivation(s), ${g.confidence}% confidence.`)
+    .map(
+      (g) =>
+        `${label(g.outcome)}: supported by ${g.derivationCount} derivation(s); evidence strength ${g.confidence}/100.`
+    )
     .join(" ");
-  return { summary, analysis, notes: "Narration could not be generated; this is a computed-only summary." };
+  return {
+    summary,
+    analysis,
+    notes: "The written explanation could not be generated just now, so this summary was built directly from the engine's result.",
+  };
 }
 
 export async function resolveQuestion(options: ResolveOptions): Promise<ResolveResult> {
-  const { question, madhhab, strictness, llm, kb, maxSolutions = 200 } = options;
+  const { question, madhhab, strictness, llm, kb, maxSolutions = 200, confirmedGoal, requireNarration } = options;
 
   // --- Stage 1: ground the question into a goal literal ---
-  const grounded = await groundQuestion(question, llm);
+  const grounded = confirmedGoal ? groundRaw(confirmedGoal) : await groundQuestion(question, llm);
   if (!grounded.ok) {
     return { ok: false, error: grounded.error };
   }
@@ -379,7 +419,12 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
   const { scoped, proved: proveResult, tarjih, explanation } = analyse(goal, kb, premises, maxSolutions);
 
   // --- Stage 3: weigh ---
-  if (!tarjih) {
+  // No permitted/forbidden ruling, but the KB may still say whether the act
+  // takes legal effect — zakat given to a parent, say, is void as zakat. That
+  // is an answer, and reporting "no rule covers this" over it would hide one
+  // the KB holds.
+  const declaratoryOnly = tarjih ? undefined : resolveDeclaratory(grounded.goal.act, scoped, maxSolutions);
+  if (!tarjih && !declaratoryOnly) {
     return {
       ok: false,
       error: {
@@ -395,12 +440,12 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
     };
   }
 
-  const groups = tarjih.groups.map((g) => presentGroup(g, scoped.evidence));
-  const relatedOpinions = tarjih.relatedOpinions.map((g) => presentGroup(g, scoped.evidence));
-  const resolution = tarjih.resolution.map(presentStep);
+  const groups = tarjih ? tarjih.groups.map((g) => presentGroup(g, scoped.evidence)) : [];
+  const relatedOpinions = tarjih ? tarjih.relatedOpinions.map((g) => presentGroup(g, scoped.evidence)) : [];
+  const resolution = tarjih ? tarjih.resolution.map(presentStep) : [];
   const topConfidence = verdictConfidence(tarjih);
 
-  const declaratory = resolveDeclaratory(grounded.goal.act, scoped, maxSolutions);
+  const declaratory = declaratoryOnly ?? resolveDeclaratory(grounded.goal.act, scoped, maxSolutions);
 
   let baseline: BaselineView | undefined;
   if (premises.length > 0) {
@@ -412,7 +457,7 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       unresolved: plain?.unresolved ?? false,
     };
   }
-  const whatIf = findScenarios(goal, kb, premises, explanation, tarjih.verdict, maxSolutions);
+  const whatIf = tarjih ? findScenarios(goal, kb, premises, explanation, tarjih.verdict, maxSolutions) : [];
   const stats: SearchStatsView = {
     steps: proveResult.steps,
     derivations: proveResult.solutions.length,
@@ -427,9 +472,9 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
     goalText,
     madhhabRequested: madhhab,
     strictnessRequested: strictness,
-    contested: tarjih.contested,
-    unresolved: tarjih.unresolved,
-    verdict: tarjih.verdict,
+    contested: tarjih?.contested ?? false,
+    unresolved: tarjih?.unresolved ?? false,
+    verdict: tarjih?.verdict,
     groups,
     resolution,
     truncated: proveResult.truncated,
@@ -437,16 +482,27 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       status: declaratory.status,
       label: declaratory.label,
       gloss: declaratory.gloss,
+      groups: declaratory.groups,
     },
     baselineVerdict: baseline?.verdict,
   });
 
-  const fallback = computedFallbackNarration(groups, tarjih.verdict);
+  const fallback = computedFallbackNarration(groups, tarjih?.verdict, declaratory);
   let narration: Narration;
   try {
     const raw = await llm.complete(narrationPrompt.system, narrationPrompt.user, { json: true, temperature: 0.2 });
     narration = parseNarration(raw, fallback);
-  } catch {
+  } catch (e) {
+    if (requireNarration) {
+      return {
+        ok: false,
+        error: {
+          stage: "llm",
+          message: e instanceof Error ? e.message : String(e),
+          kind: e instanceof LlmError ? e.kind : "network",
+        },
+      };
+    }
     narration = fallback;
   }
 
@@ -458,10 +514,10 @@ export async function resolveQuestion(options: ResolveOptions): Promise<ResolveR
       madhhab,
       strictness,
       premises: describePremises(grounded.goal.circumstances),
-      verdict: tarjih.verdict,
+      verdict: tarjih?.verdict,
       confidence: topConfidence,
-      contested: tarjih.contested,
-      unresolved: tarjih.unresolved,
+      contested: tarjih?.contested ?? false,
+      unresolved: tarjih?.unresolved ?? false,
       truncated: proveResult.truncated,
       groups,
       resolution,

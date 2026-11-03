@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
     "better-sqlite3",
     "@prisma/client",
   ],
+  // The SQLite file is opened by a computed path, so tracing can't see it.
+  // Ship it with every server route: on Vercel it is copied to /tmp at
+  // startup (see src/data/db.ts), carrying the demo cases seeded at build.
+  outputFileTracingIncludes: {
+    "/**": ["./prisma/dev.db"],
+  },
   allowedDevOrigins: ["192.168.1.97", "localhost", "127.0.0.1"],
 };
 

@@ -6,13 +6,14 @@
     "dev": "next dev -p 1919",
     "postinstall": "prisma generate && prisma db push",
     "db:push": "prisma db push",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push && tsx src/scripts/seed-demo.ts --if-vercel && next build",
     "start": "next start -p 1919",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
     "scrape:hadith": "tsx src/scripts/scrape-hadith.ts",
-    "formalize:hadith": "tsx src/scripts/formalize-hadith.ts"
+    "formalize:hadith": "tsx src/scripts/formalize-hadith.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",

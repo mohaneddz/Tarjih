@@ -1,7 +1,8 @@
+import { siteUrl } from "@/config/site";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tarjih.app";
+  const baseUrl = siteUrl();
   const currentDate = new Date().toISOString();
 
   const routes = ["", "/study", "/database", "/cases", "/console", "/saved"];
