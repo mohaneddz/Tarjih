@@ -7,9 +7,9 @@ import { cn } from "@/utils/cn";
 import { ProofTree, ProofTreeLegend } from "@/components/ui/proof-tree";
 import type { ResolutionView, ScenarioView, StalledGoalView } from "@/lib/pipeline/resolve";
 import type { EvidenceView, OutcomeGroupView } from "@/lib/pipeline/present";
-import { HUKM_LABELS } from "@/lib/kb/ontology";
-import type { Hukm } from "@/lib/kb/ontology";
-import { VerdictBadge, EvidenceBadge, RulingRosette, WeighingScale, AuthenticStamp } from "@/components/ui/asset-badge";
+import { HUKM_LABELS, VALIDITY_LABELS } from "@/lib/kb/ontology";
+import type { Hukm, Validity } from "@/lib/kb/ontology";
+import { VerdictBadge, EvidenceBadge, RulingRosette, WeighingScale, AuthenticStamp, SourceBadge } from "@/components/ui/asset-badge";
 import { getSavedCases, toggleSavedCase } from "@/lib/saved-cases";
 
 interface ResolutionSummary {
@@ -22,6 +22,7 @@ interface ResolutionSummary {
   readonly contested: boolean;
   readonly truncated: boolean;
   readonly createdAt: string;
+  readonly validity?: string | null;
 }
 
 type Tab = "tree" | "interpretation" | "sources" | "conflicts";
@@ -56,10 +57,11 @@ interface ErrorInfo {
 const FORMAT_ISSUE_KINDS = new Set(["not-covered", "unsupported-shape", "parse-error"]);
 
 const SUGGESTIONS = [
-  "Is mistreating my maternal aunt haram?",
   "Can I eat carrion if I'm starving?",
-  "Is eating swine forbidden?",
   "Can I skip the fast while travelling?",
+  "Is selling an unborn calf allowed?",
+  "Can I give my zakat to my mother?",
+  "Is mistreating my maternal aunt haram?",
 ];
 
 const LOADING_STEPS = [
@@ -71,7 +73,31 @@ const LOADING_STEPS = [
 ];
 
 function hukmLabel(h: string): string {
-  return HUKM_LABELS[h as Hukm]?.en ?? h;
+  return HUKM_LABELS[h as Hukm]?.en ?? VALIDITY_LABELS[h as Validity]?.en ?? h;
+}
+
+/**
+ * How an evidence-strength figure is shown. It is the weakest link of the
+ * strongest line of argument, out of 100 — not a probability that the
+ * verdict is right, which is why it is never written as "% confidence": the
+ * verdict is chosen by the weighing rules, and a specific text can rightly
+ * prevail over a stronger general one.
+ */
+function strengthText(n: number | null | undefined): string {
+  if (n === null || n === undefined) return "";
+  return n === 0 ? "no operative weight" : `strength ${n}/100`;
+}
+
+const STRENGTH_TOOLTIP =
+  "Evidence strength: how solid the weakest link in the best line of argument is (a definitive Qur'anic text scores " +
+  "higher than a probable hadith or an analogy). It is not a probability that the verdict is right — the verdict is " +
+  "decided by the classical weighing rules shown under Conflicts.";
+
+/** Status word for a past case, from what the summary row records. */
+function caseStatus(entry: { verdict: string | null; contested: boolean }): { label: string; className: string } {
+  if (entry.contested && !entry.verdict) return { label: "Unresolved", className: "text-brand-red" };
+  if (entry.contested) return { label: "Evidence weighed", className: "text-amber-700 dark:text-amber-400" };
+  return { label: "Evidence agrees", className: "text-brand-green" };
 }
 
 /**
@@ -93,7 +119,7 @@ function ScenarioList({ scenarios, goalText, stated }: { scenarios: readonly Sce
         <li key={s.situation} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-text-primary">If you were {s.label}:</span>
           <span className="font-serif font-bold text-brand-green">{s.verdict ? hukmLabel(s.verdict) : "contested"}</span>
-          {s.confidence !== undefined && <span className="text-text-secondary">({s.confidence}%)</span>}
+          {s.confidence !== undefined && <span className="text-text-secondary">({strengthText(s.confidence)})</span>}
           {s.unlockedBy.length > 0 && <span className="text-text-secondary/80 text-[13px]">— via {s.unlockedBy.join("; ")}</span>}
           <Link
             href={consoleHref(goalText, [...stated, s.situation])}
@@ -166,13 +192,8 @@ function HistoryCard({ entry, isActive, isSaved, onSelect, onToggleSave }: Histo
       )}
     >
       <div className="flex items-center justify-between w-full gap-2">
-        <span
-          className={cn(
-            "text-[12px] uppercase tracking-wider font-extrabold truncate",
-            entry.contested ? "text-brand-red" : "text-brand-green"
-          )}
-        >
-          {entry.contested ? "Contested" : "Resolved"}
+        <span className={cn("text-[12px] uppercase tracking-wider font-extrabold truncate", caseStatus(entry).className)}>
+          {caseStatus(entry).label}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
           {entry.verdict && <VerdictBadge verdict={entry.verdict} size="sm" showLabel={false} />}
@@ -192,7 +213,16 @@ function HistoryCard({ entry, isActive, isSaved, onSelect, onToggleSave }: Histo
         </div>
       </div>
       <span className="font-serif font-bold text-sm text-text-primary leading-snug line-clamp-2">{entry.question}</span>
-      {entry.confidence !== null && <span className="text-sm text-text-secondary">{entry.confidence}% confidence</span>}
+      <span className="text-sm text-text-secondary">
+        {entry.verdict ? (
+          <span className="font-semibold text-text-primary">{hukmLabel(entry.verdict)}</span>
+        ) : entry.validity ? (
+          <span className="font-semibold text-text-primary">Legal effect: {entry.validity}</span>
+        ) : (
+          "No single ruling"
+        )}
+        {entry.confidence !== null && entry.verdict && <span> · {strengthText(entry.confidence)}</span>}
+      </span>
     </div>
   );
 }
@@ -250,11 +280,28 @@ export function StudyClient() {
     setSavedIds(new Set(getSavedCases().map((c) => c.id)));
   }, []);
 
+  // On a phone the history list would push the question box and the answer
+  // below the fold, so it starts collapsed there and opens on demand.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSidebarCollapsed(true);
+    }
+  }, []);
+
   // Arriving from the Saved Cases page (`/study?id=...`) loads that
   // resolution straight away, the same as clicking it in the sidebar would.
+  // `/study?q=...` (from the search palette) pre-fills the question instead.
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) handleHistoryClick(id);
+    const q = searchParams.get("q");
+    if (!id && q) {
+      // Driven by the URL (the palette can change it while this page is open), so it has to follow it here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInputVal(q);
+      setPendingPreview(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -294,9 +341,12 @@ export function StudyClient() {
     return history.filter((h) => h.question.toLowerCase().includes(q));
   }, [history, searchQuery]);
 
+  // A question the KB answers only on the validity axis (zakat paid to a
+  // parent, say) has no ruling groups; its proof is the declaratory one.
   const allGroups: readonly OutcomeGroupView[] = useMemo(() => {
     if (!view) return [];
-    return [...view.groups].sort((a, b) => b.confidence - a.confidence);
+    const groups = view.groups.length > 0 ? view.groups : (view.declaratory?.groups ?? []);
+    return [...groups].sort((a, b) => b.confidence - a.confidence);
   }, [view]);
 
   const selectedGroup = useMemo(
@@ -326,6 +376,7 @@ export function StudyClient() {
       node.children.forEach(walk);
     };
     view.groups.forEach((g) => walk(g.proof));
+    view.declaratory?.groups.forEach((g) => walk(g.proof));
     return [...seen.entries()].map(([clauseId, evidence]) => ({ clauseId, evidence }));
   }, [view]);
 
@@ -341,7 +392,7 @@ export function StudyClient() {
 
   function applyView(next: ResolutionView) {
     setView(next);
-    setSelectedOutcome(next.verdict ?? next.groups[0]?.outcome ?? null);
+    setSelectedOutcome(next.verdict ?? next.groups[0]?.outcome ?? next.declaratory?.status ?? null);
     setSelectedClauseId(null);
     setActiveTab("tree");
     setErrorInfo(null);
@@ -371,7 +422,7 @@ export function StudyClient() {
         isFormatIssue: false,
       };
     }
-    return { message: body.message || "Something went wrong.", isFormatIssue: false };
+    return { message: body.message || "Something went wrong. Please try again.", isFormatIssue: false };
   }
 
   async function runFullResolve(question: string) {
@@ -382,7 +433,9 @@ export function StudyClient() {
       const res = await fetch("/api/resolve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, madhhab, strictness }),
+        // The goal the asker just confirmed is proved as-is, so what runs is
+        // exactly what the preview showed (and the question isn't translated twice).
+        body: JSON.stringify({ question, madhhab, strictness, goal: pendingPreview ?? undefined }),
       });
       if (!res.ok) {
         setErrorInfo(describeError(await res.json()));
@@ -416,7 +469,7 @@ export function StudyClient() {
       const data: { goalText: string } = await res.json();
       setPendingPreview(data.goalText);
     } catch {
-      setErrorInfo({ message: "Could not reach the grounding preview.", isFormatIssue: false });
+      setErrorInfo({ message: "Could not reach the server. Check your connection and try again.", isFormatIssue: false });
     } finally {
       setPreviewLoading(false);
     }
@@ -535,7 +588,7 @@ export function StudyClient() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex-grow h-full flex flex-col min-h-0 overflow-hidden bg-background p-5 md:p-6 gap-4">
+      <div className="flex-grow h-full flex flex-col min-h-0 overflow-hidden bg-background p-2 sm:p-5 md:p-6 gap-3 sm:gap-4">
         {/* Question bar */}
         <div className="shrink-0 bg-card-warm border border-border-warm rounded-2xl shadow-premium p-3 flex flex-col gap-3">
           <form onSubmit={handleSubmit} className="flex items-center gap-3">
@@ -551,7 +604,7 @@ export function StudyClient() {
                 </svg>
               </button>
             )}
-            <span className="h-11 w-11 shrink-0 rounded-xl bg-brand-red text-white flex items-center justify-center font-serif font-bold text-lg">
+            <span className="hidden sm:flex h-11 w-11 shrink-0 rounded-xl bg-brand-red text-white items-center justify-center font-serif font-bold text-lg">
               Q
             </span>
             <input
@@ -579,7 +632,7 @@ export function StudyClient() {
             <button
               type="submit"
               disabled={!inputVal.trim() || isSubmitting || previewLoading}
-              className="h-11 px-6 bg-brand-red hover:bg-brand-red-dark text-white rounded-xl text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer transition-colors disabled:opacity-50"
+              className="h-11 px-4 sm:px-6 bg-brand-red hover:bg-brand-red-dark text-white rounded-xl text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer transition-colors disabled:opacity-50"
             >
               {previewLoading ? "Grounding..." : isSubmitting ? "Weighing..." : pendingPreview ? "Confirm & Analyze" : "Analyze"}
             </button>
@@ -634,7 +687,7 @@ export function StudyClient() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={cn("flex-wrap items-center gap-2", view || errorInfo ? "hidden sm:flex" : "flex")}>
             <span className="text-[12px] uppercase font-extrabold text-brand-red tracking-widest mr-1">Try:</span>
             {SUGGESTIONS.map((sug) => (
               <button
@@ -654,17 +707,27 @@ export function StudyClient() {
         </div>
 
         {/* Verdict banner */}
-        {view?.verdict && (
-          <div className="shrink-0 bg-card-warm border border-border-warm rounded-2xl shadow-premium px-6 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <RulingRosette size="md" />
-              <span className="text-sm text-text-secondary font-semibold">Verdict:</span>
-              <VerdictBadge verdict={view.verdict} size="md" showLabel={false} />
-              <span className="font-serif text-2xl font-bold text-brand-red">{hukmLabel(view.verdict)}</span>
-              {view.confidence !== undefined && (
-                <span className="text-sm text-text-secondary">({view.confidence}% confidence)</span>
-              )}
-            </div>
+        {view && (view.verdict || view.declaratory) && (
+          <div className="shrink-0 bg-card-warm border border-border-warm rounded-2xl shadow-premium px-4 md:px-6 py-3 md:py-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            {view.verdict && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                <RulingRosette size="md" className="hidden sm:inline-flex" />
+                <span className="text-sm text-text-secondary font-semibold">Verdict:</span>
+                <VerdictBadge verdict={view.verdict} size="md" showLabel={false} />
+                <span className="font-serif text-xl md:text-2xl font-bold text-brand-red">{hukmLabel(view.verdict)}</span>
+                {view.contested && view.resolution.length > 0 ? (
+                  <span className="text-sm text-text-secondary">
+                    decided by <span className="font-semibold text-text-primary">{view.resolution[view.resolution.length - 1].rule}</span>
+                  </span>
+                ) : (
+                  view.confidence !== undefined && (
+                    <span className="text-sm text-text-secondary cursor-help" title={STRENGTH_TOOLTIP}>
+                      ({strengthText(view.confidence)})
+                    </span>
+                  )
+                )}
+              </div>
+            )}
             {/*
               * A second answer to a second question, not a restatement.
               * "May I enter this?" and "does this take effect?" diverge often
@@ -672,17 +735,24 @@ export function StudyClient() {
               * on a contract they think is void, or vice versa.
               */}
             {view.declaratory && (
-              <div className="flex items-center gap-2 border-l border-border-warm pl-4">
-                <span className="text-sm text-text-secondary font-semibold">Contract:</span>
-                <span className="font-serif text-lg font-bold text-text-primary">
+              <div className={cn("flex items-center gap-2", view.verdict && "sm:border-l sm:border-border-warm sm:pl-4")}>
+                <span className="text-sm text-text-secondary font-semibold">Legal effect:</span>
+                <span
+                  className={cn(
+                    "font-serif font-bold",
+                    view.verdict ? "text-lg text-text-primary" : "text-xl md:text-2xl text-brand-red"
+                  )}
+                >
                   {view.declaratory.label}
                 </span>
-                <span className="text-sm text-text-secondary">({view.declaratory.confidence}%)</span>
+                <span className="text-sm text-text-secondary cursor-help" title={STRENGTH_TOOLTIP}>
+                  ({strengthText(view.declaratory.confidence)})
+                </span>
               </div>
             )}
             <Link
               href={consoleHref(view.goalText, view.premises.map((p) => p.situation))}
-              className="ml-auto text-sm font-semibold text-text-secondary hover:text-brand-red shrink-0"
+              className="sm:ml-auto text-sm font-semibold text-text-secondary hover:text-brand-red shrink-0"
               title="Open this goal in the Prolog console"
             >
               Open in console
@@ -702,13 +772,13 @@ export function StudyClient() {
 
         <div className="relative flex-grow flex flex-col min-h-0 bg-card-warm border border-border-warm rounded-2xl shadow-premium overflow-hidden">
           {/* Tabs header */}
-          <div className="min-h-14 border-b border-border-warm-light flex flex-wrap items-center gap-6 px-6 lg:px-8 py-2 bg-card-warm shrink-0 select-none">
+          <div className="min-h-14 border-b border-border-warm-light flex items-center gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 py-2 bg-card-warm shrink-0 select-none overflow-x-auto">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 className={cn(
-                  "text-sm font-bold px-1 py-2 border-b-2 transition-all cursor-pointer",
+                  "text-sm font-bold px-1 py-2 border-b-2 transition-all cursor-pointer whitespace-nowrap",
                   activeTab === t.id ? "border-brand-red text-brand-red" : "border-transparent text-text-secondary hover:text-text-primary"
                 )}
               >
@@ -844,7 +914,7 @@ export function StudyClient() {
                       {view.baseline.verdict ? hukmLabel(view.baseline.verdict) : "unresolved"}
                     </span>
                     {view.baseline.confidence !== undefined && (
-                      <span className="text-text-secondary">({view.baseline.confidence}%)</span>
+                      <span className="text-text-secondary">({strengthText(view.baseline.confidence)})</span>
                     )}
                     <span className="text-text-secondary/80 basis-full">
                       {view.verdict ? hukmLabel(view.verdict) : "The answer above"} is a concession (rukhsa) that lasts only as long as
@@ -888,7 +958,7 @@ export function StudyClient() {
                                 : "bg-transparent border-border-warm text-text-secondary hover:border-brand-red/40"
                             )}
                           >
-                            {hukmLabel(g.outcome)} · {g.confidence}% · {g.independentLines ?? g.derivationCount} line
+                            {hukmLabel(g.outcome)} · {strengthText(g.confidence)} · {g.independentLines ?? g.derivationCount} line
                             {(g.independentLines ?? g.derivationCount) === 1 ? "" : "s"} of argument
                           </button>
                         ))}
@@ -911,14 +981,20 @@ export function StudyClient() {
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-red text-white font-bold uppercase">Wins</span>
                             </div>
                             <span className="font-serif font-bold text-brand-red">{hukmLabel(winnerGroup.outcome)}</span>
-                            <span className="text-text-secondary">{winnerGroup.confidence}% confidence, {winnerGroup.derivationCount} derivation{winnerGroup.derivationCount === 1 ? "" : "s"}</span>
+                            <span className="text-text-secondary">{strengthText(winnerGroup.confidence)}, {winnerGroup.derivationCount} derivation{winnerGroup.derivationCount === 1 ? "" : "s"}</span>
                           </div>
                           <div className="text-center text-text-secondary/60 text-[12px] font-bold">vs</div>
                           <div className="flex flex-col gap-1.5">
                             <span className="font-bold text-text-primary">Path B</span>
                             <span className="font-serif font-bold text-text-secondary">{hukmLabel(contestingLoser.outcome)}</span>
-                            <span className="text-text-secondary">{contestingLoser.confidence}% confidence, {contestingLoser.derivationCount} derivation{contestingLoser.derivationCount === 1 ? "" : "s"}</span>
+                            <span className="text-text-secondary">{strengthText(contestingLoser.confidence)}, {contestingLoser.derivationCount} derivation{contestingLoser.derivationCount === 1 ? "" : "s"}</span>
                           </div>
+                          {contestingLoser.confidence > winnerGroup.confidence && (
+                            <p className="text-[13px] text-text-secondary leading-relaxed">
+                              Path B has the stronger evidence on its own terms, but strength doesn&apos;t decide
+                              between paths — the weighing rules below do.
+                            </p>
+                          )}
                           {view.resolution.length > 0 && (
                             <div className="flex flex-col gap-2 pt-2 border-t border-border-warm-light">
                               <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Why Path A prevails</span>
@@ -1081,7 +1157,7 @@ export function StudyClient() {
                           </div>
                           {r.evidence.text && <p className="text-sm text-text-secondary italic leading-relaxed">&ldquo;{r.evidence.text}&rdquo;</p>}
                           <div className="flex gap-2 flex-wrap items-center mt-1">
-                            <EvidenceBadge grade={r.evidence.grade || (r.evidence.kind === "quran" ? "authentic" : "unverified")} size="sm" />
+                            <SourceBadge kind={r.evidence.kind} grade={r.evidence.grade} size="sm" />
                             {r.evidence.unreviewed && (
                               <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
                             )}
@@ -1104,7 +1180,7 @@ export function StudyClient() {
                           {allGroups.map((g) => (
                             <div key={g.outcome} className="flex items-center justify-between bg-background/40 border border-border-warm-light rounded-xl px-4 py-3">
                               <VerdictBadge verdict={g.outcome} size="sm" />
-                              <span className="text-sm text-text-secondary">{g.confidence}% confidence · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}</span>
+                              <span className="text-sm text-text-secondary">{strengthText(g.confidence)} · {g.derivationCount} derivation{g.derivationCount === 1 ? "" : "s"}</span>
                             </div>
                           ))}
                         </div>
@@ -1132,8 +1208,8 @@ export function StudyClient() {
                             <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Related, non-contradicting opinions</span>
                             {view.relatedOpinions.map((g) => (
                               <div key={g.outcome} className="flex items-center justify-between bg-background/40 border border-border-warm-light rounded-xl px-4 py-3">
-                                <span className="text-sm px-2.5 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold uppercase">{hukmLabel(g.outcome)}</span>
-                                <span className="text-sm text-text-secondary">{g.confidence}% confidence</span>
+                                <span className="text-sm px-2.5 py-0.5 rounded-full border border-brand-red/30 bg-brand-red-light text-brand-red font-extrabold">{hukmLabel(g.outcome)}</span>
+                                <span className="text-sm text-text-secondary">{strengthText(g.confidence)}</span>
                               </div>
                             ))}
                           </div>

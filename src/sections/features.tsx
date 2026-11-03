@@ -2,7 +2,9 @@ import React from "react";
 
 export interface ReasoningStatsProps {
   readonly coreClauseCount: number;
-  readonly reviewedClauseCount: number;
+  /** Distinct Qur'an verses and hadith the core clauses cite. */
+  readonly scriptureSourceCount: number;
+  readonly domainCount: number;
 }
 
 const STEPS = [
@@ -55,7 +57,7 @@ const STEPS = [
  * true numbers, not large invented ones — matching the section's own
  * headline, which the mockup already states honestly.
  */
-export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: ReasoningStatsProps) {
+export function ReasoningSteps({ coreClauseCount, scriptureSourceCount, domainCount }: ReasoningStatsProps) {
   return (
     <section className="py-16 border-t border-border-warm/60">
       <div className="mx-auto max-w-[92rem] px-6 grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -63,26 +65,22 @@ export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: Reasoni
         <div>
           <h2 className="font-serif text-2xl font-bold text-text-primary mb-1">How Tarjih reasons</h2>
           <div className="w-10 h-0.5 bg-brand-red mb-8" />
-          <div className="flex flex-col sm:flex-row flex-wrap gap-6 sm:gap-4">
+          <ol className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {STEPS.map((step, i) => (
-              <React.Fragment key={step.label}>
-                <div className="flex items-start gap-3 max-w-[180px]">
-                  <span className="h-10 w-10 shrink-0 rounded-full border border-border-warm text-text-secondary flex items-center justify-center">
-                    {step.icon}
-                  </span>
-                  <div>
-                    <p className="font-bold text-sm text-text-primary">{step.label}</p>
-                    <p className="text-sm text-text-secondary leading-snug mt-0.5">{step.description}</p>
-                  </div>
+              <li key={step.label} className="flex items-start gap-3">
+                <span className="h-10 w-10 shrink-0 rounded-full border border-border-warm text-text-secondary flex items-center justify-center">
+                  {step.icon}
+                </span>
+                <div>
+                  <p className="font-bold text-sm text-text-primary">
+                    <span className="text-brand-red mr-1">{i + 1}.</span>
+                    {step.label}
+                  </p>
+                  <p className="text-sm text-text-secondary leading-snug mt-0.5">{step.description}</p>
                 </div>
-                {i < STEPS.length - 1 && (
-                  <svg className="hidden sm:block h-4 w-4 text-text-secondary/40 self-center shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-                  </svg>
-                )}
-              </React.Fragment>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
 
         {/* Stats + editor's note */}
@@ -92,25 +90,17 @@ export function ReasoningSteps({ coreClauseCount, reviewedClauseCount }: Reasoni
               Small reviewed knowledge base — gaps are reported, <span className="text-brand-red">never guessed.</span>
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 bg-card-warm border border-border-warm rounded-xl p-4">
-              <svg className="h-6 w-6 text-brand-red shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-              <div>
-                <p className="font-serif font-bold text-xl text-text-primary">{coreClauseCount}</p>
-                <p className="text-sm text-text-secondary">Core clauses</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { value: coreClauseCount, label: "Hand-authored clauses, each with its evidence" },
+              { value: scriptureSourceCount, label: "Qur'an verses and hadith cited" },
+              { value: domainCount, label: "Areas of fiqh modelled" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-card-warm border border-border-warm rounded-xl p-4">
+                <p className="font-serif font-bold text-2xl text-text-primary">{stat.value}</p>
+                <p className="text-sm text-text-secondary leading-snug">{stat.label}</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3 bg-card-warm border border-border-warm rounded-xl p-4">
-              <svg className="h-6 w-6 text-brand-green shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39 1.593 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-              </svg>
-              <div>
-                <p className="font-serif font-bold text-xl text-text-primary">{reviewedClauseCount}</p>
-                <p className="text-sm text-text-secondary">Formalized clauses reviewed</p>
-              </div>
-            </div>
+            ))}
           </div>
           <div className="border border-dashed border-brand-red/40 rounded-xl p-4 bg-brand-red-light/30">
             <p className="text-[12px] font-bold text-brand-red uppercase tracking-widest mb-1">Editor&rsquo;s note</p>

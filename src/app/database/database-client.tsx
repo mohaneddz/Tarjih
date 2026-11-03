@@ -4,10 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@/utils/cn";
 import type { kbStatistics } from "@/lib/kb/entry";
 import type { ReviewQueueItem, ExcludedLiveEntry } from "@/app/api/kb/review-queue/route";
-import { EvidenceBadge, RulingRosette } from "@/components/ui/asset-badge";
+import { EvidenceBadge, RulingRosette, SourceBadge } from "@/components/ui/asset-badge";
 
 export interface CoreClauseView {
   readonly id: string;
+  /** The clause in the engine's surface syntax, as authored. */
+  readonly source: string;
+  /** The clause head as a goal, for trying it in the console. */
+  readonly goal: string;
   readonly head: string;
   readonly isFact: boolean;
   readonly kind: string;
@@ -76,6 +80,24 @@ function KindBadge({ kind }: { kind: string }) {
   );
 }
 
+const REVIEW_TOKEN_KEY = "tarjih:reviewToken";
+
+function readReviewToken(): string | null {
+  try {
+    return window.sessionStorage.getItem(REVIEW_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeReviewToken(token: string): void {
+  try {
+    window.sessionStorage.setItem(REVIEW_TOKEN_KEY, token);
+  } catch {
+    // Storage blocked: the reviewer is simply asked again next time.
+  }
+}
+
 function ClauseCard({ clause: c, onOpen }: { clause: CoreClauseView; onOpen: () => void }) {
   return (
     <button
@@ -87,7 +109,9 @@ function ClauseCard({ clause: c, onOpen }: { clause: CoreClauseView; onOpen: () 
         <span className="font-mono text-[12px] text-text-secondary truncate" title={c.id}>{c.id}</span>
         <KindBadge kind={c.kind} />
       </div>
-      <span className="font-serif font-bold text-sm text-text-primary">{c.head}</span>
+      <code className="font-mono text-[12px] text-text-primary bg-background/70 border border-border-warm-light rounded-lg px-2.5 py-2 whitespace-pre-wrap break-words line-clamp-4">
+        {c.source}
+      </code>
       <span className="text-sm text-brand-red font-semibold">{c.reference}</span>
       {c.text && <p className="text-sm text-text-secondary italic leading-relaxed">&ldquo;{c.text}&rdquo;</p>}
       {c.notes && <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">{c.notes}</p>}
@@ -98,7 +122,7 @@ function ClauseCard({ clause: c, onOpen }: { clause: CoreClauseView; onOpen: () 
           </span>
           {c.scope && <span className="text-[11px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{c.scope}</span>}
         </div>
-        <EvidenceBadge grade={c.grade || (c.kind === "quran" ? "authentic" : "unverified")} size="sm" showLabel={false} />
+        <SourceBadge kind={c.kind} grade={c.grade} size="sm" showLabel={false} />
       </div>
     </button>
   );
@@ -140,7 +164,20 @@ function ClauseModal({ clause, onClose }: { clause: CoreClauseView; onClose: () 
           </span>
           {clause.scope && <span className="text-[11px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold uppercase">{clause.scope}</span>}
           {clause.restriction && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold uppercase">{clause.restriction}</span>}
-          <EvidenceBadge grade={clause.grade || (clause.kind === "quran" ? "authentic" : "unverified")} size="sm" />
+          <SourceBadge kind={clause.kind} grade={clause.grade} size="sm" />
+        </div>
+
+        <div>
+          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-widest mb-1">Clause</p>
+          <pre className="font-mono text-[13px] text-text-primary bg-background border border-border-warm-light rounded-lg px-3 py-2.5 whitespace-pre-wrap break-words">
+            {clause.source}
+          </pre>
+          <a
+            href={`/console?${new URLSearchParams({ q: clause.goal }).toString()}`}
+            className="inline-block mt-2 text-sm font-semibold text-brand-red hover:underline"
+          >
+            Try it in the console →
+          </a>
         </div>
 
         <div>
@@ -171,6 +208,14 @@ type TypeFilter = "all" | "fact" | "rule";
 export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) {
   const [tab, setTab] = useState<Tab>("core");
   const [search, setSearch] = useState("");
+  // `/database?q=...` (from the search palette) starts with that search. Read
+  // after hydration rather than through useSearchParams, which would force
+  // this statically rendered page to bail out to client rendering.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (q) setSearch(q);
+  }, []);
   const [activeKinds, setActiveKinds] = useState<Set<string>>(() => new Set());
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [openClause, setOpenClause] = useState<CoreClauseView | null>(null);
@@ -218,7 +263,12 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
       if (typeFilter === "fact" && !c.isFact) return false;
       if (typeFilter === "rule" && c.isFact) return false;
       if (!q) return true;
-      return c.id.toLowerCase().includes(q) || c.reference.toLowerCase().includes(q) || c.head.toLowerCase().includes(q);
+      return (
+        c.id.toLowerCase().includes(q) ||
+        c.reference.toLowerCase().includes(q) ||
+        c.head.toLowerCase().includes(q) ||
+        c.source.toLowerCase().includes(q)
+      );
     });
   }, [coreClauses, search, activeKinds, typeFilter]);
 
@@ -235,11 +285,24 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
     setActioningId(id);
     setActionError(null);
     try {
-      const res = await fetch(`/api/kb/review/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, reason }),
-      });
+      const send = (token: string | null) =>
+        fetch(`/api/kb/review/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(token ? { "x-review-token": token } : {}) },
+          body: JSON.stringify({ action, reason }),
+        });
+      let res = await send(readReviewToken());
+      // The deployment may require a reviewer token (REVIEW_TOKEN). Ask once,
+      // keep it for this tab, and retry.
+      if (res.status === 401) {
+        const token = window.prompt("Reviewer token:");
+        if (!token) {
+          setActionError("A reviewer token is required to change the knowledge base on this deployment.");
+          return;
+        }
+        res = await send(token);
+        if (res.ok) writeReviewToken(token);
+      }
       if (!res.ok) {
         const body = await res.json();
         setActionError(body.message || "Action failed.");
@@ -326,7 +389,7 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
 
           <input
             type="text"
-            placeholder="Search by id, predicate, or reference..."
+            placeholder="Search clauses — e.g. khamr, zakat, 2:173…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full max-w-md h-10 px-4 text-sm rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-red transition-all"

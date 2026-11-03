@@ -21,7 +21,7 @@ export default function StudyPage() {
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col bg-background text-foreground transition-colors duration-300">
       <Header />
-      <main className="flex-1 min-h-0 relative max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-6 pb-6">
+      <main className="flex-1 min-h-0 relative max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none w-full mx-auto px-2 sm:px-6 pb-2 sm:pb-6">
         <Suspense fallback={null}>
           <StudyClient />
         </Suspense>

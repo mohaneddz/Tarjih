@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ProofView } from "@/lib/pipeline/present";
 import { cn } from "@/utils/cn";
-import { EvidenceBadge, RulingRosette } from "@/components/ui/asset-badge";
+import { RulingRosette, SourceBadge } from "@/components/ui/asset-badge";
 
 interface ProofTreeProps {
   readonly proof: ProofView;
@@ -106,8 +106,7 @@ function CheckBadge() {
 }
 
 function GradeBadge({ evidence }: { evidence: ProofView["evidence"] }) {
-  const rawGrade = evidence.grade || (evidence.kind === "quran" ? "authentic" : evidence.kind === "ijma" ? "authentic" : "unverified");
-  return <EvidenceBadge grade={rawGrade} size="sm" showLabel={false} />;
+  return <SourceBadge kind={evidence.kind} grade={evidence.grade} size="sm" showLabel={false} />;
 }
 
 // ---------------------------------------------------------------------------

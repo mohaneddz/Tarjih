@@ -53,6 +53,10 @@ export function Header() {
   const pathname = usePathname();
   const isDark = useSyncExternalStore(subscribeToTheme, readTheme, readThemeOnServer);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Below md the nav links are hidden, so phones get them from a menu.
+  // Closed on navigation by keying it to the path it was opened on.
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
+  const menuOpen = menuOpenOn !== null && menuOpenOn === pathname;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -75,7 +79,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border-warm bg-background/95 backdrop-blur-md shrink-0 select-none transition-colors duration-200">
-      <div className="mx-auto flex h-16 max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none items-center justify-between px-6">
+      <div className="mx-auto flex h-16 max-w-[120rem] lg:max-w-[135rem] 2xl:max-w-none items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/logo/tarjih-icon-transparent.png"
@@ -87,8 +91,10 @@ export function Header() {
           />
           <span className="font-serif text-xl lg:text-2xl font-bold tracking-wide text-text-primary transition-colors">
             Tarjih
-            <span className="text-text-secondary font-normal mx-2">|</span>
-            <span className="text-text-secondary text-lg lg:text-xl">ترجيح</span>
+            <span className="hidden min-[400px]:inline">
+              <span className="text-text-secondary font-normal mx-2">|</span>
+              <span className="text-text-secondary text-lg lg:text-xl">ترجيح</span>
+            </span>
           </span>
         </Link>
 
@@ -135,6 +141,22 @@ export function Header() {
           </Link>
 
           <button
+            onClick={() => setMenuOpenOn(menuOpen ? null : pathname)}
+            className="md:hidden text-text-secondary hover:text-text-primary transition-colors p-2.5 rounded-lg hover:bg-border-warm-light cursor-pointer"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              )}
+            </svg>
+          </button>
+
+          <button
             onClick={toggleTheme}
             className="text-text-secondary hover:text-text-primary transition-colors p-2.5 rounded-lg hover:bg-border-warm-light cursor-pointer"
             aria-label="Toggle Theme"
@@ -151,6 +173,26 @@ export function Header() {
           </button>
         </div>
       </div>
+      {menuOpen && (
+        <nav id="mobile-nav" className="md:hidden border-t border-border-warm bg-background px-4 py-2 flex flex-col">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname?.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpenOn(null)}
+                className={cn(
+                  "py-3 px-2 text-base font-semibold border-b border-border-warm-light last:border-b-0",
+                  active ? "text-brand-red" : "text-text-primary"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>
   );
