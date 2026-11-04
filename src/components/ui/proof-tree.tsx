@@ -84,17 +84,6 @@ const TYPE_META: Record<DisplayNodeType, { label: string; icon: React.ReactNode 
 /** Uniform icon treatment across all four types — see TYPE_META's note. */
 const ICON_STYLE = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300";
 
-/**
- * `line-clamp` truncation relies on `-webkit-box` layout, which does not
- * reliably kick in here — the note strip instead renders every wrapped line
- * up to its fixed height and hard-clips mid-line with no ellipsis. Truncating
- * the string itself sidesteps that entirely.
- */
-function truncateNote(text: string, max: number): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max).trimEnd()}…`;
-}
-
 function CheckBadge() {
   return (
     <span className="h-4 w-4 rounded-full border border-brand-green text-brand-green flex items-center justify-center shrink-0" title="Confirmed">
@@ -210,6 +199,10 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
     const viewport = viewportRef.current;
     if (!viewport) return;
     const handler = (e: WheelEvent) => {
+      // A long evidence note scrolls inside its own box; the wheel over it
+      // belongs to that box, not to the canvas zoom.
+      const note = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-note]");
+      if (note && note.scrollHeight > note.clientHeight) return;
       e.preventDefault();
       const rect = viewport.getBoundingClientRect();
       const pointerX = e.clientX - rect.left;
@@ -229,6 +222,8 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
   }, []);
 
   const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Grabbing a note's scrollbar or selecting its text must not pan the canvas.
+    if ((e.target as HTMLElement).closest("[data-note]")) return;
     dragState.current = { startX: e.clientX, startY: e.clientY, origX: transform.x, origY: transform.y };
     setIsDragging(true);
   }, [transform.x, transform.y]);
@@ -400,16 +395,16 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
               </button>
 
               {/* Real evidence note surfaced as an editor's-note style callout.
-                  Height is capped explicitly (not just line-clamped) so this
-                  box's contribution to the column's total height is bounded
-                  and known — see ROW_HEIGHT — regardless of note length. */}
+                  Height is capped explicitly so this box's contribution to the
+                  column's total height is bounded and known — see ROW_HEIGHT —
+                  and a longer note scrolls inside it instead of being cut. */}
               {hasNote && (
                 <div
+                  data-note
                   style={{ marginTop: NOTE_GAP, maxHeight: NOTE_H }}
-                  className="w-full text-[11px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 overflow-hidden"
-                  title={n.view.evidence.notes}
+                  className="w-full text-[11px] leading-snug text-text-secondary bg-card-warm border border-dashed border-brand-red/40 rounded-lg px-2.5 py-1.5 overflow-y-auto overscroll-contain select-text cursor-auto [scrollbar-width:thin] [scrollbar-color:rgb(127_38_37/0.5)_transparent]"
                 >
-                  {truncateNote(n.view.evidence.notes!, 90)}
+                  {n.view.evidence.notes}
                 </div>
               )}
             </div>
