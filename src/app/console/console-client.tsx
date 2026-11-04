@@ -120,6 +120,17 @@ export function ConsoleClient({ predicates, circumstances, atoms, acts }: Consol
     setHistory(readHistory());
   }, []);
 
+  // A shared link or /study's "Open in console" arrives with ?q= and expects
+  // to land on the answer, not on a filled-in box waiting for a click.
+  const sharedQueryRan = useRef(false);
+  useEffect(() => {
+    if (sharedQueryRan.current || !searchParams.get("q")) return;
+    sharedQueryRan.current = true;
+    void run();
+    // Runs once on arrival; later edits to the query are the user's to submit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const vocabulary = useMemo(() => {
     const names = new Set<string>([...atoms, ...acts, ...circumstances.map((c) => c.atom)]);
     for (const p of predicates) names.add(p.signature.split("(")[0]);
@@ -166,7 +177,12 @@ export function ConsoleClient({ predicates, circumstances, atoms, acts }: Consol
       setSelectedClauseId(null);
       setTab(body.solutions.length === 0 ? "explain" : "solutions");
 
-      const nextHistory = [nextQuery.trim(), ...history.filter((h) => h !== nextQuery.trim())].slice(0, HISTORY_LIMIT);
+      // Read from storage, not state: a ?q= link runs before the history
+      // effect has populated state, and would otherwise overwrite it.
+      const nextHistory = [nextQuery.trim(), ...readHistory().filter((h) => h !== nextQuery.trim())].slice(
+        0,
+        HISTORY_LIMIT
+      );
       setHistory(nextHistory);
       writeHistory(nextHistory);
       setHistoryCursor(-1);
