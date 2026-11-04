@@ -80,17 +80,18 @@ export function PipelineExample() {
               <span className="text-[12px] font-bold text-text-secondary uppercase tracking-widest">Specific over general</span>
               <WeighingScale size="sm" className="opacity-80 scale-75 -mr-2 -mt-1" />
             </div>
+            <span className="text-[11px] text-text-secondary uppercase tracking-wider">Evidence strength</span>
             <div className="flex items-center justify-between">
               <span className="font-bold text-brand-red">Permitted</span>
-              <span className="text-text-secondary">55%</span>
+              <span className="text-text-secondary">55</span>
             </div>
             <div className="flex items-center justify-between opacity-60">
               <span className="text-text-secondary">Forbidden</span>
-              <span className="text-text-secondary">100%</span>
+              <span className="text-text-secondary">100</span>
             </div>
             <p className="text-text-secondary leading-relaxed mt-1">
-              2:173 is specific (khass) to the compelled person, qualifying the general prohibition rather than being
-              overridden by it.
+              Specificity is checked before strength. 2:173 is specific (khass) to the compelled person, so it qualifies
+              the general prohibition even though the prohibition is the stronger text.
             </p>
           </div>
 
