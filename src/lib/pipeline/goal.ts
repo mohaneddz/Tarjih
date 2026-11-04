@@ -143,7 +143,10 @@ export function groundGoal(rawText: string): GoalResult {
   if (/^none$/i.test(trimmed)) {
     return fail({
       kind: "not-covered",
-      message: "This question isn't about anything the knowledge base currently models (a handful of kinship acts and forbidden foods).",
+      message:
+        "This question isn't about any act the knowledge base currently models. It covers food and drink, " +
+        "family and kinship, worship, fasting, hajj, zakat, transactions, and conduct — but only the specific " +
+        "cases it has rules for.",
     });
   }
 

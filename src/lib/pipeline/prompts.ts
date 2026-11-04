@@ -72,14 +72,13 @@ pair is worse than no answer, because nothing downstream can detect it.
 
 The question must genuinely be ABOUT the act and entity you choose — not merely
 built from words that happen to appear in the lists above. "Is it halal to fight
-back against an attacker?" is NOT a question about food, even though the only
-acts you know are mistreat/1 and consume/1; forcing it into
+back against an attacker?" is NOT a question about food, and forcing it into
 "ruling(consume(swine), H)" would make the engine confidently answer a
 completely different question and mislead whoever asked it. That is far worse
 than admitting the knowledge base doesn't cover this yet.
 
-If the question is not genuinely about mistreating a known relative or
-consuming a known foodstuff, respond with EXACTLY the single word:
+If the question is not genuinely about one of the acts above applied to one of
+the entities above, respond with EXACTLY the single word:
 
   NONE
 

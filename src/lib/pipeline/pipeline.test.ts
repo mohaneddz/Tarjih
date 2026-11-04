@@ -152,7 +152,7 @@ describe("groundGoal", () => {
   describe("the NONE sentinel (regression: force-fit guessing)", () => {
     // A question genuinely unrelated to anything in the lexicon (e.g. "is it
     // halal to fight back against an attacker?") has no correct mapping onto
-    // mistreat/1 or consume/1. The model is instructed to answer NONE rather
+    // any act in the lexicon. The model is instructed to answer NONE rather
     // than force a structurally-valid but wrong guess like
     // ruling(consume(swine), H) -- which would pass checkTermGrounded (every
     // atom in it really is known) and let the engine confidently answer a
