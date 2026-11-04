@@ -15,6 +15,19 @@ describe("runConsoleQuery", () => {
     expect(result.weighing?.verdict).toBe("haram");
   });
 
+  it("flags an atom the KB never mentions and suggests the term it uses", () => {
+    const result = runConsoleQuery({ query: "ruling(consume(wine), H)" }, core);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.solutions).toHaveLength(0);
+    expect(result.unknownAtoms).toEqual([{ atom: "wine", suggestion: "khamr" }]);
+  });
+
+  it("reports no unknown atoms for a query in the KB's own vocabulary", () => {
+    const result = runConsoleQuery({ query: "ruling(consume(khamr), haram)" }, core);
+    expect(result.ok && result.unknownAtoms).toEqual([]);
+  });
+
   it("leaves internal variables out of the bindings", () => {
     const result = runConsoleQuery({ query: "instance_of(X, rahim), instance_of(X, _)" }, core);
     expect(result.ok).toBe(true);

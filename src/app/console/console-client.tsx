@@ -533,6 +533,33 @@ export function ConsoleClient({ predicates, circumstances, atoms, acts }: Consol
                     The search stopped at its {result.stats.truncationReason} budget, so there may be derivations not shown.
                   </p>
                 )}
+                {result.unknownAtoms.length > 0 && (
+                  <div className="text-sm text-amber-700 dark:text-amber-300 flex flex-col gap-1">
+                    {result.unknownAtoms.map((u) => (
+                      <p key={u.atom}>
+                        No clause in the knowledge base mentions <code className="font-mono">{u.atom}</code>, so this
+                        query cannot succeed.
+                        {u.suggestion && (
+                          <>
+                            {" "}The KB calls it{" "}
+                            <button
+                              type="button"
+                              className="font-mono font-bold underline cursor-pointer hover:text-brand-red"
+                              onClick={() => {
+                                const next = query.replace(new RegExp(`\\b${u.atom}\\b`, "g"), u.suggestion!);
+                                setQuery(next);
+                                void run(next);
+                              }}
+                            >
+                              {u.suggestion}
+                            </button>
+                            .
+                          </>
+                        )}
+                      </p>
+                    ))}
+                  </div>
+                )}
                 {result.weighing && (
                   <div className="rounded-xl bg-background border border-border-warm-light p-3 flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2 text-sm">
