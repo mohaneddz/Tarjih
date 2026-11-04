@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { VerdictBadge, WeighingScale, RulingRosette, EvidenceBadge } from "@/components/ui/asset-badge";
+import { HUKM_LABELS } from "@/lib/kb/ontology";
+import type { Hukm } from "@/lib/kb/ontology";
 
 interface CaseRecord {
   id: string;
@@ -145,9 +147,9 @@ export function CasesClient() {
                 <tr className="border-b border-border-warm bg-border-warm-light/60 text-[12px] font-bold text-text-secondary uppercase tracking-wider select-none">
                   <th className="p-4.5 pl-6">Question</th>
                   <th className="p-4.5">Madhhab / Usul</th>
-                  <th className="p-4.5 text-center">Ruling</th>
+                  <th className="p-4.5 text-left">Ruling</th>
                   <th className="p-4.5 text-center">Confidence</th>
-                  <th className="p-4.5 text-center">Conflict</th>
+                  <th className="p-4.5 text-left">Conflict</th>
                   <th className="p-4.5 text-center">Date</th>
                   <th className="p-4.5 pr-6 text-right">Actions</th>
                 </tr>
@@ -172,21 +174,33 @@ export function CasesClient() {
                         {c.title}
                       </td>
                       <td className="p-4.5 text-brand-red font-semibold">{c.madhhab}</td>
-                      <td className="p-4.5 text-center">
+                      <td className="p-4.5">
                         {c.verdict ? (
-                          <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />
+                          <span className="inline-flex items-center gap-2 font-semibold text-text-primary whitespace-nowrap">
+                            <VerdictBadge verdict={c.verdict} size="sm" showLabel={false} />
+                            {HUKM_LABELS[c.verdict as Hukm]?.en ?? c.verdict}
+                          </span>
                         ) : (
-                          <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
+                          <span className="inline-flex items-center gap-2 text-text-secondary whitespace-nowrap">
+                            <EvidenceBadge grade="unverified" size="sm" showLabel={false} />
+                            No ruling
+                          </span>
                         )}
                       </td>
                       <td className="p-4.5 text-center font-bold text-text-primary">
                         {c.confidence !== null ? `${c.confidence}%` : "—"}
                       </td>
-                      <td className="p-4.5 text-center">
+                      <td className="p-4.5">
                         {c.contested ? (
-                          <EvidenceBadge grade="disputed" size="sm" showLabel={false} />
+                          <span className="inline-flex items-center gap-2 font-semibold text-brand-red whitespace-nowrap">
+                            <EvidenceBadge grade="disputed" size="sm" showLabel={false} />
+                            Contested
+                          </span>
                         ) : (
-                          <EvidenceBadge grade="authentic" size="sm" showLabel={false} />
+                          <span className="inline-flex items-center gap-2 text-text-secondary whitespace-nowrap">
+                            <EvidenceBadge grade="authentic" size="sm" showLabel={false} />
+                            None
+                          </span>
                         )}
                       </td>
                       <td className="p-4.5 text-center text-text-secondary">{c.date}</td>
