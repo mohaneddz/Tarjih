@@ -198,7 +198,33 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
+    // Zoom belongs to a scroll that *starts* on the canvas. Scrolling the page
+    // carries the canvas under the pointer, and without this every pass down
+    // the page zoomed it in or out. A run of wheel events (they arrive in a
+    // stream, with short gaps) counts as one gesture, and it is the first
+    // event of the run that says where the gesture began. A recent scroll of
+    // the page itself also means the canvas moved, not the user's intent.
+    const GESTURE_GAP_MS = 250;
+    const PAGE_SCROLL_QUIET_MS = 350;
+    let lastWheelAt = 0;
+    let gestureStartedOnCanvas = false;
+    let lastPageScrollAt = 0;
+    const trackGesture = (e: WheelEvent) => {
+      const now = performance.now();
+      if (now - lastWheelAt > GESTURE_GAP_MS) {
+        gestureStartedOnCanvas = viewport.contains(e.target as Node) && now - lastPageScrollAt > PAGE_SCROLL_QUIET_MS;
+      }
+      lastWheelAt = now;
+    };
+    const trackPageScroll = () => {
+      lastPageScrollAt = performance.now();
+    };
+    window.addEventListener("wheel", trackGesture, { capture: true, passive: true });
+    window.addEventListener("scroll", trackPageScroll, { capture: true, passive: true });
+
     const handler = (e: WheelEvent) => {
+      // The page is being scrolled and merely passing over the canvas: let it.
+      if (!gestureStartedOnCanvas) return;
       // A long evidence note scrolls inside its own box; the wheel over it
       // belongs to that box, not to the canvas zoom.
       const note = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-note]");
@@ -218,7 +244,11 @@ export function ProofTree({ proof, selectedClauseId, onSelectNode }: ProofTreePr
       });
     };
     viewport.addEventListener("wheel", handler, { passive: false });
-    return () => viewport.removeEventListener("wheel", handler);
+    return () => {
+      viewport.removeEventListener("wheel", handler);
+      window.removeEventListener("wheel", trackGesture, { capture: true });
+      window.removeEventListener("scroll", trackPageScroll, { capture: true });
+    };
   }, []);
 
   const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
