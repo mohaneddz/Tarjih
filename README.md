@@ -15,6 +15,71 @@ The LLM never decides the ruling. It only translates the question into
 something the engine can prove, and narrates the answer the engine already
 computed.
 
+## Tech stack
+
+**Frontend**
+
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+
+**Reasoning**
+
+![Backward chaining](https://img.shields.io/badge/Backward--chaining_prover-7F2625?style=for-the-badge)
+![Horn clauses](https://img.shields.io/badge/Horn--clause_KB-7F2625?style=for-the-badge)
+![Murajjihat](https://img.shields.io/badge/Murajjihat_weighing-7F2625?style=for-the-badge)
+
+**Data and AI**
+
+![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge)
+![gpt-oss-120b](https://img.shields.io/badge/gpt--oss--120b-412991?style=for-the-badge)
+![Cheerio](https://img.shields.io/badge/Cheerio-E88C1F?style=for-the-badge)
+
+**Tooling**
+
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/app/01-landing.jpg" width="280"/><br/>Landing</td>
+    <td align="center"><img src="screenshots/app/02-landing-two-systems.jpg" width="280"/><br/>Two systems, one answer</td>
+    <td align="center"><img src="screenshots/app/03-landing-comparison.jpg" width="280"/><br/>Compared with a chatbot</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/app/04-study-verdict.jpg" width="280"/><br/>Study: verdict and premises</td>
+    <td align="center"><img src="screenshots/app/05-study-proof-tree.jpg" width="280"/><br/>Study: proof tree</td>
+    <td align="center"><img src="screenshots/app/06-study-interpretation.jpg" width="280"/><br/>Study: interpretation</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/app/07-study-sources.jpg" width="280"/><br/>Study: cited sources</td>
+    <td align="center"><img src="screenshots/app/08-study-conflicts.jpg" width="280"/><br/>Study: conflicts and weighing</td>
+    <td align="center"><img src="screenshots/app/09-study-dark.jpg" width="280"/><br/>Study in dark mode</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/app/10-console-solutions.jpg" width="280"/><br/>Console: solutions</td>
+    <td align="center"><img src="screenshots/app/11-console-proof.jpg" width="280"/><br/>Console: proof</td>
+    <td align="center"><img src="screenshots/app/12-console-trace.jpg" width="280"/><br/>Console: search trace</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/app/13-console-why-what-if.jpg" width="280"/><br/>Console: why it failed</td>
+    <td align="center"><img src="screenshots/app/14-database-core-kb.jpg" width="280"/><br/>Knowledge base</td>
+    <td align="center"><img src="screenshots/app/15-database-rules.jpg" width="280"/><br/>Knowledge base: rules</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/app/16-cases.jpg" width="280"/><br/>Cases ledger</td>
+    <td align="center"><img src="screenshots/app/17-saved.jpg" width="280"/><br/>Saved cases</td>
+    <td></td>
+  </tr>
+</table>
+
 ## How it works
 
 ```
