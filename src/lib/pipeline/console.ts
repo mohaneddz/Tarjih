@@ -14,12 +14,12 @@ import { explainFailure } from "../engine/explain";
 import { prove } from "../engine/prover";
 import type { TraceEventType } from "../engine/prover";
 import type { LoadedKb } from "../kb/entry";
-import { findCircumstance } from "../kb/lexicon";
+import { findCircumstance, KNOWN_ATOMS } from "../kb/lexicon";
 import { QUERY_SUPPLIED_PREDICATES } from "../kb/ontology";
 import { withPremises } from "../kb/premises";
 import { parseQuery, ParseError } from "../logic/parse";
 import { atom, literalToString, termToString } from "../logic/term";
-import type { Literal } from "../logic/types";
+import type { Literal, Term } from "../logic/types";
 import { AHKAM_AXIS, VALIDITY_AXIS, weighRuling } from "../tarjih/weigh";
 import type { OutcomeAxis } from "../tarjih/weigh";
 import { humanizeLiteral } from "./humanize";
@@ -61,9 +61,16 @@ export interface ConsoleWeighing {
   readonly resolution: readonly TarjihStepView[];
 }
 
+/** An atom in the query that no clause in the KB mentions, with the nearest lexicon term if one matches. */
+export interface UnknownAtom {
+  readonly atom: string;
+  readonly suggestion?: string;
+}
+
 export interface ConsoleResult {
   readonly ok: true;
   readonly goals: string;
+  readonly unknownAtoms: readonly UnknownAtom[];
   readonly premises: readonly string[];
   readonly solutions: readonly ConsoleSolution[];
   readonly stats: {
@@ -99,6 +106,38 @@ export interface ConsoleError {
 const MAX_TRACE_EVENTS = 20_000;
 const TRACE_SHOWN = 800;
 const MAX_SOLUTIONS_CAP = 500;
+
+function collectAtoms(term: Term, into: Set<string>): void {
+  if (term.kind === "atom") into.add(term.name);
+  else if (term.kind === "struct") for (const arg of term.args) collectAtoms(arg, into);
+}
+
+/**
+ * Atoms in the query that appear in no clause at all.
+ *
+ * Such a query can only fail, and the failure explanation would describe it
+ * as missing facts about "wine" as though wine were a known entity. Saying
+ * plainly that the KB has never heard of it, and naming the term it does use,
+ * is the more useful answer.
+ */
+function findUnknownAtoms(goals: readonly Literal[], kb: LoadedKb["kb"]): UnknownAtom[] {
+  const known = new Set<string>();
+  for (const clause of kb.clauses()) {
+    for (const literal of [clause.head, ...clause.body]) for (const arg of literal.args) collectAtoms(arg, known);
+  }
+  const asked = new Set<string>();
+  for (const goal of goals) for (const arg of goal.args) collectAtoms(arg, asked);
+
+  return [...asked]
+    .filter((name) => !known.has(name))
+    .map((name) => {
+      const phrase = name.replace(/_/g, " ").toLowerCase();
+      const match = KNOWN_ATOMS.find(
+        (a) => a.aliases?.some((alias) => alias.toLowerCase() === phrase) || a.label.toLowerCase().startsWith(phrase)
+      );
+      return match ? { atom: name, suggestion: match.atom } : { atom: name };
+    });
+}
 
 /** Picks the weighing axis for a query, if it has the shape of a ruling question. */
 function axisFor(goals: readonly Literal[]): OutcomeAxis<string> | undefined {
@@ -160,6 +199,7 @@ export function runConsoleQuery(request: ConsoleRequest, kb: LoadedKb): ConsoleR
   return {
     ok: true,
     goals: goals.map(literalToString).join(", "),
+    unknownAtoms: findUnknownAtoms(goals, kb.kb),
     premises: premises.map(literalToString),
     solutions: result.solutions.map((s) => ({
       bindings: Object.fromEntries(

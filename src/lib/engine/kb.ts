@@ -53,6 +53,11 @@ export class KnowledgeBase {
     return this.byId.get(id);
   }
 
+  /** Every clause, in insertion order. */
+  clauses(): IterableIterator<Clause> {
+    return this.byId.values();
+  }
+
   get size(): number {
     return this.byId.size;
   }
