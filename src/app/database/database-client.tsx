@@ -6,6 +6,8 @@ import type { kbStatistics } from "@/lib/kb/entry";
 import type { ReviewQueueItem, ExcludedLiveEntry } from "@/app/api/kb/review-queue/route";
 import { EvidenceBadge, RulingRosette, SourceBadge } from "@/components/ui/asset-badge";
 import { KindBadge, KindIcon } from "./kindBadge";
+import { DevList, EvidenceList, ExplanationList, TitleList, VIEW_OPTIONS, isViewId } from "./clauseViews";
+import type { ViewId } from "./clauseViews";
 
 export interface CoreClauseView {
   readonly id: string;
@@ -162,11 +164,24 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
   // `/database?q=...` (from the search palette) starts with that search. Read
   // after hydration rather than through useSearchParams, which would force
   // this statically rendered page to bail out to client rendering.
+  const [view, setView] = useState<ViewId>("cards");
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    const requestedView = params.get("view");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setSearch(q);
+    if (isViewId(requestedView)) setView(requestedView);
   }, []);
+
+  // The view lives in the URL so a link opens the page the way it was shared.
+  function chooseView(next: ViewId) {
+    setView(next);
+    const url = new URL(window.location.href);
+    if (next === "cards") url.searchParams.delete("view");
+    else url.searchParams.set("view", next);
+    window.history.replaceState(null, "", url);
+  }
   const [activeKinds, setActiveKinds] = useState<Set<string>>(() => new Set());
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [openClause, setOpenClause] = useState<CoreClauseView | null>(null);
@@ -218,7 +233,9 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
         c.id.toLowerCase().includes(q) ||
         c.reference.toLowerCase().includes(q) ||
         c.head.toLowerCase().includes(q) ||
-        c.source.toLowerCase().includes(q)
+        c.source.toLowerCase().includes(q) ||
+        (c.notes?.toLowerCase().includes(q) ?? false) ||
+        (c.text?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [coreClauses, search, activeKinds, typeFilter]);
@@ -346,11 +363,39 @@ export function DatabaseClient({ coreClauses, coreStats }: DatabaseClientProps) 
             className="w-full max-w-md h-10 px-4 text-sm rounded-xl border border-border-warm bg-card-warm text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-brand-red transition-all"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredCore.map((c) => (
-              <ClauseCard key={c.id} clause={c} onOpen={() => setOpenClause(c)} />
+          <div role="tablist" aria-label="Clause view" className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary mr-1">View</span>
+            {VIEW_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                role="tab"
+                aria-selected={view === option.id}
+                title={option.hint}
+                onClick={() => chooseView(option.id)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 border text-sm font-semibold transition-colors cursor-pointer",
+                  view === option.id
+                    ? "bg-text-primary text-background border-text-primary"
+                    : "bg-card-warm border-border-warm text-text-secondary hover:border-brand-red/40 hover:text-text-primary"
+                )}
+              >
+                {option.label}
+              </button>
             ))}
           </div>
+
+          {view === "cards" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredCore.map((c) => (
+                <ClauseCard key={c.id} clause={c} onOpen={() => setOpenClause(c)} />
+              ))}
+            </div>
+          )}
+          {view === "dev" && <DevList clauses={filteredCore} onOpen={setOpenClause} />}
+          {view === "titles" && <TitleList clauses={filteredCore} onOpen={setOpenClause} />}
+          {view === "explanations" && <ExplanationList clauses={filteredCore} onOpen={setOpenClause} />}
+          {view === "evidence" && <EvidenceList clauses={filteredCore} onOpen={setOpenClause} />}
           {filteredCore.length === 0 && (
             <div className="text-center py-12 text-text-secondary text-sm bg-card-warm border border-border-warm rounded-2xl">
               No matching clauses.
