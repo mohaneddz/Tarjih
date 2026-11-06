@@ -200,7 +200,7 @@ Two ways clauses get added:
 | Page | What it's for |
 |---|---|
 | `/study` | The main interface. Ask a question, see the verdict, the proof tree, the premises taken from your question, the cited sources, and — if the evidence conflicted — exactly how it was resolved. |
-| `/database` | Browse the knowledge base: every hand-authored clause and its evidence, plus a review queue for approving or rejecting LLM-formalized hadith clauses. |
+| `/database` | Browse the knowledge base: every hand-authored clause and its evidence, in five views (cards, dev view for code only, titles, explanations, evidence; `?view=dev` links straight to one), plus a review queue for approving or rejecting LLM-formalized hadith clauses. |
 | `/console` | A Prolog console. Type a raw goal, optionally assume circumstances, and get every solution with its proof tree, a filterable step-by-step search trace, and where a failed query stalled. No LLM involved, so it works without an API key. |
 | `/cases` | A ledger of past resolved questions. |
 | `/api/health` | Database, demo content and model configuration at a glance. |
